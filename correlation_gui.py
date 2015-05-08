@@ -9,7 +9,7 @@ from PyQt4 import QtGui, QtCore
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import random
@@ -392,7 +392,7 @@ class Window(QtGui.QWidget):
         self.plotText.setText('Plot: ')
         self.left_panel_top_btns.addWidget(self.plotText)
         self.photonCountText =QtGui.QLabel()
-        self.photonCountText.setText('Bin Size: ')
+        self.photonCountText.setText('Bin  Duration (ms): ')
         self.photonCountEdit = lineEditSp('25',self)
         self.photonCountEdit.parObj = self
         self.photonCountEdit.resize(40,50)
@@ -520,13 +520,13 @@ class Window(QtGui.QWidget):
         self.plt5.a.freshDraw()
     def reprocessDataFn(self):
 
-        for i in range(0, self.label.numOfLoaded):
-                    self.objectRef[i].processData()
-        for i in range(0, self.label.subNum):
-                    self.subObjectRef[i].processData()
+        for i in range(0, self.par_obj.numOfLoaded):
+                    self.par_obj.objectRef[i].processData()
+        for i in range(0, self.par_obj.subNum):
+                    self.par_obj.subObjectRef[i].processData()
 
         self.plotDataQueueFn();
-        self.plot_PhotonCount(self.label.numOfLoaded-1)
+        self.plot_PhotonCount(self.par_obj.numOfLoaded-1)
     def updateCombo(self):
         """Updates photon counting combox box"""
         self.cbx.clear()
@@ -879,7 +879,7 @@ class scrollBox():
             
             #Adds save button to the file.
             sb = pushButtonSp2('save file', self.win_obj, self.par_obj)
-            sb.obj = self.par_obj.objectRef[i]
+            sb.corr_obj = self.par_obj.objectRef[i]
             self.win_obj.modelTab2.setCellWidget(i, 3, sb)
 
             b = baseList()
@@ -916,7 +916,7 @@ class scrollBox():
             
             #Adds save button to the file.
             sb = pushButtonSp2('save file', self.win_obj, self.par_obj)
-            sb.obj = self.par_obj.subObjectRef[i]
+            sb.corr_obj = self.par_obj.subObjectRef[i]
             
             self.win_obj.modelTab2.setCellWidget(i+j, 3, sb)
 

@@ -22,7 +22,7 @@ class ParameterClass():
 par_obj = ParameterClass()
 
 #Runs correlation on the path/to/filename.
-pt3file = picoObject("topfluorPE_2_1_1_1.pt3", par_obj, None)
+pt3file = picoObject("TopFluo488-PE_8_0_7_1_1_2.pt3", par_obj, None)
 
-print 'tau: ', pt3file.autotime
-print 'normalised correlation', pt3file.autoNorm 
+#print 'tau: ', pt3file.autotime
+#print 'normalised correlation', pt3file.autoNorm 

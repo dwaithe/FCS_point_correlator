@@ -1,4 +1,4 @@
-
+import numpy as np
 """FCS Bulk Correlation Software
 
     Copyright (C) 2015  Dominic Waithe
@@ -25,7 +25,7 @@ def equation_(param, tc,options):
 	#txy1 is xy difusion   for fluorescent species one.
 	#alpha1 is
 	#tz1 is z diffusion for fluorescent species one.
-	DC =param['DC'].value; 
+	offset =param['offset'].value; 
 	GN0 =param['GN0'].value; 
 	
 	
@@ -146,4 +146,4 @@ def equation_(param, tc,options):
 			#For three dark state.
 			GT = 1- (T1+T2+T3)+ ((T1*np.exp(-tc/tauT1))+(T2*np.exp(-tc/tauT2))+(T3*np.exp(-tc/tauT3)))
 			
-	return DC + (GN0*GDiff*GT)
+	return offset + (GN0*GDiff*GT)

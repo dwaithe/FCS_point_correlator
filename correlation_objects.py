@@ -5,6 +5,7 @@ from import_methods import *
 import time
 from fitting_methods import equation_
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
+import csv
 
 
 """FCS Bulk Correlation Software
@@ -71,9 +72,6 @@ class picoObject():
 
         #How many channels there are in the files.
         self.numOfCH =  np.unique(np.array(self.subChanArr)).__len__()-1 #Minus 1 because not interested in channel 15.
-        #TODO Generates the interleaved excitation channel if required. 
-        #if (self.aug == 'PIE'):
-            #self.pulsedInterleavedExcitation()
         
         #Finds the numbers which address the channels.
         self.ch_present = np.unique(np.array(self.subChanArr[0:100]))
@@ -86,16 +84,21 @@ class picoObject():
 
         #Time series of photon counts. For visualisation.
         self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
+        
+        unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
+        
+        #Converts to counts per 
+        self.kcount_CH1 = np.average(self.timeSeries1)
         if self.numOfCH ==  2:
+
             self.timeSeries2,self.timeSeriesScale2 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[1],self.photonCountBin)
+            unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
+            self.kcount_CH2 = np.average(self.timeSeries2)
+
 
         
         #Calculates the Auto and Cross-correlation functions.
         self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr))
-        
-        
-           
-       
         
         if self.fit_obj != None:
             #If fit object provided then creates fit objects.
@@ -106,6 +109,7 @@ class picoObject():
                 self.objId1.name = self.name+'_CH0_Auto_Corr'
                 self.objId1.ch_type = 0 #channel 0 Auto
                 self.objId1.prepare_for_fit()
+                self.objId1.kcount = self.kcount_CH1
             self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
             self.objId1.autotime = np.array(self.autotime).reshape(-1)
             self.objId1.param = self.fit_obj.def_param
@@ -119,6 +123,7 @@ class picoObject():
                     self.objId3.name = self.name+'_CH1_Auto_Corr'
                     self.objId3.ch_type = 1 #channel 1 Auto
                     self.objId3.prepare_for_fit()
+                    self.objId3.kcount = self.kcount_CH2
                 self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
                 self.objId3.autotime = np.array(self.autotime).reshape(-1)
                 self.objId3.param = self.fit_obj.def_param
@@ -272,6 +277,7 @@ class subPicoObject():
             self.objId1.name = self.name+'_CH0_Auto_Corr'
             self.objId1.ch_type = 0 #channel 0 Auto
             self.objId1.prepare_for_fit()
+            self.objId1.kcount = self.kcount_CH1
         self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
         self.objId1.autotime = np.array(self.autotime).reshape(-1)
         self.objId1.param = self.fit_obj.def_param
@@ -285,6 +291,7 @@ class subPicoObject():
                 self.objId3.name = self.name+'_CH1_Auto_Corr'
                 self.objId3.ch_type = 1 #channel 1 Auto
                 self.objId3.prepare_for_fit()
+                self.objId3.kcount = self.kcount_CH2
             self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
             self.objId3.autotime = np.array(self.autotime).reshape(-1)
             self.objId3.param = self.fit_obj.def_param
@@ -379,6 +386,7 @@ class corrObject():
         self.fitted = False
         self.checked = False
         self.toFit = False
+        self.kcount = None
        
         #main.data.append(filepath);
         #The master data object reference 
@@ -467,23 +475,35 @@ class corrObject():
     def load_from_file(self,channel):
         tscale = [];
         tdata = [];
+        int_tscale =[];
+        int_tdata=[];
         if self.ext == 'SIN':
             self.parentFn.objIdArr.append(self.objId)
             proceed = False
             
             for line in csv.reader(open(self.filepath, 'rb'),delimiter='\t'):
                 
-                if proceed ==True:
+                if proceed =='correlated':
                     if line ==[]:
-                        break;
+                        proceed =False;
+                    else:
+                        tscale.append(float(line[0]))
+                        tdata.append(float(line[channel+1]))
+                if proceed =='intensity':
                     
-                    
-                    tscale.append(float(line[0]))
-                    tdata.append(float(line[channel+1]))
-                else:
-                  
-                  if (str(line)  == "[\'[CorrelationFunction]\']"):
-                    proceed = True;
+                    if line ==[]:
+                        proceed=False;
+                    elif line.__len__()> 1:
+                        
+                        int_tscale.append(float(line[0]))
+                        int_tdata.append(float(line[channel+1]))
+                if (str(line)  == "[\'[CorrelationFunction]\']"):
+                    proceed = 'correlated';
+                elif (str(line)  == "[\'[IntensityHistory]\']"):
+                    proceed = 'intensity';
+                
+                
+                
             
 
             self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
@@ -491,6 +511,27 @@ class corrObject():
             self.name = self.name+'-CH'+str(channel)
             self.ch_type = channel;
             self.prepare_for_fit()
+
+            
+            
+            
+
+
+            #Average counts per bin. For it to be seconds (Hz), must divide by duration.
+            unit = int_tscale[-1]/(int_tscale.__len__()-1)
+            #And to be in kHz we divide by 1000.
+            self.kcount = np.average(np.array(int_tdata)/unit)/1000
+            
+
+            #var_per_bin = np.var(np.array(int_tdata))/1000
+            #ave_per_bin = np.average(np.array(int_tdata))
+            #self.brightness = var_per_bin/ave_per_bin
+            #self.N_from_moment = (ave_per_bin**2)/var_per_bin
+
+            #print 'self.brightnessSIN', self.brightness
+            #print 'self.N_from_momentSIN', self.N_from_moment
+            
+
 
 
             self.param = self.parentFn.def_param
@@ -501,8 +542,8 @@ class corrObject():
 
 
         if self.ext == 'csv':
-            
-            self.parentFn.objIdArr.append(self)
+            print 'self.objId',self.objId
+            self.parentFn.objIdArr.append(self.objId)
             
             c = 0
             
@@ -514,9 +555,14 @@ class corrObject():
 
             self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
             self.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+            self.name = self.name+'-CH'+str(0)
             self.ch_type = 0
             self.datalen= len(tdata)
+           
+
             self.objId.prepare_for_fit()
+            self.param = self.parentFn.def_param
+            self.parentFn.fill_series_list()
 
 
 

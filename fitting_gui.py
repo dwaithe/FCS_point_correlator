@@ -2,10 +2,11 @@
 import sys, os, csv
 from PyQt4 import QtCore, QtWebKit
 from PyQt4 import QtGui
+from scipy.special import _ufuncs_cxx
 import matplotlib.pyplot as plt
-import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
 from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import matplotlib.gridspec as gridspec
@@ -18,6 +19,7 @@ import os.path
 import subprocess
 import pyperclip
 import cPickle as pickle
+import copy
 from correlation_objects import corrObject
 
 """FCS Fitting Software
@@ -58,6 +60,8 @@ class folderOutput(QtGui.QMainWindow):
 			except OSError as exception:
 				if exception.errno != errno.EEXIST:
 					raise
+
+		
 		try:
 			self.filepath_save_profile = self.parent.config['filepath_save_profile']
 		except:
@@ -98,33 +102,28 @@ class folderOutput(QtGui.QMainWindow):
 			
 			
 			#filepath = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '/home')
-			filepath =  QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.parent.filepath,'Fit Profile(*.profile);')
-			self.parent.config['filepath_save_profile'] = pickle.load(self.parent.fit_profile, open(str(filepath),"w"));
+			filepath =  QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
+			if filepath != '':
+				opened_file = pickle.load(open(str(filepath),"rb"));
+				self.parent.fit_profile = opened_file;
 		if self.type == 'profile_save':
 			
 			
 			#filepath = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '/home')
-			filename =  QtGui.QFileDialog.getSaveFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
-			self.filepath_save_profile = str(QtCore.QFileInfo(filename).absolutePath())+'/'
-			self.parent.config['filepath_save_profile']  = self.filepath_save_profile
-			#Save the files to the 
-			pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
-			#Save the 
-			pickle.dump(self.parent.fit_profile, open(str(filename),"w"));
+			filepath =  QtGui.QFileDialog.getSaveFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
+			if filepath != '':
+				self.filepath_save_profile = str(QtCore.QFileInfo(filepath).absolutePath())+'/'
 
-
-		#Save parameters to file.
-class visualHisto(QtGui.QMainWindow):
+				self.parent.config['filepath_save_profile']  = self.filepath_save_profile
+				#Save the files to the 
+				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+				#Save the 
+				pickle.dump(self.parent.fit_profile, open(str(filepath),"w"));
+class visualScatter(QtGui.QMainWindow):
 	def __init__(self,parObj):
 		QtGui.QMainWindow.__init__(self)
-		#self.fileArray = fileArray
-		#self.create_main_frame()
 		self.parObj = parObj
-		
-		
-
 	def create_main_frame(self):
-		
 		
 		#self.trace_idx = self.parObj.clickedS1
 
@@ -134,11 +133,158 @@ class visualHisto(QtGui.QMainWindow):
 		vbox0 = QtGui.QVBoxLayout()
 		self.setWindowTitle("Data Visualisation")
 		self.figure1 = plt.figure(figsize=(10,4))
+		self.figure1.patch.set_facecolor('white')
+		self.canvas1 = FigureCanvas(self.figure1)
+
 		
-		# this is the Canvas Widget that displays the `figure`
-		# it takes the `figure` instance as a parameter to __init__
-		#self.canvas1 = FigureCanvas(self.figure1)
+		self.plt1 = self.figure1.add_subplot(1,1,1)
+		self.plt1.set_ylabel('frequency')
+		self.plt1.set_xlabel('bins')
+
 		
+		
+		
+		
+		self.generate_scatter_btn = QtGui.QPushButton('Generate Scatter')
+		
+		self.visual_param_select_1_panel = QtGui.QHBoxLayout()
+		self.visual_param_select_1 = QtGui.QComboBox();
+		self.visual_param_select_1_check = QtGui.QCheckBox('norm',self)
+		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1)
+		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1_check)
+
+		self.visual_param_select_2_panel = QtGui.QHBoxLayout()
+		self.visual_param_select_2 = QtGui.QComboBox();
+		self.visual_param_select_2_check = QtGui.QCheckBox('norm',self)
+		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2)
+		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2_check)
+
+		
+
+		self.generate_menu(self.visual_param_select_1)
+		self.generate_menu(self.visual_param_select_2) 
+		
+		self.generate_scatter_btn.clicked.connect(self.generate_scatter)
+		
+		copy_data_btn = QtGui.QPushButton('Copy to clipboard')
+		copy_data_btn.clicked.connect(self.copy_to_clipboard)
+		save_data_btn = QtGui.QPushButton('Save to file')
+		save_data_btn.clicked.connect(self.save_to_file)
+		hbox_main.addLayout(vbox0)
+		hbox_main.addLayout(vbox1)
+		
+		
+		
+	
+		
+		vbox0.addLayout(self.visual_param_select_1_panel)
+		vbox0.addLayout(self.visual_param_select_2_panel)
+		
+
+		
+		
+		vbox0.addWidget(self.generate_scatter_btn)
+		vbox0.addWidget(copy_data_btn)
+		vbox0.addWidget(save_data_btn)
+		vbox0.addStretch();
+		vbox1.addWidget(self.canvas1)
+		
+		page.setLayout(hbox_main)
+		self.setCentralWidget(page)
+		self.show()
+		
+
+	def generate_scatter(self):
+		self.data_1 = []
+		indList = range(0,self.parObj.objIdArr.__len__())
+		for v_ind in indList:
+			if self.parObj.objIdArr[v_ind].toFit == True:
+				if self.parObj.objIdArr[v_ind].fitted == True:
+					for art in self.parObj.objIdArr[v_ind].param:
+						if art == self.visual_param_select_1.currentText():
+							self.data_1.append(self.parObj.objIdArr[v_ind].param[art]['value'])
+		self.data_2 = []
+		indList = range(0,self.parObj.objIdArr.__len__())
+		for v_ind in indList:
+			if self.parObj.objIdArr[v_ind].toFit == True:
+				if self.parObj.objIdArr[v_ind].fitted == True:
+					for art in self.parObj.objIdArr[v_ind].param:
+						if art == self.visual_param_select_2.currentText():
+							self.data_2.append(self.parObj.objIdArr[v_ind].param[art]['value'])
+		
+
+		if self.data_1 !=[] and self.data_2 !=[]:
+			if self.visual_param_select_1_check.isChecked():
+				self.data_1 = list(np.array(self.data_1)/np.median(self.data_1))
+			if self.visual_param_select_2_check.isChecked():
+				self.data_2 = list(np.array(self.data_2)/np.median(self.data_2))
+
+			self.plt1.cla();
+			self.plt1.scatter(np.array(self.data_1).astype(np.float64), np.array(self.data_2).astype(np.float64), facecolor='green', alpha=0.75)
+			
+			self.plt1.set_xlim(np.min(self.data_1)*0.8,np.max(self.data_1)*1.2)
+			self.plt1.set_ylim(np.min(self.data_2)*0.8,np.max(self.data_2)*1.2)
+			
+			self.title_1 = self.visual_param_select_1.currentText()
+			self.title_2 = self.visual_param_select_2.currentText()
+			self.plt1.set_xlabel(self.title_1)
+			self.plt1.set_ylabel(self.title_2)
+			self.canvas1.draw()
+			
+	def copy_to_clipboard(self):
+		
+		copyStr = ""
+		copyStr += str(self.title_1)+"\t"+str(self.title_2) +"\n"
+		for i in range(0,self.data_1.__len__()):
+			copyStr += str(self.data_1[i])+"\t"+ str(self.data_2[i]) +"\n"
+		
+		pyperclip.copy(copyStr)
+		self.parObj.image_status_text.showMessage("Data copied to the system clipboard.")
+				
+	def save_to_file(self):
+		outPath = self.parObj.folderOutput.filepath
+		filenameTxt = str(self.parObj.fileNameText.text())
+		filenamePth = outPath+'/'+filenameTxt+'_scatter_data.csv'
+		f = open(filenamePth, 'w')
+		f.write(str(self.title_1)+","+str(self.title_2) +"\n")
+		for i in range(0,self.data_1.__len__()):
+			f.write(str(self.data_1[i])+","+ str(self.data_2[i]) +"\n")
+		self.parObj.image_status_text.showMessage("Data save to the path: "+outPath+'/'+filenameTxt+'_scatter_data.csv')
+
+
+	def generate_menu(self,combo):
+		#Ensures the headings are relevant to the fit.
+
+		
+		proceed=False;
+		for i in range(0,self.parObj.objIdArr.__len__()):
+			if self.parObj.objIdArr[i].toFit == True:
+				if self.parObj.objIdArr[i].fitted == True:
+					v_ind = i;
+					proceed = True;
+					break;
+			
+		
+		if proceed == True:
+			#Includes the headers for the data which is present.
+			for art in self.parObj.objIdArr[v_ind].param:
+				if self.parObj.objIdArr[v_ind].param[art]['to_show'] !=False:
+					combo.addItem(art)
+			
+class visualHisto(QtGui.QMainWindow):
+	def __init__(self,parObj):
+		QtGui.QMainWindow.__init__(self)
+		self.parObj = parObj
+	def create_main_frame(self):
+		
+		#self.trace_idx = self.parObj.clickedS1
+
+		page = QtGui.QWidget()        
+		hbox_main = QtGui.QHBoxLayout()
+		vbox1 = QtGui.QVBoxLayout()
+		vbox0 = QtGui.QVBoxLayout()
+		self.setWindowTitle("Data Visualisation")
+		self.figure1 = plt.figure(figsize=(10,4))
 		self.figure1.patch.set_facecolor('white')
 		self.canvas1 = FigureCanvas(self.figure1)
 
@@ -212,10 +358,12 @@ class visualHisto(QtGui.QMainWindow):
 		for v_ind in indList:
 			if self.parObj.objIdArr[v_ind].toFit == True:
 				if self.parObj.objIdArr[v_ind].fitted == True:
-					for key,value in self.parObj.objIdArr[v_ind].param.iteritems() :
-						if key == self.visual_param_select.currentText():
-							self.data.append(value.value)
+					for art in self.parObj.objIdArr[v_ind].param:
+						if art == self.visual_param_select.currentText():
+							print 'data ', self.parObj.objIdArr[v_ind].param[art]['value']
+							self.data.append(self.parObj.objIdArr[v_ind].param[art]['value'])
 
+		
 		
 		if self.data !=[]:
 			bin_width = float(self.num_of_bins_txt.text())
@@ -247,10 +395,13 @@ class visualHisto(QtGui.QMainWindow):
 			copyStr += str(self.bins[i])+"-"+str(self.bins[i+1])+"\t"+ str(self.n[i]) +"\n"
 		
 		pyperclip.copy(copyStr)
+		self.parObj.image_status_text.showMessage("Data copied to the system clipboard.")
+				
 	def save_to_file(self):
 		outPath = self.parObj.folderOutput.filepath
 		filenameTxt = str(self.parObj.fileNameText.text())
-		f = open(outPath+'/'+filenameTxt+'_histo_data.csv', 'w')
+		filenamePth = outPath+'/'+filenameTxt+'_histo_data.csv'
+		f = open(filenamePth, 'w')
 		
 		
 		f.write("bin"+","+str("frequency") +"\n")
@@ -258,12 +409,13 @@ class visualHisto(QtGui.QMainWindow):
 		
 		for i in range(0,self.n.__len__()):
 			f.write(str(self.bins[i])+"-"+str(self.bins[i+1])+","+ str(self.n[i]) +"\n")
-	
+		self.parObj.image_status_text.showMessage("Data save to the path: "+outPath+'/'+filenameTxt+'_histo_data.csv')
 
 
 	def generate_menu(self,combo):
 		#Ensures the headings are relevant to the fit.
 
+		
 		proceed=False;
 		for i in range(0,self.parObj.objIdArr.__len__()):
 			if self.parObj.objIdArr[i].toFit == True:
@@ -272,12 +424,15 @@ class visualHisto(QtGui.QMainWindow):
 					proceed = True;
 					break;
 			
-
+		
 		if proceed == True:
 			#Includes the headers for the data which is present.
-			for key,value in self.parObj.objIdArr[v_ind].param.iteritems() :
+			for art in self.parObj.objIdArr[v_ind].param:
+				if self.parObj.objIdArr[v_ind].param[art]['to_show'] !=False:
+					combo.addItem(art)
+				#combo.addItem('stderr('+key+')')
 				
-				combo.addItem(key)
+		
 				#combo.addItem('stderr('+key+')')
 				
 
@@ -295,9 +450,9 @@ class Form(QtGui.QMainWindow):
 		self.objStruct = {}
 		self.names = [];
 		self.setAutoScale =True
-		
+		self.colors = ['blue','green','red','cyan','magenta','black']  
 			#Default parameters for each loaded file.
-		self.def_param = Parameters()
+		#self.def_param = Parameters()
 		
 	   
 		#default options for the fitting.
@@ -310,10 +465,16 @@ class Form(QtGui.QMainWindow):
 
 		self.def_options['Dimen'] =1
 		
+
+		
+		A1 = {'alias':'A1','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
+		A2 = {'alias':'A2','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
+		A3 = {'alias':'A3','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
+
 		#Proportion of the diffusing species present
-		self.def_param.add('A1', value=1.0, min=0,max=1.0, vary=False)
-		self.def_param.add('A2', value=1.0, min=0,max=1.0, vary=False)
-		self.def_param.add('A3', value=1.0, min=0,max=1.0, vary=False)
+		#self.def_param.add('A1', value=1.0, min=0,max=1.0, vary=False)
+		#self.def_param.add('A2', value=1.0, min=0,max=1.0, vary=False)
+		#self.def_param.add('A3', value=1.0, min=0,max=1.0, vary=False)
 		#self.def_param.add('AC', value=1.0,vary=False)
 		#self.def_param.add('A2', expr='1.0-A1')
 		#self.def_param.add('A3', expr='1.0-A1-A2')
@@ -321,48 +482,65 @@ class Form(QtGui.QMainWindow):
 		
 		
 		#The offset
-		self.def_param.add('DC', value=0.0, min=-1.0,max=5.0,vary=False)
+		offset = { 'alias':'offset','value':0.01,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
+		#self.def_param.add('offset', value=0.0, min=-1.0,max=5.0,vary=False)
 		#The amplitude
-		self.def_param.add('GN0', value=1.0, vary=True)
+		GN0 = {'alias':'GN0','minv':0.0,'value':1,'maxv':1.0,'vary':True,'to_show':False}
+		#self.def_param.add('GN0', value=1.0, vary=True)
 		#The alpha value
-		self.def_param.add('alpha', value=1.0, min=0,max=1.0, vary=True)
+		alpha = {'alias':'alpha','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
+		#self.def_param.add('alpha', value=1.0, min=0,max=1.0, vary=True)
 		#lateral diffusion coefficent
+		txy1 = {'alias':'txy1','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':False}
+		txy2 = {'alias':'txy2','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':False}
+		txy3 = {'alias':'txy3','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':False}
 
-		self.def_param.add('txy1', value=1.0,min=0.001,max=200.0, vary=True)
-		self.def_param.add('txy2', value=1.0,min=0.001,max=200.0, vary=True)
-		self.def_param.add('txy3', value=1.0, min=0.001,max=200.0,vary=True)
-		
-		self.def_param.add('alpha1', value=1.0,min=0,max=2.0, vary=True)
 		
 
-
-		self.def_param.add('alpha2', value=1.0,min=0,max=2.0, vary=True)
-		self.def_param.add('alpha3', value=1.0,min=0,max=2.0, vary=True)
-
-
-
-		#Axial diffusion coefficient
-		self.def_param.add('tz1', value=1.0, min=0,max=1.0,vary=True)
-		self.def_param.add('tz2', value=1.0,min=0,max=1.0, vary=True)
-		self.def_param.add('tz3', value=1.0,min=0,max=1.0, vary=True)
+		alpha1 = {'alias':'alpha1','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':False}
+		alpha2 = {'alias':'alpha2','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':False}
+		alpha3 = {'alias':'alpha3','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':False}
+		
+		tz1 = {'alias':'tz1','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
+		tz2 = {'alias':'tz2','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
+		tz3 = {'alias':'tz3','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
 
 		#Axial ratio coefficient
-		self.def_param.add('AR1', value=1.0, vary=True)
-		self.def_param.add('AR2', value=1.0, vary=True)
-		self.def_param.add('AR3', value=1.0, vary=True)
+		
+		AR1 = {'alias':'AR1','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
+		AR2 = {'alias':'AR2','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
+		AR3 = {'alias':'AR3','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
 
-		self.def_param.add('B1', value=1.0, min= 0.001, max= 1000,vary=True)
-		self.def_param.add('B2', value=1.0, min= 0.001, max= 1000,vary=True)
-		self.def_param.add('B3', value=1.0, min= 0.001, max= 1000,vary=True)
+		B1 = {'alias':'B1','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
+		B2 = {'alias':'B2','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
+		B3 = {'alias':'B3','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
 
-		self.def_param.add('T1', value=1.0, min= 0, max= 1000,vary=True)
-		self.def_param.add('T2', value=1.0, min= 0, max= 1000,vary=True)
-		self.def_param.add('T3', value=1.0, min= 0, max= 1000,vary=True)
+		T1 = {'alias':'T1','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':False}
+		T2 = {'alias':'T2','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':False}
+		T3 = {'alias':'T3','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':False}
 	
-		self.def_param.add('tauT1', value =0.005, min= 0.001, max= 1000,vary=True); 
-		self.def_param.add('tauT2', value =0.005,min= 0.001, max= 1000, vary=True);
-		self.def_param.add('tauT3', value =0.005, min= 0.001, max= 1000,vary=True);
+		tauT1 = {'alias':'tauT1','value':0.055,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
+		tauT2 = {'alias':'tauT2','value':0.055,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
+		tauT3 = {'alias':'tauT3','value':0.005,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
 
+		N_FCS = {'alias':'N (FCS)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
+		cpm = {'alias':'N (cpm)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
+		N_mom = {'alias':'N (mom)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
+		bri = {'alias':'bri','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
+
+		
+		#ACAC = {'alias':'ACAC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
+		#ACCC = {'alias':'ACCC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
+
+
+		self.def_param ={'A1':A1,'A2':A2,'A3':A3,'txy1':txy1,'txy2':txy2,'txy3':txy3,'offset':offset,'GN0':GN0,'alpha':alpha,'alpha1':alpha1,'alpha2':alpha2,'alpha3':alpha3,'tz1':tz1,'tz2':tz2,'tz3':tz3,'AR1':AR1,'AR2':AR2,'AR3':AR3,'B1':B1,'B2':B2,'B3':B3,'T1':T1,'T2':T2,'T3':T3,'tauT1':tauT1,'tauT2':tauT2,'tauT3':tauT3}
+		self.def_param['N_FCS'] = N_FCS
+		self.def_param['cpm'] = cpm
+		self.def_param['N_mom'] = N_mom
+		self.def_param['bri'] = bri
+
+		#self.def_param['ACAC'] = ACAC
+		#self.def_param['ACCC'] = ACCC
 		#Initiates dataHOlder object.
 		#self.data = DataHolder('',self)
 
@@ -370,7 +548,7 @@ class Form(QtGui.QMainWindow):
 		
 		self.create_menu()
 		self.create_main_frame()
-		self.create_status_bar()
+		
 		#self.update_ui()
 		self.on_show()
 	def load_file(self, filename=None):
@@ -392,7 +570,7 @@ class Form(QtGui.QMainWindow):
 					corrObj1.load_from_file(0)
 					corrObj2 = corrObject(filename,self)
 					corrObj2.load_from_file(1)
-				if self.ext == 'CSV':
+				if self.ext == 'CSV' or self.ext == 'csv':
 					self.corrObj = corrObject(filename,self)
 					self.corrObj.objId.load_from_file(0)
 				#self.corrObj.objId.param = self.def_param
@@ -461,15 +639,15 @@ class Form(QtGui.QMainWindow):
 					self.axes.set_xscale('log')
 					self.axes2.set_xscale('log')
 					self.scale = objId.autotime
-
+					
 					self.series = objId.autoNorm
 					
-					self.axes.plot(self.scale, self.series, 'o',markersize=3,mew= 0,label=objId.name)
+					self.axes.plot(self.scale, self.series, 'o',markersize=3, color=self.colors[row % len(self.colors)], label=objId.name)
 					self.axes.set_autoscale_on(False)
 
 				#if self.setAutoScale == False:
 
-					#self.axes.set_ylim(bottom=float(objId.param['DC'].value)-0.001)
+					#self.axes.set_ylim(bottom=float(objId.param['offset'].value)-0.001)
 				row += 1  
 		row = 0;
 		for objId in self.objIdArr:
@@ -484,8 +662,9 @@ class Form(QtGui.QMainWindow):
 					#Takes the values from the interface 
 					if objId.model_autoNorm !=[]:
 						self.mod_scale = objId.model_autotime
+
 						self.mod_series = objId.model_autoNorm
-						self.axes.plot(self.mod_scale, self.mod_series, '-',  label=objId.name+' fitted model')       
+						self.axes.plot(self.mod_scale, self.mod_series, '-', color=self.colors[row % len(self.colors)], label=objId.name+' fitted model')       
 					   
 						maxValue = np.max(objId.residualVar)
 						minValue = np.min(objId.residualVar)
@@ -494,7 +673,7 @@ class Form(QtGui.QMainWindow):
 						if minValue < scaleMin:
 							scaleMin = minValue
 						self.axes2.set_ylim([scaleMin,scaleMax])
-						self.axes2.plot(self.mod_scale,objId.residualVar,label=objId.name)
+						self.axes2.plot(self.mod_scale,objId.residualVar,color=self.colors[row % len(self.colors)],label=objId.name)
 						self.axes2.set_ylim([scaleMin,scaleMax])
 				row +=1        
 				   
@@ -613,7 +792,7 @@ class Form(QtGui.QMainWindow):
 			   
 				<br />
 				<label >Full equation:</label>
-				<p>DC + (GN0*GDiff*GT)</p>
+				<p>offset + (GN0*GDiff*GT)</p>
 				
 				<br />
 				
@@ -792,20 +971,30 @@ class Form(QtGui.QMainWindow):
 		#Profile panel for different buttons.
 		default_profile_panel = QtGui.QHBoxLayout()
 
-		load_default_profile = QtGui.QPushButton('Load Profile')
+		text_default_profile = QtGui.QLabel('Profile:')
+
+		load_default_profile = QtGui.QPushButton('load')
 		self.load_default_profile_output = folderOutput(self)
 		self.load_default_profile_output.type = 'profile_load'
 		
-		save_default_profile = QtGui.QPushButton('Save Profile')
+		save_default_profile = QtGui.QPushButton('save')
 		self.save_default_profile_output = folderOutput(self)
 		self.save_default_profile_output.type = 'profile_save'
 
+		store_default_profile = QtGui.QPushButton('store')
+		apply_default_profile = QtGui.QPushButton('apply')
+		
+		default_profile_panel.addWidget(text_default_profile)
 		default_profile_panel.addWidget(load_default_profile)
 		default_profile_panel.addWidget(save_default_profile)
+		default_profile_panel.addWidget(store_default_profile)
+		default_profile_panel.addWidget(apply_default_profile)
 
 		
 		save_default_profile.clicked.connect(self.save_default_profile_fn)
 		load_default_profile.clicked.connect(self.load_default_profile_fn)
+		store_default_profile.clicked.connect(self.store_default_profile_fn)
+		apply_default_profile.clicked.connect(self.apply_default_profile_fn)
 
 
 		#Spin box for number of diffusing species
@@ -821,14 +1010,14 @@ class Form(QtGui.QMainWindow):
 		
 		
 
-		self.fitTable =[];
+		
 			#Table which has the fitting
 		self.fitTable = QtGui.QTableWidget()
 		
 
 		self.defineTable()
 		#self.fitTable.setMinimumWidth(320)
-		self.fitTable.setMaximumWidth(320)
+		self.fitTable.setMaximumWidth(400)
 		self.fitTable.setMinimumHeight(100)
 		self.fitTable.setMaximumHeight(600)
 		
@@ -1055,10 +1244,14 @@ class Form(QtGui.QMainWindow):
 		self.visual_histo = visualHisto(self)
 		visual_histo_btn = QtGui.QPushButton("Generate Histogram");
 		visual_histo_btn.clicked.connect(self.visual_histo.create_main_frame)
+		self.visual_scatter = visualScatter(self)
+		visual_scatter_btn = QtGui.QPushButton("Generate Scatter");
+		visual_scatter_btn.clicked.connect(self.visual_scatter.create_main_frame)
 
 		right_vbox.addWidget(self.remove_btn)
 		right_vbox.addWidget(self.clearFits_btn)
 		right_vbox.addWidget(visual_histo_btn)
+		right_vbox.addWidget(visual_scatter_btn)
 		right_vbox.addStretch(1)
 		
 		hbox = QtGui.QHBoxLayout()
@@ -1077,6 +1270,12 @@ class Form(QtGui.QMainWindow):
 		#Splitter instance. Can't have 
 		
 		container = QtGui.QWidget()
+
+		self.image_status_text = QtGui.QStatusBar()
+		
+		self.image_status_text.showMessage("Please load a data file. ")
+		self.image_status_text.setStyleSheet("QLabel {  color : green }")
+		left_vbox.addWidget(self.image_status_text)
 
 		hbox.addWidget(splitter)
 		
@@ -1102,18 +1301,53 @@ class Form(QtGui.QMainWindow):
 		print 'load profile'
 		self.fit_profile = {}
 		self.load_default_profile_output.showDialog()
-		self.fit_profile['param'] = self.objId_sel.param
-		self.fit_profile['def_options'] = self.def_options
-		self.save_default_profile_output.showDialog()
-	def save_default_profile_fn(self):
-		print 'save profile'
-		self.fit_profile = {}
-		param = self.objId_sel.param
-		self.fit_profile['param'] = self.objId_sel.param
-		self.fit_profile['def_options'] = self.def_options
-		self.save_default_profile_output.showDialog()
-
 		
+		self.def_options = self.fit_profile['def_options']
+		self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
+		self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
+		self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
+
+
+		self.diffModEqSel.setCurrentIndex(self.def_options['Diff_eq']-1)
+		self.tripModEqSel.setCurrentIndex(self.def_options['Triplet_eq']-1)
+		self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
+		
+		self.defineTable()
+		
+		
+		self.updateParamFirst()
+	def save_default_profile_fn(self):
+		
+		self.fit_profile = {}
+		
+		self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
+		self.fit_profile['def_options'] = self.def_options
+		
+		self.save_default_profile_output.showDialog()
+	def store_default_profile_fn(self):
+		
+		self.fit_profile = {}
+		
+		self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
+		self.fit_profile['def_options'] = self.def_options
+		self.image_status_text.showMessage('Profile stored, use the \'Apply\' button to apply.')
+		
+	def apply_default_profile_fn(self):
+		self.def_options = self.fit_profile['def_options']
+		self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
+		self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
+		self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
+
+
+		self.diffModEqSel.setCurrentIndex(self.def_options['Diff_eq']-1)
+		self.tripModEqSel.setCurrentIndex(self.def_options['Triplet_eq']-1)
+		self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
+		
+		self.defineTable()
+		
+		
+		self.updateParamFirst()
+		self.image_status_text.showMessage('Profile Applied.')
 
 	def fitSelected_equation(self):
 		
@@ -1123,14 +1357,17 @@ class Form(QtGui.QMainWindow):
 			#Finds the unique item names which are currently selected.
 			indList.append(self.series_list_model.itemFromIndex(v_ind))
 
-
+		c = 0;
 		
 		for i in range(self.objIdArr.__len__()-1,-1,-1):
-			#Looks through the objects in objIdArr and deletes them if they match.
+			#Fits the ones which are highlighted.
 			for indL in indList:
 				if self.objIdArr[i].series_list_id == indL:
-					self.objIdArr[i].param = self.objId_sel.param
+					c = c+1
+					self.objIdArr[i].param = copy.deepcopy(self.objId_sel.param)
 					self.objIdArr[i].fitToParameters()
+					self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
+					self.app.processEvents()
 		self.fill_series_list()
 	def removeDataFn(self):
 		"""Removes data from the displayed dataseries."""
@@ -1158,7 +1395,12 @@ class Form(QtGui.QMainWindow):
 		All data is displayed here if it has not been filtered through either channel or another attribute."""
 		
 		#Finds the current name selected in the list, before things change.
-		curr_name = self.objIdArr[self.modelFitSel.model_obj_ind_list[self.modelFitSel.currentIndex()]]
+		#Makes sure there are files to be had.
+		if self.modelFitSel.model_obj_ind_list !=[]:
+			curr_name = self.objIdArr[self.modelFitSel.model_obj_ind_list[self.modelFitSel.currentIndex()]]
+		else:
+			curr_name = None
+
 					
 
 		#Clears all menu items
@@ -1235,6 +1477,7 @@ class Form(QtGui.QMainWindow):
 		keyArray.append('Dimen')
 		keyArray.append('xmin')
 		keyArray.append('xmax')
+		
 
 
 		#Ensures the headings are relevant to the fit.
@@ -1248,14 +1491,20 @@ class Form(QtGui.QMainWindow):
 
 		#Includes the headers for the data which is present.
 		for key,value in self.objIdArr[v_ind].param.iteritems() :
-			if key =='DC':
-					keyArray.append('Offset')
-			else:
-				keyArray.append(key)
-			keyArray.append('stderr('+key+')')
-			if key =='GN0':
-					keyArray.append('N')
-			
+			if value['to_show'] == True:
+				if key =='offset':
+						keyArray.append('Offset')
+				else:
+					keyArray.append(key)
+				keyArray.append('stderr('+key+')')
+				if key =='GN0':
+						keyArray.append('N (FCS)')
+						keyArray.append('cpm kHz')
+		
+		
+		keyArray.append('N (moments)')
+		keyArray.append('molecular brightness kHz')
+
 		headerText = '\t'.join(keyArray)
 		copyStr +=headerText +'\n'
 		
@@ -1393,34 +1642,34 @@ class Form(QtGui.QMainWindow):
 				exec("self."+paraTxt+"_value.setRange("+str(paraMin)+","+str(paraMax)+")");
 				
 				try:
-					exec("self."+paraTxt+"_value.setValue(float(param[\'"+paraTxt+"\'].value))");
+					exec("self."+paraTxt+"_value.setValue(float(param[\'"+paraTxt+"\']['value']))");
 				except:
-					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\'].value))");
+					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\']['value']))");
 				
 				exec("self."+paraTxt+"_vary = QtGui.QCheckBox()");
 				checkCont = QtGui.QHBoxLayout()
 				try:
-					exec("self."+paraTxt+"_vary.setChecked(param[\'"+paraTxt+"\'].vary)");
+					exec("self."+paraTxt+"_vary.setChecked(param[\'"+paraTxt+"\']['vary'])");
 				except:
-					exec("self."+paraTxt+"_vary.setChecked(self.def_param[\'"+paraTxt+"\'].vary)");
+					exec("self."+paraTxt+"_vary.setChecked(self.def_param[\'"+paraTxt+"\']['vary'])");
 				exec("self."+paraTxt+"_min = QtGui.QDoubleSpinBox()");
 				exec("self."+paraTxt+"_min.setDecimals("+str(setDec)+")");
 				exec("self."+paraTxt+"_min.setSingleStep("+str(setSingStep)+")");
 				exec("self."+paraTxt+"_min.setRange("+str(paraMin)+","+str(paraMax)+")");
 				
 				try:
-					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\'].min))");
+					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\']['minv'])");
 				except:
-					exec("self."+paraTxt+"_min.setValue(float(self.def_param[\'"+paraTxt+"\'].min))");
+					exec("self."+paraTxt+"_min.setValue(float(self.def_param[\'"+paraTxt+"\']['minv']))");
 				exec("self."+paraTxt+"_max = QtGui.QDoubleSpinBox()");
 				exec("self."+paraTxt+"_max.setDecimals("+str(setDec)+")");
 				exec("self."+paraTxt+"_max.setSingleStep("+str(setSingStep)+")");
 				exec("self."+paraTxt+"_max.setRange("+str(paraMin)+","+str(paraMax)+")");
 				exec("self."+paraTxt+"_label = QtGui.QLabel()");
 				try:
-					exec("self."+paraTxt+"_max.setValue(float(param[\'"+paraTxt+"\'].max))");
+					exec("self."+paraTxt+"_max.setValue(float(param[\'"+paraTxt+"\']['maxv']))");
 				except:
-					 exec("self."+paraTxt+"_max.setValue(float(self.def_param[\'"+paraTxt+"\'].max))");
+					 exec("self."+paraTxt+"_max.setValue(float(self.def_param[\'"+paraTxt+"\']['maxv']))");
 				
 				#exec("self.fitTable.setCellWidget(row, 0, self."+paraTxt+"_label)");
 				exec("self.fitTable.setCellWidget(row, 0, self."+paraTxt+"_value)");
@@ -1453,18 +1702,23 @@ class Form(QtGui.QMainWindow):
 			
 			
 
-			#If no data files present, populate with the defualt.s
+			#If data is present in the array.
 			if self.objIdArr != []:
 				#Finds the active data set from the combo box.
 				
-				self.objId_sel = None
-				self.objId_sel = self.modelFitSel.model_obj_list[self.modelFitSel.currentIndex()]
-				
-				param = self.objId_sel.param
+				#self.objId_sel = None
+				if  self.modelFitSel.model_obj_list != []:
+
+					self.objId_sel = self.modelFitSel.model_obj_list[self.modelFitSel.currentIndex()]
+					param = copy.deepcopy(self.objId_sel.param)
+					
+				else:
+					param = copy.deepcopy(self.def_param)
+
 			else:
-				param = self.def_param
-			#Offset e.g. DC
-			self.paramFactory(paraTxt='DC',setDec=4,setSingStep=0.01, paraMin=-1,paraMax=5,row=row, param=param)
+				param = copy.deepcopy(self.def_param)
+			#Offset e.g. offset
+			self.paramFactory(paraTxt='offset',setDec=4,setSingStep=0.01, paraMin=-1,paraMax=5,row=row, param=param)
 			self.labelArray.append(' offset')
 			row +=1
 			text = 'GN0'
@@ -1476,8 +1730,28 @@ class Form(QtGui.QMainWindow):
 				self.N = QtGui.QLabel(str(np.round(1/self.GN0_value.value(),4)))
 			except:
 				self.N = QtGui.QLabel(str(0))
-			self.labelArray.append(' N')
+			self.labelArray.append(' N (FCS)')
 			self.fitTable.setCellWidget(row, 0, self.N)
+
+			
+			
+			try:
+				self.cpm = np.round(float(self.objId_sel.kcount)/(1/self.GN0_value.value()),2)
+				self.objId_sel.cpm = self.cpm
+				self.cpm_lbl = QtGui.QLabel('cpm: ')
+				self.cpm_txt = QtGui.QLabel(str(self.cpm))
+				if self.objId_sel.type =="scan":
+					self.cpm_unt = QtGui.QLabel('kHz')
+				else:
+					self.cpm_unt = QtGui.QLabel('kHz ')
+				self.fitTable.setCellWidget(row, 1, self.cpm_lbl)
+				self.fitTable.setCellWidget(row, 2, self.cpm_txt)
+				self.fitTable.setCellWidget(row, 3, self.cpm_unt)
+			except:
+				self.cpm_lbl = QtGui.QLabel('cpm: ')
+				self.cpm_txt = QtGui.QLabel('')
+				self.fitTable.setCellWidget(row, 1, self.cpm_lbl)
+				self.fitTable.setCellWidget(row, 2, self.cpm_txt)
 			row +=1
 			#Diffusion Variables
 			for i in range(1,self.diffNumSpecSpin.value()+1):
@@ -1487,7 +1761,7 @@ class Form(QtGui.QMainWindow):
 				self.labelArray.append(' '+text)
 				row +=1
 				text = 'txy'+str(i)
-				self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.1, paraMin=0,paraMax=400,row=row,param=param)
+				self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.1, paraMin=0,paraMax=1000,row=row,param=param)
 				self.labelArray.append(' '+text)
 				row +=1
 				text = 'alpha'+str(i)
@@ -1534,6 +1808,57 @@ class Form(QtGui.QMainWindow):
 					self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=-1,paraMax=1,row=row,param=param)
 					self.labelArray.append(' '+text)
 					row +=1
+			
+			try:
+				self.num = np.round(float(self.objId_sel.numberNandB),2)
+				self.labelArray.append(' N (mom): ')
+				self.num_txt = QtGui.QLabel(str(self.num))
+				self.objId_sel.num = self.num
+				
+				self.fitTable.setCellWidget(row, 0, self.num_txt)
+				
+				self.bri = np.round(float(self.objId_sel.brightnessNandB),2)
+				self.bri_lbl = QtGui.QLabel('bri: ')
+				self.bri_txt = QtGui.QLabel(str(self.bri))
+				self.objId_sel.bri= self.bri
+				
+				self.bri_unt = QtGui.QLabel('kHz')
+				self.fitTable.setCellWidget(row, 1, self.bri_lbl)
+				self.fitTable.setCellWidget(row, 2, self.bri_txt)
+				self.fitTable.setCellWidget(row, 3, self.bri_unt)
+				row +=1
+			except:
+				pass;
+			if self.objIdArr != [] and self.objId_sel.siblings !=None and self.objId_sel.ch_type != 2:
+				try:
+					if self.objId_sel.siblings[0].fitted == True:
+						self.ratioAC_2_AC = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[0].param['GN0']['value']),4)
+						self.labelArray.append(' (AC/AC): ')
+						self.ratioAC_2_AC_txt = QtGui.QLabel(str(self.ratioAC_2_AC))
+						self.objId_sel.ratioAC_2_AC= self.ratioAC_2_AC		
+						self.fitTable.setCellWidget(row, 0, self.ratioAC_2_AC_txt)
+				except:
+					pass
+				try:
+					if self.objId_sel.siblings[1].fitted == True:
+						self.ratioAC_2_CC = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[1].param['GN0']['value']),4)
+						self.ratioAC_2_CC_lbl = QtGui.QLabel('(CC): ')
+						self.ratioAC_2_CC_txt = QtGui.QLabel(str(self.ratioAC_2_CC))
+						self.objId_sel.ratioAC_2_CC= self.ratioAC_2_CC
+						
+						self.fitTable.setCellWidget(row, 1, self.ratioAC_2_CC_lbl)
+						self.fitTable.setCellWidget(row, 2, self.ratioAC_2_CC_txt)
+				except:
+					pass
+				
+				
+				
+				row +=1
+			#try:
+				
+			#except:
+			#	pass;
+			
 			self.fitTable.setVerticalHeaderLabels(self.labelArray)
 			self.fitTable.setRowCount(row)
 				
@@ -1543,9 +1868,11 @@ class Form(QtGui.QMainWindow):
 			
 	
 	
-	def create_status_bar(self):
-		self.status_text = QtGui.QLabel("Please load a data file")
-		self.statusBar().addWidget(self.status_text, 1)
+	
+		
+
+
+		
 
 	def create_menu(self):        
 		self.file_menu = self.menuBar().addMenu("&File")
@@ -1590,26 +1917,35 @@ class Form(QtGui.QMainWindow):
 		return action
 	def updateParam(self):
 		"""Depending on the options this function will update the params of the current data set. """
-		self.objId_sel.param = Parameters()
-		self.objId_sel.param.add('DC', value= self.DC_value.value(),min=self.DC_min.value(),max=self.DC_max.value(),vary=self.DC_vary.isChecked())
-		self.objId_sel.param.add('GN0', value= self.GN0_value.value(),min=self.GN0_min.value(),max=self.GN0_max.value(),vary=self.GN0_vary.isChecked())
+		#self.objId_sel.param = Parameters()
+		#{'alias':'B1','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True}
+		for art in self.objId_sel.param:
+			if self.objId_sel.param[art]['to_show'] == True:
+				self.objId_sel.param[art]['to_show'] = False
+
+		self.objId_sel.param['offset']['value'] = float(self.offset_value.value())
+		self.objId_sel.param['offset']['minv'] = self.offset_min.value()
+		self.objId_sel.param['offset']['maxv'] = self.offset_max.value()
+		self.objId_sel.param['offset']['vary'] = self.offset_vary.isChecked()
+		self.objId_sel.param['offset']['to_show'] = True
+		self.objId_sel.param['GN0'] = {'value': self.GN0_value.value(),'minv':self.GN0_min.value(),'maxv':self.GN0_max.value(),'vary':self.GN0_vary.isChecked(),'to_show':True}
 		for i in range(1,self.def_options['Diff_species']+1):
 		#for i in range(1,self.diffNumSpecSpin.value()+1):
 				#if i ==1:
 				text = 'A'+str(i);
 				exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-				self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+				self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 				#if i ==2:
 					#text = 'A'+str(i);
 					#self.objId_sel.param.add(text, expr='1.0-A1')w
 				text = 'txy'+str(i)
 				exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-				self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+				self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 				
 				
 				text = 'alpha'+str(i) 
 				exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-				self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+				self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 			   
 				#2 in this case corresponds to 3D:
 				if self.def_options['Dimen'] == 2:
@@ -1617,17 +1953,17 @@ class Form(QtGui.QMainWindow):
 						text = 'tz'+str(i)
 						try:
 							exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-							self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+							self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 						except:
-							self.objId_sel.param.add(text, value=self.def_param[text].value ,min=self.def_param[text].min,max=self.def_param[text].max,vary=self.def_param[text].vary)
+							self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
 
 					if self.def_options['Diff_eq'] == 2:
 						text = 'AR'+str(i)
 						try:
 							exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-							self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+							self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 						except:
-							self.objId_sel.param.add(text, value=self.def_param[text].value ,min=self.def_param[text].min,max=self.def_param[text].max,vary=self.def_param[text].vary)
+							self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
 
 		if self.def_options['Triplet_eq'] == 2:
 				#Triplet State equation1
@@ -1635,16 +1971,16 @@ class Form(QtGui.QMainWindow):
 					text = 'B'+str(i)
 					try:
 						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 					except:
-						self.objId_sel.param.add(text, value=self.def_param[text].value ,min=self.def_param[text].min,max=self.def_param[text].max,vary=self.def_param[text].vary)
+						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
 
 					text = 'tauT'+str(i)
 					try:
 						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+						self.objId_sel.param[text] ={'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 					except:
-						self.objId_sel.param.add(text, value=self.def_param[text].value ,min=self.def_param[text].min,max=self.def_param[text].max,vary=self.def_param[text].vary)
+						self.objId_sel.param[text] ={'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
 
 		if self.def_options['Triplet_eq'] == 3:
 				#Triplet State equation2
@@ -1652,19 +1988,23 @@ class Form(QtGui.QMainWindow):
 					text = 'T'+str(i)
 					try:
 						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':vary,'to_show':True}
 					except:
-						self.objId_sel.param.add(text, value=self.def_param[text].value ,min=self.def_param[text].min,max=self.def_param[text].max,vary=self.def_param[text].vary)
+						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
 
 					text = 'tauT'+str(i)
 					try:
 						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param.add(text, value=valueV ,min=minV,max=maxV,vary=varyV)
+						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 					except:
-						self.objId_sel.param.add(text, value=self.def_param[text].value ,min=self.def_param[text].min,max=self.def_param[text].max,vary=self.def_param[text].vary)
-
-				  
-			
+						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
+		#try:
+		#	if self.objIdArr != [] and self.objId_sel.siblings[1].fitted == True and self.objId_sel.siblings != None:
+		#		self.objId_sel.param['ACAC']['value'] = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[1].param['GN0']['value']),4)
+		#		self.objId_sel.param['CCCC']['value'] = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[2].param['GN0']['value']),4)
+		#		print 'worked'
+		#except:
+		#	pass		
 
 		
 	def updateParamFirst(self):
@@ -1683,13 +2023,17 @@ class Form(QtGui.QMainWindow):
 		"""Take the active parameters and applies them to all the other data which is not filtered"""
 		#Make sure all table properties are stored
 		self.updateParam()
-
+		c = 0;
 		for objId in self.objIdArr:
 			if objId.toFit == True:
+				c = c+1
+				if objId != self.objId_sel:
+					#objId.param = Parameters();
+					objId.param = copy.deepcopy(self.objId_sel.param)
 				
-				objId.param = Parameters();
-				objId.param = self.objId_sel.param
 				objId.fitToParameters()
+				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(self.modelFitSel.model_obj_ind_list.__len__())+" images.")
+				self.app.processEvents()
 		
 		
 			   
@@ -1798,6 +2142,7 @@ class comboBoxSp2(QtGui.QComboBox):
 		self.model_obj_ind_list = [0]
 	def __activated(self,selected):
 		#Saves parameters.
+		
 		self.parent.updateParam()
 		self.parent.def_options[self.type] = self.currentIndex()+1
 		
@@ -1832,11 +2177,17 @@ class spinBoxSp3(QtGui.QDoubleSpinBox):
 	def onEdit(self):
 		"""Called when user manually changes test"""
 		if self.type == 'min':
-			self.parent.dr.xpos = self.value()
-			self.parent.dr.just_update()
+			try:
+				self.parent.dr.xpos = self.value()
+				self.parent.dr.just_update()
+			except:
+				pass
 		if self.type == 'max':
-			self.parent.dr1.xpos = self.value()
-			self.parent.dr1.just_update()
+			try:
+				self.parent.dr1.xpos = self.value()
+				self.parent.dr1.just_update()
+			except:
+				pass
 
 
 
