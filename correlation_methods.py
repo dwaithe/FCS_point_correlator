@@ -21,111 +21,6 @@ import thread
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
-def tttr2xfcsV3 (y,num,NcascStart,NcascEnd, Nsub):
-    """autocorr, autotime = tttr2xfcs(y,num,10,20)
-     Translation into python of:
-     Fast calculation of fluorescence correlation data with asynchronous time-correlated single-photon counting.
-     Michael Wahl, Ingo Gregor, Matthias Patting, Jorg Enderlein
-     """
- 
-    dt = np.max(y)-np.min(y)
-    y = np.round(y[:],0)
-    numshape = num.shape[0]
-     
-    autotime = np.zeros(((NcascEnd+1)*(Nsub+1),1));
-    auto = np.zeros(((NcascEnd+1)*(Nsub+1), num.shape[1], num.shape[1])).astype(np.float64)
-    shift = float(0)
-    delta = float(1)
-    
-    tcatch1 =0
-    tcatch2 = 0
-    
-    
-    for j in range(0,NcascEnd):
-        
-        #Finds the unique photon times and their indices. The division of 'y' by '2' each cycle makes this more likely.
-        
-        y,k1 = np.unique(y,1)
-        k1shape = k1.shape[0]
-        
-        #Sums up the photon times in each bin.
-        cs =np.cumsum(num,0).T
-        
-        #Prepares difference array so starts with zero.
-        diffArr1 = np.zeros(( k1shape+1));
-        diffArr2 = np.zeros(( k1shape+1));
-        
-        #Takes the cumulative sum of the unique photon arrivals
-        diffArr1[1:] = cs[0,k1].reshape(-1)
-        diffArr2[1:] = cs[1,k1].reshape(-1)
-        
-        #del k1
-        #del cs
-        num =np.zeros((k1shape,2))
-        
-
-        
-        #Finds the total photons in each bin. and represents as count.
-        #This is achieved because we have the indices of each unique time photon and cumulative total at each point.
-        num[:,0] = np.diff(diffArr1)
-        num[:,1] = np.diff(diffArr2)
-        #diffArr1 = [];
-        #diffArr2 = [];
-
-        
-        for k in range(0,Nsub):
-            shift = shift + delta
-            lag = np.round(shift/delta,0)
-    
-            
-            #Allows the script to be sped up.
-            if j >= NcascStart:
-                
-
-                #Old method
-                #i1= np.in1d(y,y+lag,assume_unique=True)
-                #i2= np.in1d(y+lag,y,assume_unique=True)
-                
-                #New method, cython
-                t1 = time.time()
-                i1,i2 = fib4.dividAndConquer(y, y+lag,y.shape[0])
-                i1 = i1.astype(np.bool);
-                i2 = i2.astype(np.bool);
-                t2 = time.time()
-                tcatch1 += t2-t1
-                half1 = np.floor(np.sum(i1)/2)
-                
-                ib = np.cumsum(i1)
-                ic = np.cumsum(i2)
-                halfa = np.min(np.where(ib == half1))
-                halfb =  np.min(np.where(ic == half1))
-
-
-                #the number of values is different in the first half of matrix.
-
-
-
-                #Faster dot product method, faster than converting to matrix.
-                out1 = np.dot((num[i1[:halfa],:]).T,num[i2[:halfb],:])/delta 
-                out2 = np.dot((num[i1[halfa:],:]).T,num[i2[halfb:],:])/delta 
-                t3 = time.time()
-                auto[(k+(j)*Nsub),:,:] = out1+out2;
-                t4= time.time()
-                tcatch2 += t4-t3
-            autotime[k+(j)*Nsub] =shift;
-        
-        #Equivalent to matlab round when numbers are %.5
-        y = np.ceil(np.array(0.5*y))
-        delta = 2*delta
-    
-    for j in range(0, auto.shape[0]):
-        auto[j,:,:] = auto[j,:,:]*dt/(dt-autotime[j])
-    autotime = autotime/1000000
-
-    print 'np.dot', tcatch2
-    print 'divideAndConquer', tcatch1
-    return auto, autotime
-
 
 
 def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
@@ -206,6 +101,11 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
     for j in range(0, auto.shape[0]):
         auto[j,:,:] = auto[j,:,:]*dt/(dt-autotime[j])
     autotime = autotime/1000000
+
+
+    #Removes the trailing zeros.
+    autotime = autotime[autotime != 0]
+    auto = auto[autotime != 0,:,:]
     return auto, autotime
 
 
@@ -238,83 +138,3 @@ def delayTime2bin(dTimeArr, chanArr, chanNum, winInt):
     
 
     return list(photonsInBin), list(decayScale)
-def tttr2xfcsV2 (y,num,NcascStart,NcascEnd, Nsub):
-    """autocorr, autotime = tttr2xfcs(y,num,10,20)
-     Translation into python of:
-     Fast calculation of fluorescence correlation data with asynchronous time-correlated single-photon counting.
-     Michael Wahl, Ingo Gregor, Matthias Patting, Jorg Enderlein
-     """
- 
-    dt = np.max(y)-np.min(y)
-    y = np.round(y[:],0)
-    numshape = num.shape[0]
-     
-    autotime = np.zeros(((NcascEnd+1)*(Nsub+1),1));
-    auto = np.zeros(((NcascEnd+1)*(Nsub+1), num.shape[1], num.shape[1])).astype(np.float64)
-    shift = float(0)
-    delta = float(1)
-    
-    
-    
-    for j in range(0,NcascEnd):
-        
-        #Finds the unique photon times and their indices. The division of 'y' by '2' each cycle makes this more likely.
-        
-        y,k1 = np.unique(y,1)
-        k1shape = k1.shape[0]
-        
-        #Sums up the photon times in each bin.
-        cs =np.cumsum(num,0).T
-        
-        #Prepares difference array so starts with zero.
-        diffArr1 = np.zeros(( k1shape+1));
-        diffArr2 = np.zeros(( k1shape+1));
-        
-        #Takes the cumulative sum of the unique photon arrivals
-        diffArr1[1:] = cs[0,k1].reshape(-1)
-        diffArr2[1:] = cs[1,k1].reshape(-1)
-        
-        #del k1
-        #del cs
-        num =np.zeros((k1shape,2))
-        
-
-        
-        #Finds the total photons in each bin. and represents as count.
-        #This is achieved because we have the indices of each unique time photon and cumulative total at each point.
-        num[:,0] = np.diff(diffArr1)
-        num[:,1] = np.diff(diffArr2)
-        #diffArr1 = [];
-        #diffArr2 = [];
-        
-        for k in range(0,Nsub):
-            shift = shift + delta
-            lag = np.round(shift/delta,0)
-    
-            
-            #Allows the script to be sped up.
-            if j >= NcascStart:
-                
-
-                #Old method
-                #i1= np.in1d(y,y+lag,assume_unique=True)
-                #i2= np.in1d(y+lag,y,assume_unique=True)
-                
-                #New method, cython
-                i1,i2 = fib4.dividAndConquer(y, y+lag,y.shape[0])
-                i1 = i1.astype(np.bool);
-                i2 = i2.astype(np.bool);
-                #Faster dot product method, faster than converting to matrix.
-                auto[(k+(j)*Nsub),:,:] = np.dot((num[i1,:]).T,num[i2,:])/(delta+(delta*k/Nsub))    
-                print 'delta',delta
-                print 'newdelta',(delta+(delta*k/Nsub)) 
-            autotime[k+(j)*Nsub] =shift;
-        
-        #Equivalent to matlab round when numbers are %.5
-        y = np.ceil(np.array(0.5*y))
-        delta = 2*delta
-    
-    for j in range(0, auto.shape[0]):
-        auto[j,:,:] = auto[j,:,:]*dt/(dt-autotime[j])
-    autotime = autotime/1000000
-    return auto, autotime

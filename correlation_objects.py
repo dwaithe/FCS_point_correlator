@@ -6,6 +6,7 @@ import time
 from fitting_methods import equation_
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
+import copy
 
 
 """FCS Bulk Correlation Software
@@ -106,10 +107,13 @@ class picoObject():
                 corrObj= corrObject(self.filepath,self.fit_obj);
                 self.objId1 = corrObj.objId
                 self.fit_obj.objIdArr.append(corrObj.objId)
+                self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
                 self.objId1.name = self.name+'_CH0_Auto_Corr'
                 self.objId1.ch_type = 0 #channel 0 Auto
+                self.objId1.siblings = None
                 self.objId1.prepare_for_fit()
                 self.objId1.kcount = self.kcount_CH1
+                
             self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
             self.objId1.autotime = np.array(self.autotime).reshape(-1)
             self.objId1.param = self.fit_obj.def_param
@@ -119,11 +123,14 @@ class picoObject():
                 if self.objId3 == None:
                     corrObj= corrObject(self.filepath,self.fit_obj);
                     self.objId3 = corrObj.objId
+                    self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
                     self.fit_obj.objIdArr.append(corrObj.objId)
                     self.objId3.name = self.name+'_CH1_Auto_Corr'
                     self.objId3.ch_type = 1 #channel 1 Auto
+                    self.objId3.siblings = None
                     self.objId3.prepare_for_fit()
                     self.objId3.kcount = self.kcount_CH2
+                    
                 self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
                 self.objId3.autotime = np.array(self.autotime).reshape(-1)
                 self.objId3.param = self.fit_obj.def_param
@@ -131,10 +138,13 @@ class picoObject():
                 if self.objId2 == None:
                     corrObj= corrObject(self.filepath,self.fit_obj);
                     self.objId2 = corrObj.objId
+                    self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
                     self.fit_obj.objIdArr.append(corrObj.objId)
                     self.objId2.name = self.name+'_CH01_Cross_Corr'
                     self.objId2.ch_type = 2 #01cross
+                    self.objId2.siblings = None
                     self.objId2.prepare_for_fit()
+                    
                 self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
                 self.objId2.autotime = np.array(self.autotime).reshape(-1)
                 self.objId2.param = self.fit_obj.def_param
@@ -143,10 +153,13 @@ class picoObject():
                 if self.objId4 == None:
                     corrObj= corrObject(self.filepath,self.fit_obj);
                     self.objId4 = corrObj.objId
+                    self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
                     self.fit_obj.objIdArr.append(corrObj.objId)
                     self.objId4.name = self.name+'_CH10_Cross_Corr'
                     self.objId4.ch_type = 3 #10cross
+                    self.objId4.siblings = None
                     self.objId4.prepare_for_fit()
+                    
                 self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
                 self.objId4.autotime = np.array(self.autotime).reshape(-1)
                 self.objId4.param = self.fit_obj.def_param
@@ -230,6 +243,7 @@ class subPicoObject():
         self.color = self.parentId.color
         self.numOfCH = self.parentId.numOfCH
         self.ch_present = self.parentId.ch_present
+        self.photonCountBin = self.par_obj.photonCountBin
 
         self.filepath = str(self.parentId.filepath)
         self.xmin = xmin
@@ -254,18 +268,23 @@ class subPicoObject():
         
         
         self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+        self.subArrayGeneration(self.xmin,self.xmax)
         
-        
-        
-        self.subArrayGeneration(self.xmin,self.xmax,np.array(self.subChanArr))
-        
-        
-
-
         self.dTimeMin = self.parentId.dTimeMin
         self.dTimeMax = self.parentId.dTimeMax
         self.subDTimeMin = self.dTimeMin
         self.subDTimeMax = self.dTimeMax
+
+       #Time series of photon counts. For visualisation.
+        self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
+        
+        unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
+        self.kcount_CH1 = np.average(self.timeSeries1)
+        if self.numOfCH ==  2:
+
+            self.timeSeries2,self.timeSeriesScale2 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[1],self.photonCountBin)
+            unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
+            self.kcount_CH2 = np.average(self.timeSeries2)
         
 
         
@@ -274,9 +293,12 @@ class subPicoObject():
             corrObj= corrObject(self.filepath,self.fit_obj);
             self.objId1 = corrObj.objId
             self.fit_obj.objIdArr.append(corrObj.objId)
+            self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
             self.objId1.name = self.name+'_CH0_Auto_Corr'
             self.objId1.ch_type = 0 #channel 0 Auto
+            self.objId1.siblings = None
             self.objId1.prepare_for_fit()
+            
             self.objId1.kcount = self.kcount_CH1
         self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
         self.objId1.autotime = np.array(self.autotime).reshape(-1)
@@ -288,33 +310,42 @@ class subPicoObject():
                 corrObj= corrObject(self.filepath,self.fit_obj);
                 self.objId3 = corrObj.objId
                 self.fit_obj.objIdArr.append(corrObj.objId)
+                self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
                 self.objId3.name = self.name+'_CH1_Auto_Corr'
                 self.objId3.ch_type = 1 #channel 1 Auto
+                self.objId3.siblings = None
                 self.objId3.prepare_for_fit()
                 self.objId3.kcount = self.kcount_CH2
+                
             self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
             self.objId3.autotime = np.array(self.autotime).reshape(-1)
             self.objId3.param = self.fit_obj.def_param
             if self.objId2 == None:
                 corrObj= corrObject(self.filepath,self.fit_obj);
                 self.objId2 = corrObj.objId
+                self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
                 self.fit_obj.objIdArr.append(corrObj.objId)
                 self.objId2.name = self.name+'_CH01_Cross_Corr'
                 self.objId2.ch_type = 2 #channel 01 Cross
+                self.objId2.siblings = None
                 self.objId2.prepare_for_fit()
+                
             self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
             self.objId2.autotime = np.array(self.autotime).reshape(-1)
             self.objId2.param = self.fit_obj.def_param
             if self.objId4 == None:
                 corrObj= corrObject(self.filepath,self.fit_obj);
                 self.objId4 = corrObj.objId
+                self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
                 self.fit_obj.objIdArr.append(corrObj.objId)
                 self.objId4.name = self.name+'_CH10_Cross_Corr'
                 self.objId4.ch_type = 3 #channel 10 Cross
+                self.objId4.siblings = None
                 self.objId4.prepare_for_fit()
+                
             self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
             self.objId4.autotime = np.array(self.autotime).reshape(-1)
-            self.objId4.param = self.fit_obj.def_param
+            
             
         
         self.fit_obj.fill_series_list()  
@@ -324,7 +355,7 @@ class subPicoObject():
     
 
 
-    def subArrayGeneration(self,xmin,xmax,subChanArr):
+    def subArrayGeneration(self,xmin,xmax):
         if(xmax<xmin):
             xmin1 = xmin
             xmin = xmax
@@ -333,15 +364,15 @@ class subPicoObject():
         #Finds those photons which arrive above certain time or below certain time.
         photonInd = np.logical_and(self.dTimeArr>=xmin, self.dTimeArr<=xmax).astype(np.bool)
         
-        subChanArr[np.invert(photonInd).astype(np.bool)] = 16
+        self.subChanArr[np.invert(photonInd).astype(np.bool)] = 16
         
-        self.crossAndAuto(subChanArr)
+        self.crossAndAuto()
 
         return
-    def crossAndAuto(self,subChanArr):
+    def crossAndAuto(self):
         #We only want photons in channel 1 or two.
-        validPhotons = subChanArr[subChanArr < 3]
-        y = self.trueTimeArr[subChanArr < 3]
+        validPhotons = self.subChanArr[self.subChanArr < 3]
+        y = self.trueTimeArr[self.subChanArr < 3]
         #Creates boolean for photon events in either channel.
         num = np.zeros((validPhotons.shape[0],2))
         num[:,0] = (np.array([np.array(validPhotons) ==self.ch_present[0]])).astype(np.int)
@@ -420,7 +451,14 @@ class corrObject():
         self.parentFn.updateParamFirst()
         
 
-        #convert line coordinate
+        #Populate param for lmfit.
+        param = Parameters()
+        #self.def_param.add('A1', value=1.0, min=0,max=1.0, vary=False)
+        for art in self.param:
+            
+            if self.param[art]['to_show'] == True:
+                param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']) ,max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
+                
         
         #Find the index of the nearest point in the scale.
         
@@ -429,10 +467,19 @@ class corrObject():
         indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
         indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
         
+        #Run the fitting.
+        res = minimize(self.residual, param, args=(scale[indx_L:indx_R+1],data[indx_L:indx_R+1], self.parentFn.def_options))
 
-        res = minimize(self.residual, self.param, args=(scale[indx_L:indx_R+1],data[indx_L:indx_R+1], self.parentFn.def_options))
+        #Repopulate the parameter object.
+        for art in self.param:
+            if self.param[art]['to_show'] == True:
+                self.param[art]['value'] = param[art].value
+        #Extra parameters, which are not fit or inherited.
+        self.param['N_FCS']['value'] = np.round(1/self.param['GN0']['value'],4)
+
+
         self.residualVar = res.residual
-        output = fit_report(self.param)
+        output = fit_report(param)
         print 'residual',res.chisqr
         if(res.chisqr>0.05):
             print 'CAUTION DATA DID NOT FIT WELL CHI^2 >0.05',res.chisqr
@@ -453,19 +500,30 @@ class corrObject():
         rowArray.append(str(scale[indx_L]))
         rowArray.append(str(scale[indx_R]))
 
-        for key, value in self.param.iteritems() :
+        for key, value in param.iteritems() :
             rowArray.append(str(value.value))
             rowArray.append(str(value.stderr))
             if key =='GN0':
                 try:
-                    rowArray.append(str(1/value.value))
+                    rowArray.append(str(self.param['N_FCS']['value']))
+                    if self.ch_type !=2:
+                        rowArray.append(str(self.param['cpm']['value']))
+                    else:
+                        rowArray.append('')
                 except:
                     rowArray.append(str(0))
+        #Adds non-fit parameters.
+        try:
+            rowArray.append(str(np.round(float(self.numberNandB),5)))
+            rowArray.append(str(np.round(float(self.brightnessNandB),5)))
+
+        except:
+           pass
         
         self.rowText = rowArray
         
         self.parentFn.updateTableFirst();
-        self.model_autoNorm = equation_(self.param, scale[indx_L:indx_R+1],self.parentFn.def_options)
+        self.model_autoNorm = equation_(param, scale[indx_L:indx_R+1],self.parentFn.def_options)
         self.model_autotime = scale[indx_L:indx_R+1]
         self.parentFn.on_show()
 
