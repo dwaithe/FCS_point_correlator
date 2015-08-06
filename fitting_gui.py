@@ -570,13 +570,21 @@ class Form(QtGui.QMainWindow):
 					corrObj1.load_from_file(0)
 					corrObj2 = corrObject(filename,self)
 					corrObj2.load_from_file(1)
+					corrObj1.siblings = [corrObj2]
+					corrObj2.siblings = [corrObj1]
+						
 				if self.ext == 'CSV' or self.ext == 'csv':
 					self.corrObj = corrObject(filename,self)
+					self.corrObj.siblings = None
 					self.corrObj.objId.load_from_file(0)
+
 				#self.corrObj.objId.param = self.def_param
 				#Where we add the names.
 				self.fill_series_list()
-				self.status_text.setText("Loaded " + filename)
+				
+				self.image_status_text.showMessage("Loaded " + filename)
+				self.image_status_text.setStyleSheet("QLabel {  color : green }")
+		
 				
 		
 	   
