@@ -482,7 +482,7 @@ class Form(QtGui.QMainWindow):
 		
 		
 		#The offset
-		offset = { 'alias':'offset','value':0.01,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
+		offset = { 'alias':'offset','value':0.01,'minv':-1.0,'maxv':1.0,'vary':False,'to_show':False}
 		#self.def_param.add('offset', value=0.0, min=-1.0,max=5.0,vary=False)
 		#The amplitude
 		GN0 = {'alias':'GN0','minv':0.0,'value':1,'maxv':1.0,'vary':True,'to_show':False}
@@ -1666,7 +1666,7 @@ class Form(QtGui.QMainWindow):
 				exec("self."+paraTxt+"_min.setRange("+str(paraMin)+","+str(paraMax)+")");
 				
 				try:
-					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\']['minv'])");
+					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\']['minv']))");
 				except:
 					exec("self."+paraTxt+"_min.setValue(float(self.def_param[\'"+paraTxt+"\']['minv']))");
 				exec("self."+paraTxt+"_max = QtGui.QDoubleSpinBox()");
@@ -1932,10 +1932,11 @@ class Form(QtGui.QMainWindow):
 				self.objId_sel.param[art]['to_show'] = False
 
 		self.objId_sel.param['offset']['value'] = float(self.offset_value.value())
-		self.objId_sel.param['offset']['minv'] = self.offset_min.value()
-		self.objId_sel.param['offset']['maxv'] = self.offset_max.value()
+		self.objId_sel.param['offset']['minv'] = float(self.offset_min.value())
+		self.objId_sel.param['offset']['maxv'] = float(self.offset_max.value())
 		self.objId_sel.param['offset']['vary'] = self.offset_vary.isChecked()
 		self.objId_sel.param['offset']['to_show'] = True
+		self.objId_sel.param['offset'] = {'value': self.offset_value.value(),'minv':self.offset_min.value(),'maxv':self.offset_max.value(),'vary':self.offset_vary.isChecked(),'to_show':True}
 		self.objId_sel.param['GN0'] = {'value': self.GN0_value.value(),'minv':self.GN0_min.value(),'maxv':self.GN0_max.value(),'vary':self.GN0_vary.isChecked(),'to_show':True}
 		for i in range(1,self.def_options['Diff_species']+1):
 		#for i in range(1,self.diffNumSpecSpin.value()+1):
