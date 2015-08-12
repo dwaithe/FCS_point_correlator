@@ -87,8 +87,12 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
                 
                 #New method, cython
                 i1,i2 = fib4.dividAndConquer(y, y+lag,y.shape[0])
+
+                #If the weights (num) are one as in the first Ncasc round, then the correlation is equal to np.sum(i1)
                 i1 = i1.astype(np.bool);
                 i2 = i2.astype(np.bool);
+
+                #Now we want to weight each photon corectly.
                 #Faster dot product method, faster than converting to matrix.
                 auto[(k+(j)*Nsub),:,:] = np.dot((num[i1,:]).T,num[i2,:])/delta    
             

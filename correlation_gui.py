@@ -488,7 +488,7 @@ class Window(QtGui.QWidget):
 
         self.figure1.suptitle('Correlation', fontsize=20)
         self.figure4.suptitle('Photon Count', fontsize=12)
-        self.figure5.suptitle('TCSPC', fontsize=12)
+        self.figure5.suptitle('Photon Decay Curve', fontsize=12)
         self.plt5.a = Annotate(self,self.par_obj,self.TGScrollBoxObj)
     def update_correlation_parameters(self):
         self.par_obj.NcascStart = int(self.NcascStartEdit.text())
@@ -618,7 +618,7 @@ class Window(QtGui.QWidget):
             if object.numOfCH ==  2:
                 self.plt5.plot(decayScale2, photonDecayCh2,object.color,linestyle='dashed')
             self.figure5.subplots_adjust(left=0.15,right=0.95, bottom=0.30,top=0.90)
-            self.plt5.set_xlabel('Channels (1 ='+str(np.round(object.resolution,4))+' ns)', fontsize=12)
+            self.plt5.set_xlabel('Time channels (1 ='+str(np.round(object.resolution,4))+' ns)', fontsize=12)
             self.plt5.set_ylabel(axisText, fontsize=8)
             self.plt5.xaxis.grid(True,'minor')
             self.plt5.xaxis.grid(True,'major')
@@ -948,7 +948,7 @@ class TGscrollBox():
             print 'loaded'
             
             txt2 = QtGui.QLabel()
-            txt2.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">t0:</p></HTML>')
+            txt2.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">tg1:</p></HTML>')
             self.win_obj.modelTab.setCellWidget(i, 0, txt2)
 
 
@@ -961,7 +961,7 @@ class TGscrollBox():
             self.win_obj.modelTab.setCellWidget(i, 1, lb1)
 
             txt3 = QtGui.QLabel()
-            txt3.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">t1:</p></HTML>')
+            txt3.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">tg2:</p></HTML>')
             self.win_obj.modelTab.setCellWidget(i, 2, txt3)
             
             
