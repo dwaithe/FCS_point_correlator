@@ -360,7 +360,6 @@ class visualHisto(QtGui.QMainWindow):
 				if self.parObj.objIdArr[v_ind].fitted == True:
 					for art in self.parObj.objIdArr[v_ind].param:
 						if art == self.visual_param_select.currentText():
-							print 'data ', self.parObj.objIdArr[v_ind].param[art]['value']
 							self.data.append(self.parObj.objIdArr[v_ind].param[art]['value'])
 
 		
@@ -386,8 +385,6 @@ class visualHisto(QtGui.QMainWindow):
 			self.canvas1.draw()
 			
 	def copy_to_clipboard(self):
-		print self.bins.__len__()
-		print 'd',self.n.__len__()
 		copyStr = ""
 		for i in range(0,self.n.__len__()):
 			
@@ -545,6 +542,7 @@ class Form(QtGui.QMainWindow):
 		#self.data = DataHolder('',self)
 
 		self.series_list_model = QtGui.QStandardItemModel()
+		self.series_list_model.itemChanged.connect(self.item_edited)
 		
 		self.create_menu()
 		self.create_main_frame()
@@ -633,6 +631,7 @@ class Form(QtGui.QMainWindow):
 			self.axes.set_autoscale_on(True)
 			
 		row = 0;
+		row_checked = 0
 		for objId in self.objIdArr:
 			if objId.toFit == True:
 				model_index = self.series_list_model.index(row, 0)
@@ -652,12 +651,14 @@ class Form(QtGui.QMainWindow):
 					
 					self.axes.plot(self.scale, self.series, 'o',markersize=3, color=self.colors[row % len(self.colors)], label=objId.name)
 					self.axes.set_autoscale_on(False)
+					row_checked += 1
 
 				#if self.setAutoScale == False:
 
 					#self.axes.set_ylim(bottom=float(objId.param['offset'].value)-0.001)
 				row += 1  
 		row = 0;
+		
 		for objId in self.objIdArr:
 			if objId.toFit == True:
 				model_index = self.series_list_model.index(row, 0)
@@ -672,8 +673,14 @@ class Form(QtGui.QMainWindow):
 						self.mod_scale = objId.model_autotime
 
 						self.mod_series = objId.model_autoNorm
-						self.axes.plot(self.mod_scale, self.mod_series, '-', color=self.colors[row % len(self.colors)], label=objId.name+' fitted model')       
-					   
+						def onpick(event):
+						    thisline = event.artist
+						    xdata = thisline.get_xdata()
+						    ydata = thisline.get_ydata()
+						    ind = event.ind
+						    print 'onpick points:', zip(xdata[ind], ydata[ind])
+						self.axes.plot(self.mod_scale, self.mod_series, '-', color=self.colors[row % len(self.colors)], label=objId.name+' fitted model',picker=5)       
+					    
 						maxValue = np.max(objId.residualVar)
 						minValue = np.min(objId.residualVar)
 						if maxValue > scaleMax:
@@ -683,10 +690,11 @@ class Form(QtGui.QMainWindow):
 						self.axes2.set_ylim([scaleMin,scaleMax])
 						self.axes2.plot(self.mod_scale,objId.residualVar,color=self.colors[row % len(self.colors)],label=objId.name)
 						self.axes2.set_ylim([scaleMin,scaleMax])
+						
 				row +=1        
 				   
 				
-		if(self.series_list_model.rowCount()>0):
+		if(self.series_list_model.rowCount()>0 and row_checked>0):
 			
 				#The line on the left.
 				try:
@@ -700,15 +708,18 @@ class Form(QtGui.QMainWindow):
 					if(xpos2>xpos2a):
 						xpos2 = xpos2a
 				except:
+					
 					try:
-						xpos1 = np.argmax(self.series >0)
+						
+						xpos1 = np.argmax(self.scale >0)
 						xpos2 = int(self.series.shape[0]-np.argmax(self.series[::-1] >-1)-1)
 					except:
+						
 						xpos1 = 10
 						xpos2 = 40
 
 
-					
+				
 
 				self.line0=self.axes.axvline(x=self.scale[xpos1],linewidth=4, color='gray')
 				self.dr = draggableLine(self.line0, self)
@@ -812,6 +823,11 @@ class Form(QtGui.QMainWindow):
 		self.about_win.setLayout(layout)
 		self.about_win.show()
 		self.about_win.raise_()
+	def item_edited(self,model_index):
+		"""If the text is edited this will update the name of the object"""
+		for objId in self.objIdArr:
+			item = objId.series_list_id
+			objId.name = item.text()
 
 	def fill_series_list(self):
 		
@@ -822,6 +838,8 @@ class Form(QtGui.QMainWindow):
 				#Find details of each dataset
 				name = objId.name
 				item = QtGui.QStandardItem(name)
+				
+
 				objId.series_list_id = item
 				#If the item has been checked. Restore that state.
 				if objId.checked == False:
@@ -1247,6 +1265,8 @@ class Form(QtGui.QMainWindow):
 		right_vbox.addWidget(self.right_check_all_none)
 		self.remove_btn = QtGui.QPushButton("Remove Highlighted Data")
 		self.remove_btn.clicked.connect(self.removeDataFn)
+		self.create_average_btn = QtGui.QPushButton("Create average of Highlighted")
+		self.create_average_btn.clicked.connect(self.create_average_btn_fn)
 		self.clearFits_btn = QtGui.QPushButton("Clear Fit Data All/Highlighted")
 		self.clearFits_btn.clicked.connect(self.clearFits)
 		self.visual_histo = visualHisto(self)
@@ -1257,6 +1277,7 @@ class Form(QtGui.QMainWindow):
 		visual_scatter_btn.clicked.connect(self.visual_scatter.create_main_frame)
 
 		right_vbox.addWidget(self.remove_btn)
+		right_vbox.addWidget(self.create_average_btn)
 		right_vbox.addWidget(self.clearFits_btn)
 		right_vbox.addWidget(visual_histo_btn)
 		right_vbox.addWidget(visual_scatter_btn)
@@ -1290,6 +1311,62 @@ class Form(QtGui.QMainWindow):
 		self.main_frame.setLayout(hbox)
 
 		self.setCentralWidget(self.main_frame)
+	def create_average_btn_fn(self):
+		#Reads those indices which are highlighted.
+		listToFit = self.series_list_view.selectedIndexes()
+		indList =[];
+		for v_ind in listToFit:
+			#Finds the unique item names which are currently selected.
+			indList.append(self.series_list_model.itemFromIndex(v_ind))
+		
+		series_2_average = []
+		for i in range(self.objIdArr.__len__()-1,-1,-1):
+			#Looks through the objects in objIdArr and deletes them if they match.
+			for indL in indList:
+				if self.objIdArr[i].series_list_id == indL:
+					
+					series_2_average.append(self.objIdArr[i].autoNorm)
+					if series_2_average.__len__() == 1:
+						autotime = self.objIdArr[i].autotime
+						sum_auto = np.sum(np.array(autotime))
+					else:
+						if np.sum(self.objIdArr[i].autotime) != sum_auto:
+							series_2_average.pop(-1)
+
+					break
+		if series_2_average == []:
+			return
+		matrix_2_average = np.zeros((series_2_average.__len__(),series_2_average[0].__len__()))
+
+		for i in range(0,series_2_average.__len__()):
+			matrix_2_average[i,:] = series_2_average[i]
+
+		average_out = np.average(matrix_2_average,0)
+
+
+		corrObj1 = corrObject(None,self);
+		corrObj1.siblings = None
+		self.objIdArr.append(corrObj1.objId)
+		corrObj1.param = copy.deepcopy(self.def_param)
+		corrObj1.ch_type = 0
+		corrObj1.prepare_for_fit()
+		
+		corrObj1.kcount = None #objId.kcountCH0[i]
+		corrObj1.numberNandB = None #objId.numberNandBCH0[i]
+		corrObj1.brightnessNandB = None #objId.brightnessNandBCH0[i]
+		corrObj1.type = "scan"
+		#corrObj1.siblings = None
+
+		
+		corrObj1.name = 'average_data'
+		corrObj1.autotime = autotime
+		corrObj1.autoNorm = average_out
+
+		self.fill_series_list()
+		
+
+		
+
 	def check_all_none(self):
 		
 		for objId in self.objIdArr:
@@ -1404,9 +1481,9 @@ class Form(QtGui.QMainWindow):
 		
 		#Finds the current name selected in the list, before things change.
 		#Makes sure there are files to be had.
-		if self.modelFitSel.model_obj_ind_list !=[]:
+		try:
 			curr_name = self.objIdArr[self.modelFitSel.model_obj_ind_list[self.modelFitSel.currentIndex()]]
-		else:
+		except:
 			curr_name = None
 
 					
@@ -1442,7 +1519,8 @@ class Form(QtGui.QMainWindow):
 					#The name was found.
 					name_found = True
 		#If the name wasn't found in the list, because it was filtered out. Default to first entry.      
-		if name_found == False:
+		
+		if name_found == False and self.modelFitSel.model_obj_list !=[]:
 			self.modelFitSel.setCurrentIndex(0);
 			self.modelFitSel.objId_ind = self.objIdArr[self.modelFitSel.currentIndex()]
 		#Redraw the table
@@ -2007,13 +2085,7 @@ class Form(QtGui.QMainWindow):
 						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
 					except:
 						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-		#try:
-		#	if self.objIdArr != [] and self.objId_sel.siblings[1].fitted == True and self.objId_sel.siblings != None:
-		#		self.objId_sel.param['ACAC']['value'] = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[1].param['GN0']['value']),4)
-		#		self.objId_sel.param['CCCC']['value'] = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[2].param['GN0']['value']),4)
-		#		print 'worked'
-		#except:
-		#	pass		
+		
 
 		
 	def updateParamFirst(self):
@@ -2056,7 +2128,7 @@ class draggableLine:
 		self.type =None
 		self.line = line
 		self.press = None
-		self.xpos = 0
+		self.xpos = 1
 		self.parent = parent
 		#self.trans = trans
 
