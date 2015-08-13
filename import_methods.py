@@ -181,6 +181,7 @@ def pt3import(filepath):
         truetime = (truensync * syncperiod) + (dtime*Resolution);
         trueTimeArr[b] = truetime
         dTimeArr[b] = dtime
+        
         #f1.write(str(truensync)+" "+str(truetime)+"\n")
     f.close();
     #f1.close();

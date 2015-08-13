@@ -192,7 +192,7 @@ class picoObject():
         t1 = time.time()
         auto, self.autotime = tttr2xfcs(y,num,self.NcascStart,self.NcascEnd, self.Nsub)
         t2 = time.time()
-        print 'timing',t2-t1
+        
         
 
         #Normalisation of the TCSPC data:
@@ -563,12 +563,12 @@ class corrObject():
                 
                 
             
-
+            self.siblings = None
             self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
             self.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
             self.name = self.name+'-CH'+str(channel)
             self.ch_type = channel;
-            self.prepare_for_fit()
+            #self.prepare_for_fit()
 
             
             
@@ -600,27 +600,156 @@ class corrObject():
 
 
         if self.ext == 'csv':
-            print 'self.objId',self.objId
-            self.parentFn.objIdArr.append(self.objId)
-            
-            c = 0
-            
-            for line in csv.reader(open(self.filepath, 'rb')):
-                if (c >0):
-                    tscale.append(line[0])
-                    tdata.append(line[1])
-                c +=1;
+            r_obj = csv.reader(open(self.filepath, 'rb'))
+            line_one = r_obj.next()
+            if line_one.__len__()>1:
+                if float(line_one[1]) == 2:
+                    
+                    version = 2
+                else:
+                    print 'version not known:',line_one[1]
+            else:
+                version = 1
 
-            self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
-            self.autotime= np.array(tscale).astype(np.float64).reshape(-1)
-            self.name = self.name+'-CH'+str(0)
-            self.ch_type = 0
-            self.datalen= len(tdata)
-           
+            if version == 1:
+                self.parentFn.objIdArr.append(self)
+                
+                c = 0
+                
+                for line in csv.reader(open(self.filepath, 'rb')):
+                    if (c >0):
+                        tscale.append(line[0])
+                        tdata.append(line[1])
+                    c +=1;
 
-            self.objId.prepare_for_fit()
-            self.param = self.parentFn.def_param
-            self.parentFn.fill_series_list()
+                self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
+                self.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+                self.name = self.name+'-CH'+str(0)
+                self.ch_type = 0
+                self.datalen= len(tdata)
+
+                self.param = self.parentFn.def_param
+                self.parentFn.fill_series_list()
+            if version == 2:
+                
+                    
+                numOfCH = float(r_obj.next()[1])
+                
+                if numOfCH == 1:
+                    self.parentFn.objIdArr.append(self)
+                    self.type =str(r_obj.next()[1])
+                    self.ch_type = int(r_obj.next()[1])
+                    self.name = self.name+'-CH'+str(self.ch_type)
+                    
+                    self.kcount = float(r_obj.next()[1])
+                    self.numberNandB =  float(r_obj.next()[1])
+                    self.brightnessNandB =  float(r_obj.next()[1])
+
+                    self.carpet_position =  int(r_obj.next()[1])
+                    
+                    
+
+                    pc_text =  int(r_obj.next()[1])
+                    
+                    if pc_text != False:
+                        self.name = self.name +'_pc_m'+str(pc_text)
+                        
+                    
+                    tscale = []
+                    tdata = []
+                    null = r_obj.next()
+                    line = r_obj.next()
+                    while  line[0] != 'end':
+
+                        tscale.append(line[0])
+                        tdata.append(line[1])
+                        line = r_obj.next()
+
+                    self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
+                    self.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+                    self.siblings = None
+                    self.param = self.parentFn.def_param
+                    self.parentFn.fill_series_list()
+                if numOfCH == 2:
+                    corrObj2 = corrObject(self.filepath,self.parentFn);
+                    corrObj3 = corrObject(self.filepath,self.parentFn);
+
+                    self.parentFn.objIdArr.append(self)
+                    self.parentFn.objIdArr.append(corrObj2)
+                    self.parentFn.objIdArr.append(corrObj3)
+                    
+                    line_type = r_obj.next()
+                    self.type = str(line_type[1])
+                    corrObj2.type = str(line_type[1])
+                    corrObj3.type = str(line_type[1])
+                    
+
+                    line_ch = r_obj.next()
+                    self.ch_type = int(line_ch[1])
+                    corrObj2.ch_type = int(line_ch[2])
+                    corrObj3.ch_type = int(line_ch[3])
+                    
+                    self.name = self.name+'-CH'+str(self.ch_type)
+                    corrObj2.name = corrObj2.name+'-CH'+str(corrObj2.ch_type)
+                    corrObj3.name = corrObj3.name+'-CH'+str(corrObj3.ch_type)
+                    
+                    line_kcount = r_obj.next()
+                    self.kcount = float(line_kcount[1])
+                    corrObj2.kcount = float(line_kcount[2])
+                    #corrObj3.kcount = float(line_kcount[3])
+
+                    line_numberNandB = r_obj.next()
+                    self.numberNandB =  float(line_numberNandB[1])
+                    corrObj2.numberNandB =  float(line_numberNandB[2])
+                    #corrObj3.numberNandB =  float(line_numberNandB[3])
+
+                    line_brightnessNandB = r_obj.next()
+                    self.brightnessNandB =  float(line_brightnessNandB[1])
+                    corrObj2.brightnessNandB =  float(line_brightnessNandB[2])
+                    #corrObj3.brightnessNandB =  float(line_brightnessNandB[3])
+                    
+                    line_pc = r_obj.next()
+                    pc_text =  int(line_pc[1])
+                    
+                    if pc_text != False:
+                        self.name = self.name +'_pc_m'+str(pc_text)
+                        corrObj2.name = corrObj2.name +'_pc_m'+str(pc_text)
+                        corrObj3.name = corrObj3.name +'_pc_m'+str(pc_text)
+                    
+                    null = r_obj.next()
+                    line = r_obj.next()
+                    tscale = []
+                    tdata0 = []
+                    tdata1 = []
+                    tdata2 = []
+                    while  line[0] != 'end':
+
+                        tscale.append(line[0])
+                        tdata0.append(line[1])
+                        tdata1.append(line[2])
+                        tdata2.append(line[3])
+                        line = r_obj.next()
+
+                    
+                    self.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+                    corrObj2.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+                    corrObj3.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+
+                    self.autoNorm= np.array(tdata0).astype(np.float64).reshape(-1)
+                    corrObj2.autoNorm= np.array(tdata1).astype(np.float64).reshape(-1)
+                    corrObj3.autoNorm= np.array(tdata2).astype(np.float64).reshape(-1)
+                    
+                    self.siblings = [corrObj2,corrObj3]
+                    corrObj2.siblings = [self,corrObj3]
+                    corrObj3.siblings = [self,corrObj2]
+                    
+                    self.param = self.parentFn.def_param
+                    corrObj2.param = self.parentFn.def_param
+                    corrObj3.param = self.parentFn.def_param
+                    self.parentFn.fill_series_list()
+
+
+                
 
 
 
