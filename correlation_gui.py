@@ -202,7 +202,9 @@ class FileDialog(QtGui.QMainWindow):
 
         self.win_obj.update_correlation_parameters()
         for filename in fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);;All Files (*.*)'):
-            picoObject(filename,self.par_obj,self.fit_obj);
+            pic = picoObject(filename,self.par_obj,self.fit_obj);
+            if pic.exit == True:
+                return
             self.loadpath = str(QtCore.QFileInfo(filename).absolutePath())
             self.par_obj.numOfLoaded = self.par_obj.numOfLoaded+1
             self.win_obj.label.generateList()

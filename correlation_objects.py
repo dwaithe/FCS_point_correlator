@@ -41,6 +41,8 @@ class picoObject():
         self.filepath = str(filepath)
         self.nameAndExt = os.path.basename(self.filepath).split('.')
         self.name = self.nameAndExt[0]
+        self.ext = self.nameAndExt[-1]
+
         self.par_obj.data.append(filepath);
         self.par_obj.objectRef.append(self)
         
@@ -65,8 +67,35 @@ class picoObject():
         self.winInt = self.par_obj.winInt
         self.photonCountBin = self.par_obj.photonCountBin
         
-        #File import 
-        self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+        #File import
+        
+        if self.ext == 'pt3':
+            self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+        if self.ext == 'csv':
+            self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
+            #If the file is empty.
+            if self.subChanArr == None:
+                #Undoes any preparation of resource.
+                self.par_obj.data.pop(-1);
+                self.par_obj.objectRef.pop(-1)
+                self.exit = True
+                print 'Your file is not in the correct format.'
+                return
+
+        #print 'shape of self.subChanArr',self.subChanArr.shape
+        #print 'shape of self.trueTimeArr',self.trueTimeArr.shape
+        #print 'shape of self.dTimeArr',self.dTimeArr.shape
+        
+        #f = open('test_uncorreled.csv', 'w')
+        #f.write('version,'+str(2)+'\n')
+        #f.write('type,pt uncorrelated\n')
+        #f.write('resolution,'+str(self.resolution)+str('\n'))
+        #for i in range(self.subChanArr.shape[0]):
+
+        #     f.write(str(self.subChanArr[i])+','+"%.3f"%self.trueTimeArr[i]+','+str(self.dTimeArr[i])+'\n')
+        #f.write('end'+str('\n'))
+        #f.close()
+                    
         
         #Colour assigned to file.
         self.color = self.par_obj.colors[self.unqID % len(self.par_obj.colors)]
@@ -169,6 +198,7 @@ class picoObject():
         self.dTimeMax = np.max(self.dTimeArr)
         self.subDTimeMin = self.dTimeMin
         self.subDTimeMax = self.dTimeMax
+        self.exit = False
         del self.subChanArr 
         del self.trueTimeArr 
         del self.dTimeArr
@@ -231,6 +261,7 @@ class subPicoObject():
         self.NcascEnd = self.parentId.NcascEnd
         self.Nsub = self.parentId.Nsub
         self.fit_obj = self.parentId.fit_obj
+        self.ext = self.parentId.ext
         
         self.type = 'subObject'
         #Appends the object to the subObject register.
@@ -267,7 +298,19 @@ class subPicoObject():
         self.winInt = self.par_obj.winInt
         
         
-        self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+        #self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+        if self.ext == 'pt3':
+            self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+        if self.ext == 'csv':
+            self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
+            #If the file is empty.
+            #if self.subChanArr == None:
+                #Undoes any preparation of resource.
+            #    self.par_obj.subObjectRef.pop(-1)
+                #self.exit = True
+            #    return
+
+
         self.subArrayGeneration(self.xmin,self.xmax)
         
         self.dTimeMin = self.parentId.dTimeMin
