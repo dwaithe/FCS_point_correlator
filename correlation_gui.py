@@ -638,30 +638,44 @@ class Window(QtGui.QWidget):
             self.saveFile(obj)
         for obj in self.par_obj.subObjectRef:
             self.saveFile(obj)
-    def saveFile(self,obj):
+    def saveFile(self,objId):
         """Save files as .csv"""
-        print obj.name,'saved'
-
-        f = open(self.folderOutput.filepath+'/'+obj.name+'_CH1_Auto_Corr.csv', 'w')
-        f.write('# Time (ns)\tCH1 Auto-Correlation\n')
-        for x in range(0,obj.autotime.shape[0]):
-            f.write(str(obj.autotime[x][0])+','+str(obj.autoNorm[x,0,0])+ '\n')
-        if obj.numOfCH ==2:
-            f = open(self.folderOutput.filepath+'/'+obj.name+'_CH2_Auto_Corr.csv', 'w')
-            f.write('# Time (ns)\tCH2 Auto-Correlation\n')
-            for x in range(0,obj.autotime.shape[0]):
-                f.write(str(obj.autotime[x][0])+','+str(obj.autoNorm[x,1,1])+ '\n')
         
-            f = open(self.folderOutput.filepath+'/'+obj.name+'_CH1_Cross_Corr.csv', 'w')
-            f.write('# Time (ns)\tCH1 Cross-Correlation\n')
-            for x in range(0,obj.autotime.shape[0]):
-                f.write(str(obj.autotime[x][0])+','+str(obj.autoNorm[x,0,1])+ '\n')
             
-            f = open(self.folderOutput.filepath+'/'+obj.name+'_CH2_Cross_Corr.csv', 'w')
-            f.write('# Time (ns)\tCH2 Cross-Correlation\n')
-            for x in range(0,obj.autotime.shape[0]):
-                f.write(str(obj.autotime[x][0])+','+str(obj.autoNorm[x,1,0])+ '\n')
-        print 'file Saved'
+            
+                
+            
+        f = open(self.folderOutput.filepath+'/'+objId.name+'_correlation.csv', 'w')
+        f.write('version,'+str(2)+'\n')
+        f.write('numOfCH,'+str(objId.numOfCH)+'\n')
+        f.write('type, point\n')
+        
+        if objId.numOfCH == 1:
+            f.write('ch_type,'+str(0)+'\n')
+            f.write('kcount,'+str(objId.kcount_CH1)+'\n')
+            f.write('numberNandB,'+str(objId.numberNandBCH0)+'\n')
+            f.write('brightnessNandB,'+str(objId.brightnessNandBCH0)+'\n')
+            f.write('carpet pos, 0 \n')
+            f.write('pc, 0\n');
+            f.write('Time (ns), CH0 Auto-Correlation\n')
+            for x in range(0,objId.autotime.shape[0]):
+                f.write(str(objId.autotime[x])+','+str(objId.autoNorm[x,0,0])+ '\n')
+            f.write('end\n')
+        if objId.numOfCH == 2:
+            f.write('ch_type, 0 ,1, 2\n')
+            f.write('kcount,'+str(objId.kcount_CH1)+','+str(objId.kcount_CH2)+'\n')
+            f.write('numberNandB,'+str(objId.numberNandBCH0)+','+str(objId.numberNandBCH1)+'\n')
+            f.write('brightnessNandB,'+str(objId.brightnessNandBCH0)+','+str(objId.brightnessNandBCH1)+'\n')
+            f.write('carpet pos, 0 \n')
+            
+            f.write('pc, 0\n');
+            f.write('Time (ns), CH0 Auto-Correlation, CH1 Auto-Correlation, CH01 Cross-Correlation\n')
+            for x in range(0,objId.autotime.shape[0]):
+                f.write(str(objId.autotime[x])+','+str(objId.autoNorm[x,0,0])+','+str(objId.autoNorm[x,1,1])+','+str(objId.autoNorm[x,0,1])+'\n')
+            f.write('end\n')
+                
+
+
 
 
 
