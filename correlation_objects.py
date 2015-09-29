@@ -164,7 +164,7 @@ class picoObject():
 				
 			self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
 			self.objId1.autotime = np.array(self.autotime).reshape(-1)
-			self.objId1.param = self.fit_obj.def_param
+			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 			
 			
 			if self.numOfCH ==  2:
@@ -181,7 +181,7 @@ class picoObject():
 					
 				self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 				self.objId3.autotime = np.array(self.autotime).reshape(-1)
-				self.objId3.param = self.fit_obj.def_param
+				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 				
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
@@ -195,7 +195,7 @@ class picoObject():
 					
 				self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 				self.objId2.autotime = np.array(self.autotime).reshape(-1)
-				self.objId2.param = self.fit_obj.def_param
+				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 				
 
 				if self.objId4 == None:
@@ -210,7 +210,7 @@ class picoObject():
 					
 				self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
 				self.objId4.autotime = np.array(self.autotime).reshape(-1)
-				self.objId4.param = self.fit_obj.def_param
+				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 				
 			self.fit_obj.fill_series_list()
 		self.dTimeMin = 0
@@ -364,7 +364,7 @@ class subPicoObject():
 			self.objId1.kcount = self.kcount_CH1
 		self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
 		self.objId1.autotime = np.array(self.autotime).reshape(-1)
-		self.objId1.param = self.fit_obj.def_param
+		self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 		
 		
 		if self.numOfCH ==2:
@@ -381,7 +381,7 @@ class subPicoObject():
 				
 			self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 			self.objId3.autotime = np.array(self.autotime).reshape(-1)
-			self.objId3.param = self.fit_obj.def_param
+			self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 			if self.objId2 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId2 = corrObj.objId
@@ -394,7 +394,7 @@ class subPicoObject():
 				
 			self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 			self.objId2.autotime = np.array(self.autotime).reshape(-1)
-			self.objId2.param = self.fit_obj.def_param
+			self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 			if self.objId4 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId4 = corrObj.objId
@@ -478,8 +478,10 @@ class corrObject():
 		self.goodFit = True
 		self.fitted = False
 		self.checked = False
+		self.clicked = False
 		self.toFit = False
 		self.kcount = None
+		self.filter = False
 	   
 		#main.data.append(filepath);
 		#The master data object reference 
@@ -508,9 +510,9 @@ class corrObject():
 		residuals = data-A
 		return residuals
 	def fitToParameters(self):
-		self.parentFn.updateParamFirst()
-		self.parentFn.updateTableFirst()
-		self.parentFn.updateParamFirst()
+		#self.parentFn.updateParamFirst()
+		#self.parentFn.updateTableFirst()
+		#self.parentFn.updateParamFirst()
 		
 
 		#Populate param for lmfit.
@@ -519,6 +521,7 @@ class corrObject():
 		for art in self.param:
 			
 			if self.param[art]['to_show'] == True:
+				
 				param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']) ,max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
 				
 		
@@ -526,18 +529,20 @@ class corrObject():
 		
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
 		scale = np.array(self.autotime).astype(np.float64).reshape(-1)
-		indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
-		indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
+		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
+		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
 		
 		#Run the fitting.
-		res = minimize(self.residual, param, args=(scale[indx_L:indx_R+1],data[indx_L:indx_R+1], self.parentFn.def_options))
+		res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 
 		#Repopulate the parameter object.
 		for art in self.param:
-			if self.param[art]['to_show'] == True:
+			if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 				self.param[art]['value'] = param[art].value
+				self.param[art]['stderr'] = float(param[art].stderr)
+				
 		#Extra parameters, which are not fit or inherited.
-		self.param['N_FCS']['value'] = np.round(1/self.param['GN0']['value'],4)
+		#self.param['N_FCS']['value'] = np.round(1/self.param['GN0']['value'],4)
 
 
 		self.residualVar = res.residual
@@ -550,44 +555,15 @@ class corrObject():
 			self.goodFit = True
 		self.fitted = True
 		self.chisqr = res.chisqr
-		rowArray =[];
-		localTime = time.asctime( time.localtime(time.time()) )
-		rowArray.append(str(self.name))  
-		rowArray.append(str(localTime))
-		rowArray.append(str(self.parentFn.diffModEqSel.currentText()))
-		rowArray.append(str(self.parentFn.def_options['Diff_species']))
-		rowArray.append(str(self.parentFn.tripModEqSel.currentText()))
-		rowArray.append(str(self.parentFn.def_options['Triplet_species']))
-		rowArray.append(str(self.parentFn.dimenModSel.currentText()))
-		rowArray.append(str(scale[indx_L]))
-		rowArray.append(str(scale[indx_R]))
-
-		for key, value in param.iteritems() :
-			rowArray.append(str(value.value))
-			rowArray.append(str(value.stderr))
-			if key =='GN0':
-				try:
-					rowArray.append(str(self.param['N_FCS']['value']))
-					if self.ch_type !=2:
-						rowArray.append(str(self.param['cpm']['value']))
-					else:
-						rowArray.append('')
-				except:
-					rowArray.append(str(0))
-		#Adds non-fit parameters.
-		try:
-			rowArray.append(str(np.round(float(self.numberNandB),5)))
-			rowArray.append(str(np.round(float(self.brightnessNandB),5)))
-
-		except:
-		   pass
 		
-		self.rowText = rowArray
+		self.localTime =  time.asctime( time.localtime(time.time()) )
 		
-		self.parentFn.updateTableFirst();
-		self.model_autoNorm = equation_(param, scale[indx_L:indx_R+1],self.parentFn.def_options)
-		self.model_autotime = scale[indx_L:indx_R+1]
-		self.parentFn.on_show()
+		
+		
+		#self.parentFn.updateTableFirst();
+		self.model_autoNorm = equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		self.model_autotime = scale[self.indx_L:self.indx_R+1]
+		#self.parentFn.on_show()
 
 		#self.parentFn.axes.plot(model_autotime,model_autoNorm, 'o-')
 		#self.parentFn.canvas.draw();
@@ -641,27 +617,14 @@ class corrObject():
 			unit = int_tscale[-1]/(int_tscale.__len__()-1)
 			#And to be in kHz we divide by 1000.
 			self.kcount = np.average(np.array(int_tdata)/unit)/1000
-			
-
-			#var_per_bin = np.var(np.array(int_tdata))/1000
-			#ave_per_bin = np.average(np.array(int_tdata))
-			#self.brightness = var_per_bin/ave_per_bin
-			#self.N_from_moment = (ave_per_bin**2)/var_per_bin
-
-			#print 'self.brightnessSIN', self.brightness
-			#print 'self.N_from_momentSIN', self.N_from_moment
-			
-
-
-
-			self.param = self.parentFn.def_param
+			self.param = copy.deepcopy(self.parentFn.def_param)
 			self.parentFn.fill_series_list()
 			
 		
 					#Where we add the names.
 
-
-		if self.ext == 'csv':
+		print 'self.ext',self.ext
+		if self.ext == 'csv' or self.ext =='CSV':
 			r_obj = csv.reader(open(self.filepath, 'rb'))
 			line_one = r_obj.next()
 			if line_one.__len__()>1:
@@ -690,9 +653,9 @@ class corrObject():
 				self.ch_type = 0
 				self.datalen= len(tdata)
 
-				self.param = self.parentFn.def_param
+				self.param = copy.deepcopy(self.parentFn.def_param)
 				self.parentFn.fill_series_list()
-			if version == 2:
+			if version >= 2:
 				
 					
 				numOfCH = float(r_obj.next()[1])
@@ -703,15 +666,29 @@ class corrObject():
 					self.ch_type = int(r_obj.next()[1])
 					self.name = self.name+'-CH'+str(self.ch_type)
 					
-					self.kcount = float(r_obj.next()[1])
-					self.numberNandB =  float(r_obj.next()[1])
-					self.brightnessNandB =  float(r_obj.next()[1])
-
-					self.carpet_position =  int(r_obj.next()[1])
+					line = r_obj.next()
+					while  line[0] != 'Time (ns)':
+						if line[0] == 'kcount':
+							self.kcount = float(line[1])
+						if line[0] == 'numberNandB':
+							self.numberNandB = float(line[1])
+						if line[0] == 'brightnessNandB':
+							self.brightnessNandB =  float(line[1])
+						if line[0] == 'CV':
+							self.CV =  float(line[1])
+						if line[0] == 'carpet pos':
+							carpet = int(line[1])
+						if line[0] == 'pc':
+							pc_text = int(line[1])
+						
+						line = r_obj.next()
 					
 					
+					
+					
+					
 
-					pc_text =  int(r_obj.next()[1])
+					
 					
 					if pc_text != False:
 						self.name = self.name +'_pc_m'+str(pc_text)
@@ -730,7 +707,7 @@ class corrObject():
 					self.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 					self.autotime= np.array(tscale).astype(np.float64).reshape(-1)
 					self.siblings = None
-					self.param = self.parentFn.def_param
+					self.param = copy.deepcopy(self.parentFn.def_param)
 					self.parentFn.fill_series_list()
 				if numOfCH == 2:
 					corrObj2 = corrObject(self.filepath,self.parentFn);
@@ -754,26 +731,30 @@ class corrObject():
 					self.name = self.name+'-CH'+str(self.ch_type)
 					corrObj2.name = corrObj2.name+'-CH'+str(corrObj2.ch_type)
 					corrObj3.name = corrObj3.name+'-CH'+str(corrObj3.ch_type)
+
+					line = r_obj.next()
+					while  line[0] != 'Time (ns)':
+						if line[0] == 'kcount':
+							self.kcount = float(line[1])
+							corrObj2.kcount = float(line[2])
+						if line[0] == 'numberNandB':
+							self.numberNandB = float(line[1])
+							corrObj2.numberNandB =  float(line[2])
+						if line[0] == 'brightnessNandB':
+							self.brightnessNandB =  float(line[1])
+							corrObj2.brightnessNandB =  float(line[2])
+						if line[0] == 'CV':
+							self.CV =  float(line[1])
+							corrObj2.CV = float(line[2])
+							corrObj3.CV = float(line[3])
+						if line[0] == 'carpet pos':
+							self.carpet_position = int(line[1])
+						if line[0] == 'pc':
+							pc_text = int(line[1])
+						
+						line = r_obj.next()
 					
-					line_kcount = r_obj.next()
-					self.kcount = float(line_kcount[1])
-					corrObj2.kcount = float(line_kcount[2])
-					#corrObj3.kcount = float(line_kcount[3])
-
-					line_numberNandB = r_obj.next()
-					self.numberNandB =  float(line_numberNandB[1])
-					corrObj2.numberNandB =  float(line_numberNandB[2])
-					#corrObj3.numberNandB =  float(line_numberNandB[3])
-
-					line_brightnessNandB = r_obj.next()
-					self.brightnessNandB =  float(line_brightnessNandB[1])
-					corrObj2.brightnessNandB =  float(line_brightnessNandB[2])
-
-					self.carpet_position =  int(r_obj.next()[1])
-					#corrObj3.brightnessNandB =  float(line_brightnessNandB[3])
 					
-					line_pc = r_obj.next()
-					pc_text =  int(line_pc[1])
 					
 					if pc_text != False:
 						self.name = self.name +'_pc_m'+str(pc_text)
@@ -807,9 +788,9 @@ class corrObject():
 					corrObj2.siblings = [self,corrObj3]
 					corrObj3.siblings = [self,corrObj2]
 					
-					self.param = self.parentFn.def_param
-					corrObj2.param = self.parentFn.def_param
-					corrObj3.param = self.parentFn.def_param
+					self.param = copy.deepcopy(self.parentFn.def_param)
+					corrObj2.param = copy.deepcopy(self.parentFn.def_param)
+					corrObj3.param = copy.deepcopy(self.parentFn.def_param)
 					self.parentFn.fill_series_list()
 
 
