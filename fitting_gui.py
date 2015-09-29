@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import matplotlib.gridspec as gridspec
 import numpy as np
+from fitting_extended import TableFilterBox, visualHisto, visualScatter
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import time
 import errno
@@ -20,6 +21,7 @@ import subprocess
 import pyperclip
 import cPickle as pickle
 import copy
+from fitting_methods import update_param_fcs, calc_param_fcs, decide_which_to_show, initialise_fcs
 from correlation_objects import corrObject
 
 """FCS Fitting Software
@@ -119,318 +121,7 @@ class folderOutput(QtGui.QMainWindow):
 				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
 				#Save the 
 				pickle.dump(self.parent.fit_profile, open(str(filepath),"w"));
-class visualScatter(QtGui.QMainWindow):
-	def __init__(self,parObj):
-		QtGui.QMainWindow.__init__(self)
-		self.parObj = parObj
-	def create_main_frame(self):
-		
-		#self.trace_idx = self.parObj.clickedS1
 
-		page = QtGui.QWidget()        
-		hbox_main = QtGui.QHBoxLayout()
-		vbox1 = QtGui.QVBoxLayout()
-		vbox0 = QtGui.QVBoxLayout()
-		self.setWindowTitle("Data Visualisation")
-		self.figure1 = plt.figure(figsize=(10,4))
-		self.figure1.patch.set_facecolor('white')
-		self.canvas1 = FigureCanvas(self.figure1)
-
-		
-		self.plt1 = self.figure1.add_subplot(1,1,1)
-		self.plt1.set_ylabel('frequency')
-		self.plt1.set_xlabel('bins')
-
-		
-		
-		
-		
-		self.generate_scatter_btn = QtGui.QPushButton('Generate Scatter')
-		
-		self.visual_param_select_1_panel = QtGui.QHBoxLayout()
-		self.visual_param_select_1 = QtGui.QComboBox();
-		self.visual_param_select_1_check = QtGui.QCheckBox('norm',self)
-		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1)
-		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1_check)
-
-		self.visual_param_select_2_panel = QtGui.QHBoxLayout()
-		self.visual_param_select_2 = QtGui.QComboBox();
-		self.visual_param_select_2_check = QtGui.QCheckBox('norm',self)
-		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2)
-		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2_check)
-
-		
-
-		self.generate_menu(self.visual_param_select_1)
-		self.generate_menu(self.visual_param_select_2) 
-		
-		self.generate_scatter_btn.clicked.connect(self.generate_scatter)
-		
-		copy_data_btn = QtGui.QPushButton('Copy to clipboard')
-		copy_data_btn.clicked.connect(self.copy_to_clipboard)
-		save_data_btn = QtGui.QPushButton('Save to file')
-		save_data_btn.clicked.connect(self.save_to_file)
-		hbox_main.addLayout(vbox0)
-		hbox_main.addLayout(vbox1)
-		
-		
-		
-	
-		
-		vbox0.addLayout(self.visual_param_select_1_panel)
-		vbox0.addLayout(self.visual_param_select_2_panel)
-		
-
-		
-		
-		vbox0.addWidget(self.generate_scatter_btn)
-		vbox0.addWidget(copy_data_btn)
-		vbox0.addWidget(save_data_btn)
-		vbox0.addStretch();
-		vbox1.addWidget(self.canvas1)
-		
-		page.setLayout(hbox_main)
-		self.setCentralWidget(page)
-		self.show()
-		
-
-	def generate_scatter(self):
-		self.data_1 = []
-		indList = range(0,self.parObj.objIdArr.__len__())
-		for v_ind in indList:
-			if self.parObj.objIdArr[v_ind].toFit == True:
-				if self.parObj.objIdArr[v_ind].fitted == True:
-					for art in self.parObj.objIdArr[v_ind].param:
-						if art == self.visual_param_select_1.currentText():
-							self.data_1.append(self.parObj.objIdArr[v_ind].param[art]['value'])
-		self.data_2 = []
-		indList = range(0,self.parObj.objIdArr.__len__())
-		for v_ind in indList:
-			if self.parObj.objIdArr[v_ind].toFit == True:
-				if self.parObj.objIdArr[v_ind].fitted == True:
-					for art in self.parObj.objIdArr[v_ind].param:
-						if art == self.visual_param_select_2.currentText():
-							self.data_2.append(self.parObj.objIdArr[v_ind].param[art]['value'])
-		
-
-		if self.data_1 !=[] and self.data_2 !=[]:
-			if self.visual_param_select_1_check.isChecked():
-				self.data_1 = list(np.array(self.data_1)/np.median(self.data_1))
-			if self.visual_param_select_2_check.isChecked():
-				self.data_2 = list(np.array(self.data_2)/np.median(self.data_2))
-
-			self.plt1.cla();
-			self.plt1.scatter(np.array(self.data_1).astype(np.float64), np.array(self.data_2).astype(np.float64), facecolor='green', alpha=0.75)
-			
-			self.plt1.set_xlim(np.min(self.data_1)*0.8,np.max(self.data_1)*1.2)
-			self.plt1.set_ylim(np.min(self.data_2)*0.8,np.max(self.data_2)*1.2)
-			
-			self.title_1 = self.visual_param_select_1.currentText()
-			self.title_2 = self.visual_param_select_2.currentText()
-			self.plt1.set_xlabel(self.title_1)
-			self.plt1.set_ylabel(self.title_2)
-			self.canvas1.draw()
-			
-	def copy_to_clipboard(self):
-		
-		copyStr = ""
-		copyStr += str(self.title_1)+"\t"+str(self.title_2) +"\n"
-		for i in range(0,self.data_1.__len__()):
-			copyStr += str(self.data_1[i])+"\t"+ str(self.data_2[i]) +"\n"
-		
-		pyperclip.copy(copyStr)
-		self.parObj.image_status_text.showMessage("Data copied to the system clipboard.")
-				
-	def save_to_file(self):
-		outPath = self.parObj.folderOutput.filepath
-		filenameTxt = str(self.parObj.fileNameText.text())
-		filenamePth = outPath+'/'+filenameTxt+'_scatter_data.csv'
-		f = open(filenamePth, 'w')
-		f.write(str(self.title_1)+","+str(self.title_2) +"\n")
-		for i in range(0,self.data_1.__len__()):
-			f.write(str(self.data_1[i])+","+ str(self.data_2[i]) +"\n")
-		self.parObj.image_status_text.showMessage("Data save to the path: "+outPath+'/'+filenameTxt+'_scatter_data.csv')
-
-
-	def generate_menu(self,combo):
-		#Ensures the headings are relevant to the fit.
-
-		
-		proceed=False;
-		for i in range(0,self.parObj.objIdArr.__len__()):
-			if self.parObj.objIdArr[i].toFit == True:
-				if self.parObj.objIdArr[i].fitted == True:
-					v_ind = i;
-					proceed = True;
-					break;
-			
-		
-		if proceed == True:
-			#Includes the headers for the data which is present.
-			for art in self.parObj.objIdArr[v_ind].param:
-				if self.parObj.objIdArr[v_ind].param[art]['to_show'] !=False:
-					combo.addItem(art)
-			
-class visualHisto(QtGui.QMainWindow):
-	def __init__(self,parObj):
-		QtGui.QMainWindow.__init__(self)
-		self.parObj = parObj
-	def create_main_frame(self):
-		
-		#self.trace_idx = self.parObj.clickedS1
-
-		page = QtGui.QWidget()        
-		hbox_main = QtGui.QHBoxLayout()
-		vbox1 = QtGui.QVBoxLayout()
-		vbox0 = QtGui.QVBoxLayout()
-		self.setWindowTitle("Data Visualisation")
-		self.figure1 = plt.figure(figsize=(10,4))
-		self.figure1.patch.set_facecolor('white')
-		self.canvas1 = FigureCanvas(self.figure1)
-
-		
-		self.plt1 = self.figure1.add_subplot(1,1,1)
-		self.plt1.set_ylabel('frequency')
-		self.plt1.set_xlabel('bins')
-
-		
-		
-		
-		
-		self.generate_histogram_btn = QtGui.QPushButton('Generate Histogram')
-		
-		self.visual_param_select = QtGui.QComboBox();
-
-		self.min_range_lbl = QtGui.QLabel("min range:") 
-		self.min_range_txt = QtGui.QLineEdit();
-		self.min_range_txt.setPlaceholderText("default:input data min")
-		self.max_range_lbl = QtGui.QLabel("max range:") 
-		self.max_range_txt = QtGui.QLineEdit();
-		self.max_range_txt.setPlaceholderText("default:input data max")
-		self.num_of_bins_lbl = QtGui.QLabel("bin width:") 
-		self.num_of_bins_txt = QtGui.QLineEdit('2');
-
-		min_box = QtGui.QHBoxLayout();
-		min_box.addWidget(self.min_range_lbl)
-		min_box.addWidget(self.min_range_txt)
-		max_box = QtGui.QHBoxLayout();
-		max_box.addWidget(self.max_range_lbl)
-		max_box.addWidget(self.max_range_txt)
-		bin_box = QtGui.QHBoxLayout();
-		bin_box.addWidget(self.num_of_bins_lbl)
-		bin_box.addWidget(self.num_of_bins_txt)
-
-		self.generate_menu(self.visual_param_select) 
-		self.generate_histogram_btn.clicked.connect(self.generate_histo)
-		
-		copy_data_btn = QtGui.QPushButton('Copy to clipboard')
-		copy_data_btn.clicked.connect(self.copy_to_clipboard)
-		save_data_btn = QtGui.QPushButton('Save to file')
-		save_data_btn.clicked.connect(self.save_to_file)
-		hbox_main.addLayout(vbox0)
-		hbox_main.addLayout(vbox1)
-		
-		
-		
-	
-		
-		vbox0.addWidget(self.visual_param_select)
-		
-
-		
-		vbox0.addLayout(min_box)
-		vbox0.addLayout(max_box)
-		vbox0.addLayout(bin_box)
-		vbox0.addWidget(self.generate_histogram_btn)
-		vbox0.addWidget(copy_data_btn)
-		vbox0.addWidget(save_data_btn)
-		vbox0.addStretch();
-		vbox1.addWidget(self.canvas1)
-		
-		page.setLayout(hbox_main)
-		self.setCentralWidget(page)
-		self.show()
-		
-
-	def generate_histo(self):
-		self.data = []
-		indList = range(0,self.parObj.objIdArr.__len__())
-		for v_ind in indList:
-			if self.parObj.objIdArr[v_ind].toFit == True:
-				if self.parObj.objIdArr[v_ind].fitted == True:
-					for art in self.parObj.objIdArr[v_ind].param:
-						if art == self.visual_param_select.currentText():
-							self.data.append(self.parObj.objIdArr[v_ind].param[art]['value'])
-
-		
-		
-		if self.data !=[]:
-			bin_width = float(self.num_of_bins_txt.text())
-			min_range = self.min_range_txt.text()
-			max_range = self.max_range_txt.text()
-			if min_range == '':
-				min_range = min(self.data)
-			else:
-				min_range = float(min_range)
-			if max_range == '':
-				max_range = max(self.data)
-			else:
-				max_range = float(min_range)
-			self.plt1.cla();
-
-			bins = np.arange(min_range,max_range+bin_width,bin_width)
-			
-			self.n, self.bins, patches = self.plt1.hist(np.array(self.data).astype(np.float64), bins, facecolor='green', alpha=0.75)
-			#self.plt1.plot(range(0,10),range(0,10))
-			self.canvas1.draw()
-			
-	def copy_to_clipboard(self):
-		copyStr = ""
-		for i in range(0,self.n.__len__()):
-			
-			
-			copyStr += str(self.bins[i])+"-"+str(self.bins[i+1])+"\t"+ str(self.n[i]) +"\n"
-		
-		pyperclip.copy(copyStr)
-		self.parObj.image_status_text.showMessage("Data copied to the system clipboard.")
-				
-	def save_to_file(self):
-		outPath = self.parObj.folderOutput.filepath
-		filenameTxt = str(self.parObj.fileNameText.text())
-		filenamePth = outPath+'/'+filenameTxt+'_histo_data.csv'
-		f = open(filenamePth, 'w')
-		
-		
-		f.write("bin"+","+str("frequency") +"\n")
-
-		
-		for i in range(0,self.n.__len__()):
-			f.write(str(self.bins[i])+"-"+str(self.bins[i+1])+","+ str(self.n[i]) +"\n")
-		self.parObj.image_status_text.showMessage("Data save to the path: "+outPath+'/'+filenameTxt+'_histo_data.csv')
-
-
-	def generate_menu(self,combo):
-		#Ensures the headings are relevant to the fit.
-
-		
-		proceed=False;
-		for i in range(0,self.parObj.objIdArr.__len__()):
-			if self.parObj.objIdArr[i].toFit == True:
-				if self.parObj.objIdArr[i].fitted == True:
-					v_ind = i;
-					proceed = True;
-					break;
-			
-		
-		if proceed == True:
-			#Includes the headers for the data which is present.
-			for art in self.parObj.objIdArr[v_ind].param:
-				if self.parObj.objIdArr[v_ind].param[art]['to_show'] !=False:
-					combo.addItem(art)
-				#combo.addItem('stderr('+key+')')
-				
-		
-				#combo.addItem('stderr('+key+')')
 				
 
 
@@ -451,96 +142,9 @@ class Form(QtGui.QMainWindow):
 			#Default parameters for each loaded file.
 		#self.def_param = Parameters()
 		
-	   
-		#default options for the fitting.
-		self.def_options ={}
+		#Initialise the FCS variables
+	   	initialise_fcs(self)
 		
-		self.def_options['Diff_eq'] = 1
-		self.def_options['Diff_species'] = 1
-		self.def_options['Triplet_eq'] = 1
-		self.def_options['Triplet_species'] = 1
-
-		self.def_options['Dimen'] =1
-		
-
-		
-		A1 = {'alias':'A1','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
-		A2 = {'alias':'A2','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
-		A3 = {'alias':'A3','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':False}
-
-		#Proportion of the diffusing species present
-		#self.def_param.add('A1', value=1.0, min=0,max=1.0, vary=False)
-		#self.def_param.add('A2', value=1.0, min=0,max=1.0, vary=False)
-		#self.def_param.add('A3', value=1.0, min=0,max=1.0, vary=False)
-		#self.def_param.add('AC', value=1.0,vary=False)
-		#self.def_param.add('A2', expr='1.0-A1')
-		#self.def_param.add('A3', expr='1.0-A1-A2')
-
-		
-		
-		#The offset
-		offset = { 'alias':'offset','value':0.01,'minv':-1.0,'maxv':1.0,'vary':False,'to_show':False}
-		#self.def_param.add('offset', value=0.0, min=-1.0,max=5.0,vary=False)
-		#The amplitude
-		GN0 = {'alias':'GN0','minv':0.0,'value':1,'maxv':1.0,'vary':True,'to_show':False}
-		#self.def_param.add('GN0', value=1.0, vary=True)
-		#The alpha value
-		alpha = {'alias':'alpha','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
-		#self.def_param.add('alpha', value=1.0, min=0,max=1.0, vary=True)
-		#lateral diffusion coefficent
-		txy1 = {'alias':'txy1','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':False}
-		txy2 = {'alias':'txy2','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':False}
-		txy3 = {'alias':'txy3','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':False}
-
-		
-
-		alpha1 = {'alias':'alpha1','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':False}
-		alpha2 = {'alias':'alpha2','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':False}
-		alpha3 = {'alias':'alpha3','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':False}
-		
-		tz1 = {'alias':'tz1','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
-		tz2 = {'alias':'tz2','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
-		tz3 = {'alias':'tz3','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':False}
-
-		#Axial ratio coefficient
-		
-		AR1 = {'alias':'AR1','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-		AR2 = {'alias':'AR2','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-		AR3 = {'alias':'AR3','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-
-		B1 = {'alias':'B1','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-		B2 = {'alias':'B2','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-		B3 = {'alias':'B3','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-
-		T1 = {'alias':'T1','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':False}
-		T2 = {'alias':'T2','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':False}
-		T3 = {'alias':'T3','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':False}
-	
-		tauT1 = {'alias':'tauT1','value':0.055,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-		tauT2 = {'alias':'tauT2','value':0.055,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-		tauT3 = {'alias':'tauT3','value':0.005,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':False}
-
-		N_FCS = {'alias':'N (FCS)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
-		cpm = {'alias':'N (cpm)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
-		N_mom = {'alias':'N (mom)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
-		bri = {'alias':'bri','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
-
-		
-		#ACAC = {'alias':'ACAC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
-		#ACCC = {'alias':'ACCC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':'always'}
-
-
-		self.def_param ={'A1':A1,'A2':A2,'A3':A3,'txy1':txy1,'txy2':txy2,'txy3':txy3,'offset':offset,'GN0':GN0,'alpha':alpha,'alpha1':alpha1,'alpha2':alpha2,'alpha3':alpha3,'tz1':tz1,'tz2':tz2,'tz3':tz3,'AR1':AR1,'AR2':AR2,'AR3':AR3,'B1':B1,'B2':B2,'B3':B3,'T1':T1,'T2':T2,'T3':T3,'tauT1':tauT1,'tauT2':tauT2,'tauT3':tauT3}
-		self.def_param['N_FCS'] = N_FCS
-		self.def_param['cpm'] = cpm
-		self.def_param['N_mom'] = N_mom
-		self.def_param['bri'] = bri
-
-		#self.def_param['ACAC'] = ACAC
-		#self.def_param['ACCC'] = ACCC
-		#Initiates dataHOlder object.
-		#self.data = DataHolder('',self)
-
 		self.series_list_model = QtGui.QStandardItemModel()
 		self.series_list_model.itemChanged.connect(self.item_edited)
 		
@@ -606,7 +210,10 @@ class Form(QtGui.QMainWindow):
 	def on_show(self):
 		self.axes.clear()        
 		self.axes.grid(True)
-
+		try:
+			self.canvas.mpl_disconnect(self.cid)
+		except:
+			'fail'
 		self.axes.set_ylabel('Correlation', fontsize=12)
 		
 		self.axes.xaxis.grid(True,'minor')
@@ -632,12 +239,30 @@ class Form(QtGui.QMainWindow):
 			
 		row = 0;
 		row_checked = 0
+		def onpick(event):
+			thisline = event.artist
+			xdata = thisline.get_xdata()
+			ydata = thisline.get_ydata()
+			ind = event.ind
+			
+
+			#Finds the model which has been clicked based on the label association.
+			for objId in self.objIdArr:
+				objId.clicked = False
+				if str(objId) == str(thisline.get_label()):
+					objId.clicked = True
+					#self.axes.plot(objId.autotime, objId.autoNorm, 'o',markersize=2, color="red", label=objId,picker=4.0,alpha=alpha)
+					#self.canvas.draw()
+			self.fill_series_list()
 		for objId in self.objIdArr:
 			if objId.toFit == True:
 				model_index = self.series_list_model.index(row, 0)
 				checked = self.series_list_model.data(model_index, QtCore.Qt.CheckStateRole) == QtCore.QVariant(QtCore.Qt.Checked)
 				objId.checked = checked
-				
+				if objId.filter ==True:
+					alpha = 0.1;
+				else:
+					alpha = 1.0
 				
 				if checked:
 					
@@ -649,9 +274,13 @@ class Form(QtGui.QMainWindow):
 					
 					self.series = objId.autoNorm
 					
-					self.axes.plot(self.scale, self.series, 'o',markersize=3, color=self.colors[row % len(self.colors)], label=objId.name)
+					
+					self.axes.plot(self.scale, self.series, 'o',markersize=2, color="grey", label=objId,picker=4.0,alpha=alpha)
+					
+
 					self.axes.set_autoscale_on(False)
 					row_checked += 1
+
 
 				#if self.setAutoScale == False:
 
@@ -659,11 +288,15 @@ class Form(QtGui.QMainWindow):
 				row += 1  
 		row = 0;
 		
+		
 		for objId in self.objIdArr:
 			if objId.toFit == True:
 				model_index = self.series_list_model.index(row, 0)
 				checked = self.series_list_model.data(model_index, QtCore.Qt.CheckStateRole) == QtCore.QVariant(QtCore.Qt.Checked)
-
+				if objId.filter ==True:
+					alpha = 0.1;
+				else:
+					alpha = 1.0
 				
 				
 				if checked:
@@ -673,14 +306,10 @@ class Form(QtGui.QMainWindow):
 						self.mod_scale = objId.model_autotime
 
 						self.mod_series = objId.model_autoNorm
-						def onpick(event):
-						    thisline = event.artist
-						    xdata = thisline.get_xdata()
-						    ydata = thisline.get_ydata()
-						    ind = event.ind
-						    print 'onpick points:', zip(xdata[ind], ydata[ind])
-						self.axes.plot(self.mod_scale, self.mod_series, '-', color=self.colors[row % len(self.colors)], label=objId.name+' fitted model',picker=5)       
-					    
+						
+							#self.colors[row % len(self.colors)]
+						self.axes.plot(self.mod_scale, self.mod_series, '-', color="blue", label=objId,picker=4.0, alpha=alpha)       
+						
 						maxValue = np.max(objId.residualVar)
 						minValue = np.min(objId.residualVar)
 						if maxValue > scaleMax:
@@ -688,12 +317,12 @@ class Form(QtGui.QMainWindow):
 						if minValue < scaleMin:
 							scaleMin = minValue
 						self.axes2.set_ylim([scaleMin,scaleMax])
-						self.axes2.plot(self.mod_scale,objId.residualVar,color=self.colors[row % len(self.colors)],label=objId.name)
+						self.axes2.plot(self.mod_scale,objId.residualVar,color="grey",label=objId.name,alpha=alpha)
 						self.axes2.set_ylim([scaleMin,scaleMax])
 						
 				row +=1        
 				   
-				
+		self.cid = self.canvas.mpl_connect('pick_event',onpick)	
 		if(self.series_list_model.rowCount()>0 and row_checked>0):
 			
 				#The line on the left.
@@ -745,8 +374,8 @@ class Form(QtGui.QMainWindow):
 				
 			#redraw the canvas.self.axes.set_autoscale_on(False) 
 		
-		if self.legend_cb.isChecked():
-			self.axes.legend(loc=3,prop={'size':8})
+		#if self.legend_cb.isChecked():
+		#	self.axes.legend(loc=3,prop={'size':8})
 		self.canvas.draw()       
 
 	   
@@ -832,13 +461,16 @@ class Form(QtGui.QMainWindow):
 	def fill_series_list(self):
 		
 		self.series_list_model.clear()
-		
+		to_focus_item = None
+		to_focus = 0
 		for objId in self.objIdArr:
 				
 				#Find details of each dataset
 				name = objId.name
 				item = QtGui.QStandardItem(name)
-				
+				objId.filter = False
+				objId.toFit = True
+
 
 				objId.series_list_id = item
 				#If the item has been checked. Restore that state.
@@ -847,8 +479,6 @@ class Form(QtGui.QMainWindow):
 				else :
 					item.setCheckState(QtCore.Qt.Checked)
 
-
-				
 				#Filter for CH identification:
 				if self.ch_check_ch0.isChecked() == True and objId.ch_type == 0:
 					objId.toFit = True
@@ -862,18 +492,72 @@ class Form(QtGui.QMainWindow):
 					
 					objId.toFit = False
 					continue;
+				
+				for filt in self.tfb.filter_list:
+					if objId.filter == False:
+						if filt[1] == '>':
+							
+							if objId.param[filt[0]]['value'] < float(filt[2]):
+								if filt[3]  == 0:
+									#show
+									objId.toFit = True
+									objId.filter = False
+								if filt[3]  == 1:
+									#apply
+									objId.toFit = True
+									objId.filter =True
+								if filt[3] == 2:
+									#off
+									objId.toFit = False
+									objId.filter = False
+							else:
+								objId.filter = False
+								
+								
+							
+								
+						else:
+							if objId.param[filt[0]]['value'] > float(filt[2]):
+								if filt[3]  == 0:
+									objId.toFit = True
+									objId.filter = False
+								if filt[3]  == 1:
+									objId.toFit = True
+									objId.filter = True
+								if filt[3] == 2:
+									objId.toFit = False
+									objId.filter = False
+							else:
+								objId.filter = False
+						
+							
+
+
+				
+
+				
+				if objId.toFit == True:
+					#Context sensitive colour highlighting
+
+					#if objId.goodFit == False:
+					#	item.setBackground(QtGui.QColor('red'))
+					#elif objId.fitted == True:
+					#	item.setBackground(QtGui.QColor('green'))
+					#else:    
+					#	item.setBackground(QtGui.QColor('white'))
+					if objId.clicked == True:
+						item.setBackground(QtGui.QColor(0, 0, 255, 127))
+						to_focus = self.series_list_model.rowCount()
+						to_focus_item = item
+
 
 				
 				
-				#Context sensitive colour highlighting
-				if objId.goodFit == False:
-					item.setBackground(QtGui.QColor('red'))
-				elif objId.fitted == True:
-					item.setBackground(QtGui.QColor('green'))
-				else:    
-					item.setBackground(QtGui.QColor('white'))
-				item.setCheckable(True)
-				self.series_list_model.appendRow(item)
+					item.setCheckable(True)
+					self.series_list_model.appendRow(item)
+		if to_focus_item != None:
+			self.series_list_view.scrollTo(self.series_list_model.indexFromItem(to_focus_item))
+		
 		self.updateFitList()
 
 				
@@ -884,8 +568,8 @@ class Form(QtGui.QMainWindow):
 		
 		plot_frame = QtGui.QWidget()
 		
-		self.dpi = 100
-		self.fig = Figure((8.0, 16.0), dpi=self.dpi)
+		self.dpi = 300
+		self.fig = Figure((8.0, 16.0), )
 		self.fig.patch.set_facecolor('white')
 		self.canvas = FigureCanvas(self.fig)
 		self.canvas.setParent(self.main_frame)
@@ -909,8 +593,8 @@ class Form(QtGui.QMainWindow):
 		self.to_spin = QtGui.QSpinBox()
 
 		
-		self.show_button = QtGui.QPushButton("Plot Checked Data")
-		self.connect(self.show_button, QtCore.SIGNAL('clicked()'), self.on_show)
+		
+		
 
 		self.series_list_view2 = QtGui.QListView()
 
@@ -1041,7 +725,7 @@ class Form(QtGui.QMainWindow):
 		self.fitTable = QtGui.QTableWidget()
 		
 
-		self.defineTable()
+		
 		#self.fitTable.setMinimumWidth(320)
 		self.fitTable.setMaximumWidth(400)
 		self.fitTable.setMinimumHeight(100)
@@ -1209,18 +893,20 @@ class Form(QtGui.QMainWindow):
 		#right_vbox.addLayout(spins_hbox)
 
 		legend_box = QtGui.QHBoxLayout()
-		self.legend_cb = QtGui.QCheckBox("Show L&egend")
-		self.legend_cb.setChecked(False)
-		legend_box.addWidget(self.legend_cb)
+		#self.legend_cb = QtGui.QCheckBox("Show L&egend")
+		#self.legend_cb.setChecked(False)
+		#legend_box.addWidget(self.legend_cb)
 		
 
-		
-		
 		self.right_check_all_none = QtGui.QPushButton("check all")
+		self.show_button = QtGui.QPushButton("Plot Checked Data")
+		
 		self.switch_true_false = True
-		legend_box.addWidget(self.right_check_all_none)
-		self.right_check_all_none.clicked.connect(self.check_all_none)
 
+
+
+		legend_box.addWidget(self.show_button)
+		legend_box.addWidget(self.right_check_all_none)
 		right_vbox.addLayout(legend_box)
 
 		right_ch_check = QtGui.QHBoxLayout()
@@ -1258,9 +944,11 @@ class Form(QtGui.QMainWindow):
 		right_ch_check.addWidget(ch_check_ch10_label)
 		right_ch_check.addWidget(self.ch_check_ch10)
 		#Add to main layout.
+		self.right_check_all_none.clicked.connect(self.check_all_none)
+		self.connect(self.show_button, QtCore.SIGNAL('clicked()'), self.on_show)
 		right_vbox.addLayout(right_ch_check)
 
-		right_vbox.addWidget(self.show_button)
+		
 
 		right_vbox.addWidget(self.right_check_all_none)
 		self.remove_btn = QtGui.QPushButton("Remove Highlighted Data")
@@ -1282,7 +970,39 @@ class Form(QtGui.QMainWindow):
 		right_vbox.addWidget(visual_histo_btn)
 		right_vbox.addWidget(visual_scatter_btn)
 		right_vbox.addStretch(1)
+
+		filter_box = QtGui.QHBoxLayout()
+		right_vbox.addLayout(filter_box)
+
+
+		self.tfb = TableFilterBox(self)
+
+
+		filter_box.addWidget(self.tfb)
+		self.filter_add_panel = QtGui.QHBoxLayout()
+		self.filter_select = QtGui.QComboBox()
+		self.filter_select.setMaximumWidth(100)
 		
+
+		for item in self.def_param:
+			self.filter_select.addItem(item)
+
+		self.filter_lessthan = QtGui.QComboBox()
+		self.filter_lessthan.addItem('<')
+		self.filter_lessthan.addItem('>')
+		self.filter_lessthan.setMaximumWidth(50)
+		self.filter_value = QtGui.QLineEdit('10.0')
+		self.filter_value.setMaximumWidth(50)
+		self.filter_value.setMinimumWidth(50)
+		self.filter_add = QtGui.QPushButton('add')
+		self.filter_add_panel.addWidget(self.filter_select)
+		self.filter_add_panel.addWidget(self.filter_lessthan)
+		self.filter_add_panel.addWidget(self.filter_value)
+		self.filter_add_panel.addWidget(self.filter_add)
+		right_vbox.addLayout(self.filter_add_panel)
+		
+
+		self.filter_add.clicked.connect(self.tfb.filter_add_fn)
 		hbox = QtGui.QHBoxLayout()
 		splitter = QtGui.QSplitter();
 		
@@ -1307,10 +1027,14 @@ class Form(QtGui.QMainWindow):
 		left_vbox.addWidget(self.image_status_text)
 
 		hbox.addWidget(splitter)
-		
+		self.defineTable()
 		self.main_frame.setLayout(hbox)
 
 		self.setCentralWidget(self.main_frame)
+	
+		
+		
+
 	def create_average_btn_fn(self):
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
@@ -1531,6 +1255,7 @@ class Form(QtGui.QMainWindow):
 		
 
 		#Redraw the table
+
 		self.updateTableFirst()
 
 
@@ -1553,7 +1278,7 @@ class Form(QtGui.QMainWindow):
 		
 		copyStr =""
 		
-		keys = self.objId_sel.param.keys
+		
 		keyArray.append('name of file')
 		keyArray.append('time of fit')
 		keyArray.append('Diff_eq')
@@ -1576,20 +1301,18 @@ class Form(QtGui.QMainWindow):
 				v_ind =0;
 
 		#Includes the headers for the data which is present.
-		for key,value in self.objIdArr[v_ind].param.iteritems() :
-			if value['to_show'] == True:
-				if key =='offset':
-						keyArray.append('Offset')
+		for item in self.order_list:
+			if self.objId_sel.param[item]['to_show'] == True:
+				if  self.objId_sel.param[item]['calc'] == False:
+					keyArray.append(str(self.objId_sel.param[item]['alias']))
+					keyArray.append('stdev('+str(self.objId_sel.param[item]['alias'])+')')
 				else:
-					keyArray.append(key)
-				keyArray.append('stderr('+key+')')
-				if key =='GN0':
-						keyArray.append('N (FCS)')
-						keyArray.append('cpm kHz')
+					keyArray.append(str(self.objId_sel.param[item]['alias']))
+
+				
 		
 		
-		keyArray.append('N (moments)')
-		keyArray.append('molecular brightness kHz')
+		
 
 		headerText = '\t'.join(keyArray)
 		copyStr +=headerText +'\n'
@@ -1609,28 +1332,52 @@ class Form(QtGui.QMainWindow):
 			for v_ind in listToFit:
 				indList.append(v_ind.row())
 		
-		
-				   
+	  	
+		#Opens export files
+		outPath = self.folderOutput.filepath
+		filenameTxt = str(self.fileNameText.text())
+		if copy_fn == False:
+			csvfile = open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a')
+			spamwriter = csv.writer(csvfile)
+			spamwriter.writerow(keyArray)
+		for v_ind in indList:
+			
+				
+			if(self.objIdArr[v_ind].toFit == True):
+				if(self.objIdArr[v_ind].fitted == True):
+					param = self.objIdArr[v_ind].param
+					rowText = []
+					rowText.append(str(self.objIdArr[v_ind].name))
+					rowText.append(str(self.objIdArr[v_ind].localTime))
+					rowText.append(str(self.diffModEqSel.currentText()))
+					rowText.append(str(self.def_options['Diff_species']))
+					rowText.append(str(self.tripModEqSel.currentText()))
+					rowText.append(str(self.def_options['Triplet_species']))
+					rowText.append(str(self.dimenModSel.currentText()))
+					rowText.append(str(self.objIdArr[v_ind].model_autotime[0]))
+					rowText.append(str(self.objIdArr[v_ind].model_autotime[-1]))
+					for item in self.order_list:
+						
+							if  param[item]['calc'] == False:
+								if param[item]['to_show'] == True:
+									rowText.append(str(param[item]['value']))
+									rowText.append(str(param[item]['stderr']))
+							else:
+								if param[item]['to_show'] == True:
+									rowText.append(str(param[item]['value']))
+								else:
+									rowText.append(str(' '))
+					if copy_fn == True:
+						copyStr += str('\t'.join(rowText)) +'\n'
+					if copy_fn == False:
+						spamwriter = csv.writer(csvfile,  dialect='excel')
+						spamwriter.writerow(rowText)
+
 		if copy_fn == True:
-			for v_ind in indList:
-				if(self.objIdArr[v_ind].toFit == True):
-					if(self.objIdArr[v_ind].fitted == True):
-						 copyStr += str('\t'.join(self.objIdArr[v_ind].rowText)) +'\n'
+			copyStr += str('end\n')
 			pyperclip.copy(copyStr)
 		else:
-			#Opens export files
-			outPath = self.folderOutput.filepath
-			filenameTxt = str(self.fileNameText.text())
-			with open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a') as csvfile:
-				spamwriter = csv.writer(csvfile)
-				spamwriter.writerow(keyArray)
-			for v_ind in indList:
-				with open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a') as csvfile:
-					if(self.objIdArr[v_ind].toFit == True):
-						if(self.objIdArr[v_ind].fitted == True):
-							spamwriter = csv.writer(csvfile,  dialect='excel')
-							spamwriter.writerow(self.objIdArr[v_ind].rowText)
-
+			csvfile.close()
 	def clearFits(self):
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
@@ -1642,7 +1389,7 @@ class Form(QtGui.QMainWindow):
 		
 		for v_ind in indList:
 			self.objIdArr[v_ind].fitted = False;
-			self.objIdArr[v_ind].param = self.def_param
+			self.objIdArr[v_ind].param = copy.deepcopy(self.def_param)
 			self.objIdArr[v_ind].model_autoNorm =[]
 			self.objIdArr[v_ind].model_autotime = []
 		self.fill_series_list()
@@ -1718,9 +1465,10 @@ class Form(QtGui.QMainWindow):
 				
 
 
-	def paramFactory(self,paraTxt,setDec,setSingStep, paraMin,paraMax,row,param):
+	def paramFactory(self,paraTxt,setDec,paraMin,paraMax,setSingStep,row,param):
 				"""UI factory function"""
 				#exec("self."+paraTxt+"_label = QtGui.QLabel()");
+				
 				
 				exec("self."+paraTxt+"_value = QtGui.QDoubleSpinBox()");
 				exec("self."+paraTxt+"_value.setDecimals("+str(setDec)+")");
@@ -1730,6 +1478,7 @@ class Form(QtGui.QMainWindow):
 				try:
 					exec("self."+paraTxt+"_value.setValue(float(param[\'"+paraTxt+"\']['value']))");
 				except:
+					
 					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\']['value']))");
 				
 				exec("self."+paraTxt+"_vary = QtGui.QCheckBox()");
@@ -1771,7 +1520,7 @@ class Form(QtGui.QMainWindow):
 			self.fitTable.setRowCount(30)
 			self.fitTable.setColumnCount(4)
 			self.fitTable.setHorizontalHeaderLabels(QtCore.QString("Init, Vary,Min,Max, , , ").split(","))
-			#self.fitTable.setVerticalHeaderLabels(QtCore.QString(", show, ,,, , , , ").split(","))
+			
 			
 			self.fitTable.setColumnWidth(0,75);
 			self.fitTable.setColumnWidth(1,32);
@@ -1782,183 +1531,53 @@ class Form(QtGui.QMainWindow):
 			self.fitTable.reset()
 			self.labelArray =[]
 
-			self.def_options['Diff_species'] = self.diffNumSpecSpin.value()
-			self.def_options['Triplet_species'] = self.tripNumSpecSpin.value()
 			
 			
-			
-
 			#If data is present in the array.
 			if self.objIdArr != []:
 				#Finds the active data set from the combo box.
-				
-				#self.objId_sel = None
 				if  self.modelFitSel.model_obj_list != []:
-
 					self.objId_sel = self.modelFitSel.model_obj_list[self.modelFitSel.currentIndex()]
+					decide_which_to_show(self)
+					calc_param_fcs(self,self.objId_sel)
 					param = copy.deepcopy(self.objId_sel.param)
-					
 				else:
 					param = copy.deepcopy(self.def_param)
-
 			else:
 				param = copy.deepcopy(self.def_param)
-			#Offset e.g. offset
-			self.paramFactory(paraTxt='offset',setDec=4,setSingStep=0.01, paraMin=-1,paraMax=5,row=row, param=param)
-			self.labelArray.append(' offset')
-			row +=1
-			text = 'GN0'
-			self.paramFactory(paraTxt=text,setDec=4,setSingStep=0.01, paraMin=-1,paraMax=5,row=row,param=param)
-			self.labelArray.append(' '+text)
-			row +=1
 
-			try:
-				self.N = QtGui.QLabel(str(np.round(1/self.GN0_value.value(),4)))
-			except:
-				self.N = QtGui.QLabel(str(0))
-			self.labelArray.append(' N (FCS)')
-			self.fitTable.setCellWidget(row, 0, self.N)
-
+			#For the filter list we redefine the options.
+			self.filter_select.clear()
 			
-			
-			try:
-				self.cpm = np.round(float(self.objId_sel.kcount)/(1/self.GN0_value.value()),2)
-				self.objId_sel.cpm = self.cpm
-				self.cpm_lbl = QtGui.QLabel('cpm: ')
-				self.cpm_txt = QtGui.QLabel(str(self.cpm))
-				if self.objId_sel.type =="scan":
-					self.cpm_unt = QtGui.QLabel('kHz')
-				else:
-					self.cpm_unt = QtGui.QLabel('kHz ')
-				self.fitTable.setCellWidget(row, 1, self.cpm_lbl)
-				self.fitTable.setCellWidget(row, 2, self.cpm_txt)
-				self.fitTable.setCellWidget(row, 3, self.cpm_unt)
-			except:
-				self.cpm_lbl = QtGui.QLabel('cpm: ')
-				self.cpm_txt = QtGui.QLabel('')
-				self.fitTable.setCellWidget(row, 1, self.cpm_lbl)
-				self.fitTable.setCellWidget(row, 2, self.cpm_txt)
-			row +=1
-			#Diffusion Variables
-			for i in range(1,self.diffNumSpecSpin.value()+1):
+			col =0
+			for item in self.order_list:
 				
-				text = 'A'+str(i)
-				self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=0,paraMax=1,row=row,param=param)
-				self.labelArray.append(' '+text)
-				row +=1
-				text = 'txy'+str(i)
-				self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.1, paraMin=0,paraMax=1000,row=row,param=param)
-				self.labelArray.append(' '+text)
-				row +=1
-				text = 'alpha'+str(i)
-				self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=0,paraMax=100,row=row,param=param)
-				self.labelArray.append(' '+text)
-				row +=1
-				#2 in this case corresponds to 3D:
-				if self.def_options['Dimen'] == 2:
-					if self.def_options['Diff_eq'] == 1:
-						text = 'tz'+str(i)
-						self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=0,paraMax=100,row=row,param=param)
-						self.labelArray.append(' '+text)
+				if param[item]['to_show'] == True:
+
+					self.filter_select.addItem(item)
+					if param[item]['calc'] == False:
+						self.paramFactory(paraTxt=item,setDec=4,paraMin=-1.0,paraMax=100000,setSingStep=0.01,row=row, param=param)
+						self.labelArray.append(' '+param[item]['alias'])
 						row +=1
-					if self.def_options['Diff_eq'] == 2:
-						text = 'AR'+str(i)
-						self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=-1,paraMax=100,row=row,param=param)
-						self.labelArray.append(' '+text)
-						row +=1
-				  
-			
+					else:
+						if col == 0:
+							label = QtGui.QLabel(' '+str(np.round(param[item]['value'],3)))
+							self.fitTable.setCellWidget(row, 0, label)
+							self.labelArray.append(' '+param[item]['alias'])
+							
+							col = 2
+							row +=1
+							continue;
+						if col ==2:
+							label = QtGui.QLabel(' '+str(np.round(param[item]['value'],3)))
+							label_2 = QtGui.QLabel(str(' '+param[item]['alias']))
+							self.fitTable.setCellWidget(row-1, 3, label)
+							self.fitTable.setCellWidget(row-1, 2,label_2)
+							
+							col = 0
 
-		   
-			if self.def_options['Triplet_eq'] == 2:
-				#Triplet State equation1
-				for i in range(1,self.tripNumSpecSpin.value()+1):
-				
-					text = 'B'+str(i)
-					self.paramFactory(paraTxt=text,setDec=4,setSingStep=0.01, paraMin=-1,paraMax=1,row=row,param=param)
-					self.labelArray.append(' '+text)
-					row +=1
-					text = 'tauT'+str(i)
-					self.paramFactory(paraTxt=text,setDec=4,setSingStep=0.01, paraMin=-1,paraMax=1,row=row,param=param)
-					self.labelArray.append(' '+text)
-					row +=1
-			if self.def_options['Triplet_eq'] == 3:
-				#Triplet State equation2
-				for i in range(1,self.tripNumSpecSpin.value()+1):
-				
-					text = 'T'+str(i)
-					self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=-1,paraMax=1,row=row,param=param)
-					self.labelArray.append(' '+text)
-					row +=1
-					text = 'tauT'+str(i)
-					self.paramFactory(paraTxt=text,setDec=3,setSingStep=0.01, paraMin=-1,paraMax=1,row=row,param=param)
-					self.labelArray.append(' '+text)
-					row +=1
-			
-			try:
-				self.num = np.round(float(self.objId_sel.numberNandB),2)
-				self.labelArray.append(' N (mom): ')
-				self.num_txt = QtGui.QLabel(str(self.num))
-				self.objId_sel.num = self.num
-				
-				self.fitTable.setCellWidget(row, 0, self.num_txt)
-				
-				self.bri = np.round(float(self.objId_sel.brightnessNandB),2)
-				self.bri_lbl = QtGui.QLabel('bri: ')
-				self.bri_txt = QtGui.QLabel(str(self.bri))
-				self.objId_sel.bri= self.bri
-				
-				self.bri_unt = QtGui.QLabel('kHz')
-				self.fitTable.setCellWidget(row, 1, self.bri_lbl)
-				self.fitTable.setCellWidget(row, 2, self.bri_txt)
-				self.fitTable.setCellWidget(row, 3, self.bri_unt)
-				row +=1
-			except:
-				pass;
-			if self.objIdArr != [] and self.objId_sel.siblings !=None and self.objId_sel.ch_type != 2:
-				try:
-					if self.objId_sel.siblings[0].fitted == True:
-						self.ratioAC_2_AC = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[0].param['GN0']['value']),4)
-						self.labelArray.append(' (AC/AC): ')
-						self.ratioAC_2_AC_txt = QtGui.QLabel(str(self.ratioAC_2_AC))
-						self.objId_sel.ratioAC_2_AC= self.ratioAC_2_AC		
-						self.fitTable.setCellWidget(row, 0, self.ratioAC_2_AC_txt)
-				except:
-					pass
-				try:
-					if self.objId_sel.siblings[1].fitted == True:
-						self.ratioAC_2_CC = np.round(float(self.objId_sel.param['GN0']['value'])/float(self.objId_sel.siblings[1].param['GN0']['value']),4)
-						self.ratioAC_2_CC_lbl = QtGui.QLabel('(CC): ')
-						self.ratioAC_2_CC_txt = QtGui.QLabel(str(self.ratioAC_2_CC))
-						self.objId_sel.ratioAC_2_CC= self.ratioAC_2_CC
-						
-						self.fitTable.setCellWidget(row, 1, self.ratioAC_2_CC_lbl)
-						self.fitTable.setCellWidget(row, 2, self.ratioAC_2_CC_txt)
-				except:
-					pass
-				
-				
-				
-				row +=1
-			#try:
-				
-			#except:
-			#	pass;
-			
 			self.fitTable.setVerticalHeaderLabels(self.labelArray)
 			self.fitTable.setRowCount(row)
-				
-				
-	
-			
-			
-	
-	
-	
-		
-
-
-		
 
 	def create_menu(self):        
 		self.file_menu = self.menuBar().addMenu("&File")
@@ -2001,92 +1620,13 @@ class Form(QtGui.QMainWindow):
 		if checkable:
 			action.setCheckable(True)
 		return action
+
+	
+				
 	def updateParam(self):
-		"""Depending on the options this function will update the params of the current data set. """
-		#self.objId_sel.param = Parameters()
-		#{'alias':'B1','value':1.0,'minv':0.001,'maxv':1000.0,'vary':True}
-		for art in self.objId_sel.param:
-			if self.objId_sel.param[art]['to_show'] == True:
-				self.objId_sel.param[art]['to_show'] = False
-
-		self.objId_sel.param['offset']['value'] = float(self.offset_value.value())
-		self.objId_sel.param['offset']['minv'] = float(self.offset_min.value())
-		self.objId_sel.param['offset']['maxv'] = float(self.offset_max.value())
-		self.objId_sel.param['offset']['vary'] = self.offset_vary.isChecked()
-		self.objId_sel.param['offset']['to_show'] = True
-		self.objId_sel.param['offset'] = {'value': self.offset_value.value(),'minv':self.offset_min.value(),'maxv':self.offset_max.value(),'vary':self.offset_vary.isChecked(),'to_show':True}
-		self.objId_sel.param['GN0'] = {'value': self.GN0_value.value(),'minv':self.GN0_min.value(),'maxv':self.GN0_max.value(),'vary':self.GN0_vary.isChecked(),'to_show':True}
-		for i in range(1,self.def_options['Diff_species']+1):
-		#for i in range(1,self.diffNumSpecSpin.value()+1):
-				#if i ==1:
-				text = 'A'+str(i);
-				exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-				self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-				#if i ==2:
-					#text = 'A'+str(i);
-					#self.objId_sel.param.add(text, expr='1.0-A1')w
-				text = 'txy'+str(i)
-				exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-				self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-				
-				
-				text = 'alpha'+str(i) 
-				exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-				self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-			   
-				#2 in this case corresponds to 3D:
-				if self.def_options['Dimen'] == 2:
-					if self.def_options['Diff_eq'] == 1:
-						text = 'tz'+str(i)
-						try:
-							exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-							self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-						except:
-							self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-
-					if self.def_options['Diff_eq'] == 2:
-						text = 'AR'+str(i)
-						try:
-							exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-							self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-						except:
-							self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-
-		if self.def_options['Triplet_eq'] == 2:
-				#Triplet State equation1
-				for i in range(1,self.tripNumSpecSpin.value()+1):
-					text = 'B'+str(i)
-					try:
-						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-					except:
-						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-
-					text = 'tauT'+str(i)
-					try:
-						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param[text] ={'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-					except:
-						self.objId_sel.param[text] ={'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-
-		if self.def_options['Triplet_eq'] == 3:
-				#Triplet State equation2
-				for i in range(1,self.tripNumSpecSpin.value()+1):
-					text = 'T'+str(i)
-					try:
-						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':vary,'to_show':True}
-					except:
-						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-
-					text = 'tauT'+str(i)
-					try:
-						exec("valueV = self."+text+"_value.value()"); exec("minV = self."+text+"_min.value()"); exec("maxV = self."+text+"_max.value()"); exec("varyV = self."+text+"_vary.isChecked()");
-						self.objId_sel.param[text] = {'value':valueV ,'minv':minV,'maxv':maxV,'vary':varyV,'to_show':True}
-					except:
-						self.objId_sel.param[text] = {'value':self.def_param[text].value ,'minv':self.def_param[text].min,'maxv':self.def_param[text].max,'vary':self.def_param[text].vary,'to_show':True}
-		
-
+		update_param_fcs(self)
+	def update_calc(self,objId):
+		calc_param_fcs(self,objId)
 		
 	def updateParamFirst(self):
 		self.updateParam()
@@ -2096,14 +1636,16 @@ class Form(QtGui.QMainWindow):
 		self.updateParam()
 	def fit_equation(self):
 	   
-		
+		self.updateParamFirst()
 		if self.objId_sel.toFit == True:
 			self.objId_sel.fitToParameters()
+			self.update_calc(self.objId_sel)
 			self.fill_series_list()
+			self.on_show()	
 	def fitAll_equation(self):
 		"""Take the active parameters and applies them to all the other data which is not filtered"""
 		#Make sure all table properties are stored
-		self.updateParam()
+		self.updateParamFirst()
 		c = 0;
 		for objId in self.objIdArr:
 			if objId.toFit == True:
@@ -2113,11 +1655,14 @@ class Form(QtGui.QMainWindow):
 					objId.param = copy.deepcopy(self.objId_sel.param)
 				
 				objId.fitToParameters()
+				self.update_calc(objId)
 				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(self.modelFitSel.model_obj_ind_list.__len__())+" images.")
 				self.app.processEvents()
+
+
 		
 		
-			   
+		self.on_show()	   
 		self.fill_series_list()
 	
 		
@@ -2223,12 +1768,17 @@ class comboBoxSp2(QtGui.QComboBox):
 		self.model_obj_ind_list = [0]
 	def __activated(self,selected):
 		#Saves parameters.
-		
-		self.parent.updateParam()
+		#self.parent.updateParam()
+		#self.parent.objId_sel = self.parent.modelFitSel.model_obj_list[self.parent.modelFitSel.currentIndex()]
+
+		#Store the existing parameters.
 		self.parent.def_options[self.type] = self.currentIndex()+1
+		self.parent.updateParam()
 		
-		
+		#Update the table display.
+		decide_which_to_show(self.parent)
 		self.parent.defineTable()
+		
 class spinBoxSp3(QtGui.QDoubleSpinBox):
 	def __init__(self,parent):
 		QtGui.QDoubleSpinBox.__init__(self,parent)
