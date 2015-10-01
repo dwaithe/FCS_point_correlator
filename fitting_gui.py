@@ -138,7 +138,9 @@ class Form(QtGui.QMainWindow):
 		self.objStruct = {}
 		self.names = [];
 		self.setAutoScale =True
-		self.colors = ['blue','green','red','cyan','magenta','black']  
+		self.colors = ['blue','green','red','cyan','magenta','black']
+		self.objId_sel = None
+
 			#Default parameters for each loaded file.
 		#self.def_param = Parameters()
 		
@@ -167,18 +169,25 @@ class Form(QtGui.QMainWindow):
 				self.nameAndExt = os.path.basename(str(filename)).split('.')
 				self.name = self.nameAndExt[0]
 				self.ext = self.nameAndExt[-1]
-				if self.ext == 'SIN' or self.ext == 'sin':
-					corrObj1 = corrObject(filename,self)
-					corrObj1.load_from_file(0)
-					corrObj2 = corrObject(filename,self)
-					corrObj2.load_from_file(1)
-					corrObj1.siblings = [corrObj2]
-					corrObj2.siblings = [corrObj1]
-						
-				if self.ext == 'CSV' or self.ext == 'csv':
-					self.corrObj = corrObject(filename,self)
-					self.corrObj.siblings = None
-					self.corrObj.objId.load_from_file(0)
+				try:
+					if self.ext == 'SIN' or self.ext == 'sin':
+
+						corrObj1 = corrObject(filename,self)
+						corrObj1.load_from_file(0)
+						corrObj2 = corrObject(filename,self)
+						corrObj2.load_from_file(1)
+						corrObj1.siblings = [corrObj2]
+						corrObj2.siblings = [corrObj1]
+							
+					elif self.ext == 'CSV' or self.ext == 'csv' or self.ext == 'fcs' :
+						self.corrObj = corrObject(filename,self)
+						self.corrObj.siblings = None
+						self.corrObj.objId.load_from_file(0)
+					else:
+						self.image_status_text.showMessage("File format not recognised please request via github page.")
+				except:
+					self.image_status_text.showMessage("File format not recognised please request via github page.")
+					break;
 
 				#self.corrObj.objId.param = self.def_param
 				#Where we add the names.
@@ -203,7 +212,7 @@ class Form(QtGui.QMainWindow):
 			f.write(self.loadpath)
 			f.close()
 		except:
-			print 'nofile'
+			pass
 		
 	
 	
@@ -213,7 +222,7 @@ class Form(QtGui.QMainWindow):
 		try:
 			self.canvas.mpl_disconnect(self.cid)
 		except:
-			'fail'
+			pass
 		self.axes.set_ylabel('Correlation', fontsize=12)
 		
 		self.axes.xaxis.grid(True,'minor')
@@ -954,7 +963,7 @@ class Form(QtGui.QMainWindow):
 		self.remove_btn = QtGui.QPushButton("Remove Highlighted Data")
 		self.remove_btn.clicked.connect(self.removeDataFn)
 		self.create_average_btn = QtGui.QPushButton("Create average of Highlighted")
-		self.create_average_btn.clicked.connect(self.create_average_btn_fn)
+		self.create_average_btn.clicked.connect(self.create_average_fn)
 		self.clearFits_btn = QtGui.QPushButton("Clear Fit Data All/Highlighted")
 		self.clearFits_btn.clicked.connect(self.clearFits)
 		self.visual_histo = visualHisto(self)
@@ -1035,7 +1044,7 @@ class Form(QtGui.QMainWindow):
 		
 		
 
-	def create_average_btn_fn(self):
+	def create_average_fn(self):
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
@@ -1107,7 +1116,7 @@ class Form(QtGui.QMainWindow):
 			self.switch_true_false = True
 			self.right_check_all_none.setText("check all")
 	def load_default_profile_fn(self):
-		print 'load profile'
+		
 		self.fit_profile = {}
 		self.load_default_profile_output.showDialog()
 		

@@ -79,22 +79,10 @@ class picoObject():
 				self.par_obj.data.pop(-1);
 				self.par_obj.objectRef.pop(-1)
 				self.exit = True
-				print 'Your file is not in the correct format.'
+				self.par_obj.image_status_text.showMessage("Your sample is not in the correct format.")
+				self.par_obj.fit_obj.app.processEvents()
 				return
 
-		#print 'shape of self.subChanArr',self.subChanArr.shape
-		#print 'shape of self.trueTimeArr',self.trueTimeArr.shape
-		#print 'shape of self.dTimeArr',self.dTimeArr.shape
-		
-		#f = open('test_uncorreled.csv', 'w')
-		#f.write('version,'+str(2)+'\n')
-		#f.write('type,pt uncorrelated\n')
-		#f.write('resolution,'+str(self.resolution)+str('\n'))
-		#for i in range(self.subChanArr.shape[0]):
-
-		#     f.write(str(self.subChanArr[i])+','+"%.3f"%self.trueTimeArr[i]+','+str(self.dTimeArr[i])+'\n')
-		#f.write('end'+str('\n'))
-		#f.close()
 					
 		
 		#Colour assigned to file.
@@ -367,7 +355,7 @@ class subPicoObject():
 		self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 		
 		
-		if self.numOfCH ==2:
+		if self.numOfCH == 2:
 			if self.objId3 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId3 = corrObj.objId
@@ -483,12 +471,6 @@ class corrObject():
 		self.kcount = None
 		self.filter = False
 	   
-		#main.data.append(filepath);
-		#The master data object reference 
-		#main.corrObjectRef.append(self)
-		#The id in terms of how many things are loaded.
-		#self.unqID = main.label.numOfLoaded;
-		#main.label.numOfLoaded = main.label.numOfLoaded+1
 	def prepare_for_fit(self):
 		if self.parentFn.ch_check_ch0.isChecked() == True and self.ch_type == 0:
 			self.toFit = True
@@ -573,6 +555,86 @@ class corrObject():
 		tdata = [];
 		int_tscale =[];
 		int_tdata=[];
+
+		
+		if self.ext == 'fcs':
+			
+
+
+			corrObj = self
+			text =[0]
+			r_obj = csv.reader(open(corrObj.filepath, 'rb'),delimiter='\t')
+			title = r_obj.next()
+			line = r_obj.next()
+			line = r_obj.next()
+			name = line[1].split(' = ')[1]
+			read = True
+			while  read == True:
+				
+				corrObj = corrObject(self.filepath,self.parentFn);
+				self.parentFn.objIdArr.append(corrObj)
+
+				corrObj.name = name
+
+				
+				
+
+				line = r_obj.next()
+				text =[]
+				for part in line:
+					if part != '':
+							text.append(part)
+				
+
+				#Reads to first correlation array text.
+				while  text[0].split(' = ')[0] != 'CorrelationArray' or text[0].split(' = ')[1] == int(0):
+					
+					line = r_obj.next()
+					text =[]
+					for part in line:
+						if part != '':
+							text.append(part)
+				line = r_obj.next()
+				tdata = []
+				tscale = []
+				
+
+				while  text[0].split(' = ')[0] != 'PhotonCountHistogramArraySize':
+					
+					try:
+						line = r_obj.next()
+					except:
+						read = False
+						break;
+					text =[]
+					for part in line:
+						if part != '':
+							text.append(part)
+					if text.__len__() >1:
+						tscale.append(float(text[0]))
+						tdata.append(float(text[1]))
+
+				if tdata.__len__() == 0:
+					corrObj = []
+					self.parentFn.objIdArr.pop(-1)
+					break;
+
+				channel = 0
+				corrObj.siblings = None
+				corrObj.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
+				corrObj.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
+				corrObj.name = corrObj.name+'-CH'+str(channel)
+				corrObj.ch_type = channel;
+				corrObj.param = copy.deepcopy(self.parentFn.def_param)
+				self.parentFn.fill_series_list()
+				
+				
+
+
+
+
+
+
 		if self.ext == 'SIN':
 			self.parentFn.objIdArr.append(self.objId)
 			proceed = False
@@ -623,16 +685,19 @@ class corrObject():
 		
 					#Where we add the names.
 
-		print 'self.ext',self.ext
+		
 		if self.ext == 'csv' or self.ext =='CSV':
 			r_obj = csv.reader(open(self.filepath, 'rb'))
 			line_one = r_obj.next()
 			if line_one.__len__()>1:
-				if float(line_one[1]) == 2:
+				
+					if float(line_one[1]) == 2:
+						
+						version = 2
+					else:
+						print 'version not known:',line_one[1]
 					
-					version = 2
-				else:
-					print 'version not known:',line_one[1]
+				
 			else:
 				version = 1
 
@@ -667,6 +732,7 @@ class corrObject():
 					self.name = self.name+'-CH'+str(self.ch_type)
 					
 					line = r_obj.next()
+
 					while  line[0] != 'Time (ns)':
 						if line[0] == 'kcount':
 							self.kcount = float(line[1])
@@ -680,15 +746,13 @@ class corrObject():
 							carpet = int(line[1])
 						if line[0] == 'pc':
 							pc_text = int(line[1])
+						if line[0] == 'pbc_f0':
+							self.pbc_f0 = float(line[1])
+						if line[0] == 'pbc_tb':
+							self.pbc_tb = float(line[1])
 						
 						line = r_obj.next()
-					
-					
-					
-					
-					
 
-					
 					
 					if pc_text != False:
 						self.name = self.name +'_pc_m'+str(pc_text)
@@ -709,6 +773,7 @@ class corrObject():
 					self.siblings = None
 					self.param = copy.deepcopy(self.parentFn.def_param)
 					self.parentFn.fill_series_list()
+
 				if numOfCH == 2:
 					corrObj2 = corrObject(self.filepath,self.parentFn);
 					corrObj3 = corrObject(self.filepath,self.parentFn);
@@ -751,6 +816,12 @@ class corrObject():
 							self.carpet_position = int(line[1])
 						if line[0] == 'pc':
 							pc_text = int(line[1])
+						if line[0] == 'pbc_f0':
+							self.pbc_f0 = float(line[1])
+							corrObj2.pbc_f0 = float(line[2])
+						if line[0] == 'pbc_tb':
+							self.pbc_tb = float(line[1])
+							corrObj2.pbc_tb = float(line[2])
 						
 						line = r_obj.next()
 					

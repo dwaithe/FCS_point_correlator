@@ -80,6 +80,8 @@ def initialise_fcs(int_obj):
 		N_mom = {'alias':'N (mom)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 		bri = {'alias':'bri (kHz)','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 		CV = {'alias':'Coincidence','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
+		f0 = {'alias':'PBC f0','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
+		overtb = {'alias':'PBC tb','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 
 		
 		ACAC = {'alias':'ACAC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
@@ -92,15 +94,18 @@ def initialise_fcs(int_obj):
 		int_obj.def_param['N_mom'] = N_mom
 		int_obj.def_param['bri'] = bri
 		int_obj.def_param['CV'] = CV
+		int_obj.def_param['f0'] = f0
+		int_obj.def_param['overtb'] = overtb
 
 		int_obj.def_param['ACAC'] = ACAC
 		int_obj.def_param['ACCC'] = ACCC
 
 		
-		int_obj.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','ACAC','ACCC']
+		int_obj.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC']
 
 
 def decide_which_to_show(int_obj):
+	
 	for art in int_obj.objId_sel.param:
 		if int_obj.objId_sel.param[art]['to_show'] == True:
 			int_obj.objId_sel.param[art]['to_show'] = False
@@ -151,6 +156,8 @@ def update_each(int_obj,text):
 			int_obj.objId_sel.param[text] = copy.deepcopy(int_obj.def_param[text])
 def update_param_fcs(int_obj):
 		"""Depending on the menu options this function will update the params of the current data set. """
+		if int_obj.objId_sel ==None:
+			return
 		decide_which_to_show(int_obj)
 		#Set all the parameters to not show.
 
@@ -190,6 +197,13 @@ def calc_param_fcs(int_obj,objId):
 		try:
 			objId.param['CV']['value'] = float(objId.CV)
 			objId.param['CV']['to_show'] = True
+		except:
+			pass
+		try:
+			objId.param['f0']['value'] = float(objId.pbc_f0)
+			objId.param['f0']['to_show'] = True
+			objId.param['overtb']['value'] = float(objId.pbc_tb)
+			objId.param['overtb']['to_show'] = True
 		except:
 			pass
 
