@@ -35,14 +35,11 @@ def initialise_fcs(int_obj):
 		A2 = {'alias':'A2','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':True,'calc':False}
 		A3 = {'alias':'A3','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':True,'calc':False}		
 		#The offset
-		offset = { 'alias':'offset','value':0.01,'minv':-1.0,'maxv':1.0,'vary':True,'to_show':True,'calc':False}
+		offset = { 'alias':'offset','value':0.01,'minv':-0.5,'maxv':1.5,'vary':True,'to_show':True,'calc':False}
 		#int_obj.defin.add('offset', value=0.0, min=-1.0,max=5.0,vary=False)
 		#The amplitude
 		GN0 = {'alias':'GN0','minv':0.001,'value':1,'maxv':1.0,'vary':True,'to_show':True,'calc':False}
-		#int_obj.def_param.add('GN0', value=1.0, vary=True)
-		#The alpha value
-		#int_obj.def_param.add('alpha', value=1.0, min=0,max=1.0, vary=True)
-		#lateral diffusion coefficent
+		
 		txy1 = {'alias':'txy1','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':True,'calc':False}
 		txy2 = {'alias':'txy2','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':True,'calc':False}
 		txy3 = {'alias':'txy3','value':0.01,'minv':0.001,'maxv':2000.0,'vary':True,'to_show':True,'calc':False}

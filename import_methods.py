@@ -22,6 +22,7 @@ import csv
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 def csvimport(filepath):
+    """Function for importing time-tag data directly into FCS point software. """
     r_obj = csv.reader(open(filepath, 'rb'))
     line_one = r_obj.next()
     if line_one.__len__()>1:

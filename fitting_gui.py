@@ -21,6 +21,7 @@ import subprocess
 import pyperclip
 import cPickle as pickle
 import copy
+from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
 from fitting_methods import update_param_fcs, calc_param_fcs, decide_which_to_show, initialise_fcs
 from correlation_objects import corrObject
 
@@ -165,37 +166,31 @@ class Form(QtGui.QMainWindow):
 		except:
 			self.loadpath = os.path.expanduser('~')+'/FCS_Analysis/'
 
-		for filename in load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)'):
-				self.nameAndExt = os.path.basename(str(filename)).split('.')
+		for file_path in load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)'):
+				self.nameAndExt = os.path.basename(str(file_path)).split('.')
 				self.name = self.nameAndExt[0]
 				self.ext = self.nameAndExt[-1]
-				try:
-					if self.ext == 'SIN' or self.ext == 'sin':
-
-						corrObj1 = corrObject(filename,self)
-						corrObj1.load_from_file(0)
-						corrObj2 = corrObject(filename,self)
-						corrObj2.load_from_file(1)
-						corrObj1.siblings = [corrObj2]
-						corrObj2.siblings = [corrObj1]
-							
-					elif self.ext == 'CSV' or self.ext == 'csv' or self.ext == 'fcs' :
-						self.corrObj = corrObject(filename,self)
-						self.corrObj.siblings = None
-						self.corrObj.objId.load_from_file(0)
-					else:
-						self.image_status_text.showMessage("File format not recognised please request via github page.")
-				except:
+				#try:
+				if self.ext == 'SIN' or self.ext == 'sin':
+					sin_import_method(self,file_path)
+				if self.ext == 'fcs':
+					fcs_import_method(self,file_path)
+				elif self.ext == 'CSV' or self.ext == 'csv' :
+					csv_import_method(self,file_path)
+					
+				else:
 					self.image_status_text.showMessage("File format not recognised please request via github page.")
-					break;
+				#except:
+				#	self.image_status_text.showMessage("File format not recognised please request via github page.")
+				#	break;
 
 				#self.corrObj.objId.param = self.def_param
 				#Where we add the names.
-				self.fill_series_list()
 				
-				self.image_status_text.showMessage("Loaded " + filename)
+				
+				self.image_status_text.showMessage("Loaded " + file_path)
 				self.image_status_text.setStyleSheet("QLabel {  color : green }")
-		
+		self.fill_series_list()
 				
 		
 	   
@@ -203,7 +198,7 @@ class Form(QtGui.QMainWindow):
 	   
 
 		try:
-			self.loadpath = str(QtCore.QFileInfo(filename).absolutePath())
+			self.loadpath = str(QtCore.QFileInfo(file_path).absolutePath())
 			
 			
 					#self.update_ui()
