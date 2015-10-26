@@ -142,6 +142,8 @@ class picoObject():
 			if self.objId1 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId1 = corrObj.objId
+				self.objId1.parent_name = 'point FCS'
+				self.objId1.parent_uqid = 'point FCS'
 				self.fit_obj.objIdArr.append(corrObj.objId)
 				self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId1.name = self.name+'_CH0_Auto_Corr'
@@ -159,6 +161,8 @@ class picoObject():
 				if self.objId3 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId3 = corrObj.objId
+					self.objId3.parent_name = 'point FCS'
+					self.objId3.parent_uqid = 'point FCS'
 					self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 					self.fit_obj.objIdArr.append(corrObj.objId)
 					self.objId3.name = self.name+'_CH1_Auto_Corr'
@@ -174,6 +178,8 @@ class picoObject():
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId2 = corrObj.objId
+					self.objId2.parent_name = 'point FCS'
+					self.objId2.parent_uqid = 'point FCS'
 					self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 					self.fit_obj.objIdArr.append(corrObj.objId)
 					self.objId2.name = self.name+'_CH01_Cross_Corr'
@@ -189,6 +195,8 @@ class picoObject():
 				if self.objId4 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId4 = corrObj.objId
+					self.objId4.parent_name = 'point FCS'
+					self.objId4.parent_uqid = 'point FCS'
 					self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 					self.fit_obj.objIdArr.append(corrObj.objId)
 					self.objId4.name = self.name+'_CH10_Cross_Corr'
@@ -288,7 +296,7 @@ class subPicoObject():
 		self.xmax = xmax
 
 		self.nameAndExt = os.path.basename(self.filepath).split('.')
-		self.name = 'TG-'+str(self.unqID)+'-xmin_'+str(round(xmin,0))+'-xmax_'+str(round(xmax,0))+'-'+self.nameAndExt[0]
+		self.name = self.nameAndExt[0]+'-TG-'+str(self.unqID)+'-xmin_'+str(round(xmin,0))+'-xmax_'+str(round(xmax,0))
 
 		self.objId1 = None
 		self.objId2 = None
@@ -342,6 +350,8 @@ class subPicoObject():
 		if self.objId1 == None:
 			corrObj= corrObject(self.filepath,self.fit_obj);
 			self.objId1 = corrObj.objId
+			self.objId1.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
+			self.objId1.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 			self.fit_obj.objIdArr.append(corrObj.objId)
 			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 			self.objId1.name = self.name+'_CH0_Auto_Corr'
@@ -359,6 +369,8 @@ class subPicoObject():
 			if self.objId3 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId3 = corrObj.objId
+				self.objId3.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
+				self.objId3.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 				self.fit_obj.objIdArr.append(corrObj.objId)
 				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId3.name = self.name+'_CH1_Auto_Corr'
@@ -373,6 +385,8 @@ class subPicoObject():
 			if self.objId2 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId2 = corrObj.objId
+				self.objId2.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
+				self.objId2.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 				self.fit_obj.objIdArr.append(corrObj.objId)
 				self.objId2.name = self.name+'_CH01_Cross_Corr'
@@ -386,6 +400,9 @@ class subPicoObject():
 			if self.objId4 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId4 = corrObj.objId
+				
+				self.objId4.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
+				self.objId4.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 				self.fit_obj.objIdArr.append(corrObj.objId)
 				self.objId4.name = self.name+'_CH10_Cross_Corr'

@@ -907,7 +907,7 @@ class scrollBox():
             j = i+1
         for i in range(0,self.par_obj.subNum):
             self.win_obj.modelTab2.setRowCount(j+i+1)
-            print i
+            
             a =baseList()
             a.listId = i
             a.setText('<HTML><p style="color:'+str(self.par_obj.subObjectRef[i].color)+';margin-top:0">TG-'+str(self.par_obj.subObjectRef[i].TGid)+': Data:'+str(self.par_obj.subObjectRef[i].parentUnqID)+'-xmin:'+str(round(self.par_obj.subObjectRef[i].xmin,1))+'-xmax:'+str(round(self.par_obj.subObjectRef[i].xmax,1))+' </p></HTML>')
@@ -958,10 +958,10 @@ class TGscrollBox():
         self.rect =[]
 
     def generateList(self):
-        print 'here'
+        
         for i in range(0, self.par_obj.TGnumOfRgn):
             self.win_obj.modelTab.setRowCount(i+1)
-            print 'loaded'
+            
             
             txt2 = QtGui.QLabel()
             txt2.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">tg1:</p></HTML>')
