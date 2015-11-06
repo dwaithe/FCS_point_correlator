@@ -63,12 +63,23 @@ class folderOutput(QtGui.QMainWindow):
 			except OSError as exception:
 				if exception.errno != errno.EEXIST:
 					raise
+		try:
+			self.parent.config = pickle.load(open(os.path.expanduser('~')+'/FCS_Analysis/config.p', "rb" ));
+			self.folder_to_process = self.parent.config['folder_to_process']
+		except:
+			self.folder_to_process = os.path.expanduser('~')+'/FCS_Analysis/output/'
+			try:
+				os.makedirs(self.folder_to_process)
+			except OSError as exception:
+				if exception.errno != errno.EEXIST:
+					raise
 
 		
 		try:
 			self.filepath_save_profile = self.parent.config['filepath_save_profile']
 		except:
 			self.filepath_save_profile = os.path.expanduser('~')+'/FCS_Analysis/output/'
+
 		
 		
 	def initUI(self):      
@@ -91,8 +102,7 @@ class folderOutput(QtGui.QMainWindow):
 	def showDialog(self):
 
 		if self.type == 'output_dir':
-			#folderSelect = QtGui.QFileDialog()
-			#folderSelect.setDirectory(self.filepath);
+			
 			tfilepath = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",self.filepath))
 			
 			if tfilepath !='':
@@ -100,7 +110,21 @@ class folderOutput(QtGui.QMainWindow):
 			#Save to the config file.
 				self.parent.config['output_filepath'] = str(tfilepath)
 				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+		if self.type == 'folder_to_process':
 			
+			folder_to_process = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",self.folder_to_process))
+			
+			if folder_to_process !='':
+				self.folder_to_process = folder_to_process
+				self.parent.config['folder_to_process'] = str(folder_to_process)
+				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+				
+				paths_to_load = []
+				files_to_load = [ f for f in os.listdir(folder_to_process) if os.path.isfile(os.path.join(folder_to_process,f)) ]
+				for file_name in files_to_load:
+					paths_to_load.append(folder_to_process+'/'+file_name)
+				
+				self.parent.load_series(paths_to_load)
 		if self.type == 'profile_load':
 			
 			
@@ -141,6 +165,8 @@ class Form(QtGui.QMainWindow):
 		self.setAutoScale =True
 		self.colors = ['blue','green','red','cyan','magenta','black']
 		self.objId_sel = None
+		self.root_name ={}
+		self.win_obj = parent
 
 			#Default parameters for each loaded file.
 		#self.def_param = Parameters()
@@ -149,7 +175,7 @@ class Form(QtGui.QMainWindow):
 	   	initialise_fcs(self)
 		
 		self.series_list_model = QtGui.QStandardItemModel()
-		self.series_list_model.itemChanged.connect(self.item_edited)
+		
 		
 		self.create_menu()
 		self.create_main_frame()
@@ -165,8 +191,25 @@ class Form(QtGui.QMainWindow):
 			f.close() 
 		except:
 			self.loadpath = os.path.expanduser('~')+'/FCS_Analysis/'
+		
+		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)')
+		self.load_series(files_to_load)
+		try:
+			self.loadpath = str(QtCore.QFileInfo(file_path).absolutePath())
+			
+			
+					#self.update_ui()
+			f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'w')
 
-		for file_path in load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)'):
+			f.write(self.loadpath)
+			f.close()
+		except:
+			pass
+
+
+	def load_series(self,files_to_load):
+		counter = 0
+		for file_path in  files_to_load:
 				self.nameAndExt = os.path.basename(str(file_path)).split('.')
 				self.name = self.nameAndExt[0]
 				self.ext = self.nameAndExt[-1]
@@ -186,10 +229,12 @@ class Form(QtGui.QMainWindow):
 
 				#self.corrObj.objId.param = self.def_param
 				#Where we add the names.
+				counter = counter+1
+				self.image_status_text.showMessage("Applying to carpet: "+str(counter+1)+' of '+str(files_to_load.__len__()+1)+' selected.')
+                self.app.processEvents()
 				
-				
-				self.image_status_text.showMessage("Loaded " + file_path)
-				self.image_status_text.setStyleSheet("QLabel {  color : green }")
+		self.image_status_text.showMessage("Loaded " + file_path)
+		self.image_status_text.setStyleSheet("QLabel {  color : green }")
 		self.fill_series_list()
 				
 		
@@ -197,17 +242,7 @@ class Form(QtGui.QMainWindow):
 		
 	   
 
-		try:
-			self.loadpath = str(QtCore.QFileInfo(file_path).absolutePath())
-			
-			
-					#self.update_ui()
-			f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'w')
-
-			f.write(self.loadpath)
-			f.close()
-		except:
-			pass
+		
 		
 	
 	
@@ -251,17 +286,21 @@ class Form(QtGui.QMainWindow):
 			
 
 			#Finds the model which has been clicked based on the label association.
-			for objId in self.objIdArr:
+			for Id, objId in enumerate(self.objIdArr):
 				objId.clicked = False
 				if str(objId) == str(thisline.get_label()):
 					objId.clicked = True
 					#self.axes.plot(objId.autotime, objId.autoNorm, 'o',markersize=2, color="red", label=objId,picker=4.0,alpha=alpha)
 					#self.canvas.draw()
 			self.fill_series_list()
-		for objId in self.objIdArr:
+
+		
+		for Id, objId in enumerate(self.objIdArr):
 			if objId.toFit == True:
-				model_index = self.series_list_model.index(row, 0)
-				checked = self.series_list_model.data(model_index, QtCore.Qt.CheckStateRole) == QtCore.QVariant(QtCore.Qt.Checked)
+				model_index = objId.item_in_list
+
+				checked = model_index.checkState() == QtCore.Qt.Checked
+				
 				objId.checked = checked
 				if objId.filter ==True:
 					alpha = 0.1;
@@ -293,10 +332,10 @@ class Form(QtGui.QMainWindow):
 		row = 0;
 		
 		
-		for objId in self.objIdArr:
+		for Id, objId in enumerate(self.objIdArr):
 			if objId.toFit == True:
-				model_index = self.series_list_model.index(row, 0)
-				checked = self.series_list_model.data(model_index, QtCore.Qt.CheckStateRole) == QtCore.QVariant(QtCore.Qt.Checked)
+				model_index = objId.item_in_list
+				checked = model_index.checkState() == QtCore.Qt.Checked
 				if objId.filter ==True:
 					alpha = 0.1;
 				else:
@@ -458,30 +497,88 @@ class Form(QtGui.QMainWindow):
 		self.about_win.raise_()
 	def item_edited(self,model_index):
 		"""If the text is edited this will update the name of the object"""
-		for objId in self.objIdArr:
+		for Id, objId in enumerate(self.objIdArr):
 			item = objId.series_list_id
 			objId.name = item.text()
+	def file_item_edited(self, model_index):
+		
+		if model_index.hasChildren() == True:
+			self.series_list_model.itemChanged.disconnect()
+			for file_id in self.root_name:
+				checked = self.root_name[file_id]['file_item'].checkState() == QtCore.Qt.Checked
+				objId_list = self.root_name[file_id]['objIdArr']
+				for objId in objId_list:
+					if objId.toFit == True:
+						if checked == False:
+							objId.checked = False
+							objId.item_in_list.setCheckState(QtCore.Qt.Unchecked)
+						else:
+							objId.checked = True
+							objId.item_in_list.setCheckState(QtCore.Qt.Checked)
+			self.series_list_model.itemChanged.connect(self.file_item_edited)
 
 	def fill_series_list(self):
 		
 		self.series_list_model.clear()
 		to_focus_item = None
 		to_focus = 0
-		for objId in self.objIdArr:
-				
-				#Find details of each dataset
+
+		self.root_name = {}
+
+		c = -1
+		for Id, objId in enumerate(self.objIdArr):
+			#Find details of each dataset
+				parent_name = objId.parent_name
+				parent_uqid = objId.parent_uqid
+				try: 
+					
+					self.root_name[c][parent_name]
+					#checked = file_item.checkState() == QtCore.Qt.Checked
+
+					#if checked == True:
+					#	file_item.setCheckState(QtCore.Qt.Checked)
+					#else:
+					#	file_item.setCheckState(QtCore.Qt.Unchecked)
+					
+				except:
+					c = c+1
+					self.root_name[c] = {}
+					self.root_name[c]['file_item'] = QtGui.QStandardItem(parent_name)
+					self.root_name[c]['file_item'].setCheckable(True)
+					
+					self.root_name[c][parent_name] = []
+					self.root_name[c]['parent_uqid'] = parent_uqid
+					self.series_list_model.appendRow(self.root_name[c]['file_item'])
+					self.root_name[c]['objIdArr'] = []
+
+				self.root_name[c]['objIdArr'].append(objId)
+
+					
+		bid = 0
+		self.hashlist ={}
+		for file_id in self.root_name:
+
+			idx = 0
+			objId_list = self.root_name[file_id]['objIdArr']
+			for objId in objId_list:
+		
 				name = objId.name
-				item = QtGui.QStandardItem(name)
 				objId.filter = False
 				objId.toFit = True
+				item = QtGui.QStandardItem(name)
+				self.hashlist[item] = bid
+				bid = bid + 1
 
+				
 
 				objId.series_list_id = item
 				#If the item has been checked. Restore that state.
 				if objId.checked == False:
 					item.setCheckState(QtCore.Qt.Unchecked)
+
 				else :
 					item.setCheckState(QtCore.Qt.Checked)
+					self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Checked)
 
 				#Filter for CH identification:
 				if self.ch_check_ch0.isChecked() == True and objId.ch_type == 0:
@@ -543,12 +640,12 @@ class Form(QtGui.QMainWindow):
 				if objId.toFit == True:
 					#Context sensitive colour highlighting
 
-					#if objId.goodFit == False:
-					#	item.setBackground(QtGui.QColor('red'))
-					#elif objId.fitted == True:
-					#	item.setBackground(QtGui.QColor('green'))
-					#else:    
-					#	item.setBackground(QtGui.QColor('white'))
+					if objId.goodFit == False:
+						item.setBackground(QtGui.QColor('red'))
+					elif objId.fitted == True:
+						item.setBackground(QtGui.QColor('green'))
+					else:    
+						item.setBackground(QtGui.QColor('white'))
 					if objId.clicked == True:
 						item.setBackground(QtGui.QColor(0, 0, 255, 127))
 						to_focus = self.series_list_model.rowCount()
@@ -556,13 +653,17 @@ class Form(QtGui.QMainWindow):
 
 
 				
-				
+					self.root_name[file_id]['file_item'].setChild(idx,item)
+					idx = idx +1
 					item.setCheckable(True)
-					self.series_list_model.appendRow(item)
+					objId.item_in_list = item
+					
 		if to_focus_item != None:
 			self.series_list_view.scrollTo(self.series_list_model.indexFromItem(to_focus_item))
 		
 		self.updateFitList()
+		self.series_list_model.itemChanged.connect(self.file_item_edited)
+
 
 				
 	
@@ -588,7 +689,8 @@ class Form(QtGui.QMainWindow):
 		self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
 		
 		log_label = QtGui.QLabel("Data series:")
-		self.series_list_view = QtGui.QListView()
+		self.series_list_view = QtGui.QTreeView()
+		self.series_list_view.setHeaderHidden(True)
 		
 
 		self.series_list_view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -608,6 +710,14 @@ class Form(QtGui.QMainWindow):
 		loadCorrFile = QtGui.QPushButton("Load Correlated File")
 		loadCorrFile.clicked.connect(self.load_file)
 		self.load_box.addWidget(loadCorrFile)
+		
+		load_folder = QtGui.QPushButton('load Folder')
+		self.load_folder_output = folderOutput(self)
+		self.load_folder_output.type = 'folder_to_process'
+		load_folder.clicked.connect(self.load_folder_fn)
+		self.load_box.addWidget(load_folder)
+
+
 		on_about_btn = QtGui.QPushButton()
 		on_about_btn.setText("About Equation")
 		on_about_btn.clicked.connect(self.on_about)
@@ -753,12 +863,32 @@ class Form(QtGui.QMainWindow):
 		self.fitSelected_btn = QtGui.QPushButton("Only highlighted")
 		self.fitSelected_btn.clicked.connect(self.fitSelected_equation)
 
+
+
+
 		#Fit button adding to layout.
 		fit_btns.addWidget(self.fit_btn_txt)
 		fit_btns.addWidget(self.fit_btn)
 		fit_btns.addWidget(self.fitAll_btn)
 		fit_btns.addWidget(self.fitSelected_btn)
 		fit_btns.addStretch();
+
+		#bootstrap.
+		bootstrap_panel = QtGui.QHBoxLayout()
+		bootstrap_panel.addStretch()
+		self.bootstrap_enable_toggle = False
+		self.bootstrap_enable_btn = QtGui.QPushButton('OFF')
+		self.bootstrap_enable_btn.setStyleSheet("color: red");
+		self.bootstrap_enable_btn.setFixedWidth(60)
+		self.bootstrap_enable_btn.clicked.connect(self.bootstrap_enable_toggle_fn)
+		self.bootstrap_samples = QtGui.QSpinBox()
+		self.bootstrap_samples.setRange (1,400)
+		self.bootstrap_samples.setValue(100)
+
+		bootstrap_panel.addWidget(QtGui.QLabel('bootstrap:'))
+		bootstrap_panel.addWidget(self.bootstrap_enable_btn)
+		bootstrap_panel.addWidget(self.bootstrap_samples)
+		
 		
 
 
@@ -787,6 +917,7 @@ class Form(QtGui.QMainWindow):
 		
 		left_vboxTop.addWidget(self.modelFitSel)
 		left_vboxTop.addLayout(fit_btns)
+		left_vboxTop.addLayout(bootstrap_panel)
 		left_vboxTop.addLayout(fit_layout)
 		
 		left_vboxTop.addLayout(default_profile_panel)
@@ -801,6 +932,8 @@ class Form(QtGui.QMainWindow):
 		fit_layout.addWidget(self.fit_btn_max_label)
 		fit_layout.addWidget(self.fit_btn_max)
 		fit_layout.addStretch()
+
+
 		
 		
 		#left_vbox.addWidget(self.fitSelected_btn)
@@ -1035,33 +1168,60 @@ class Form(QtGui.QMainWindow):
 		self.main_frame.setLayout(hbox)
 
 		self.setCentralWidget(self.main_frame)
+	def bootstrap_enable_toggle_fn(self):
+		#Toggle the bootstrap toggle.
+		if self.bootstrap_enable_toggle == False:
+			self.bootstrap_enable_btn.setText('ON')
+			self.bootstrap_enable_btn.setStyleSheet("color: green");
+			self.bootstrap_enable_toggle = True
+		else:
+			self.bootstrap_enable_btn.setText('OFF')
+			self.bootstrap_enable_btn.setStyleSheet("color: red");
+			self.bootstrap_enable_toggle = False
 	
 		
 		
 
 	def create_average_fn(self):
 		#Reads those indices which are highlighted.
+		
+		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
+		
+
 		for v_ind in listToFit:
-			#Finds the unique item names which are currently selected.
-			indList.append(self.series_list_model.itemFromIndex(v_ind))
+			item = self.series_list_model.itemFromIndex(v_ind)
+			if item.hasChildren():
+				indList.extend(self.return_grouped_data_fn(item))
+			else:
+				indList.append(self.hashlist[item])
+
+		
+		#Removes duplicates
+		indList = list(set(indList))
+		#Reverses order.
+		indList.sort(reverse=True)
 		
 		series_2_average = []
-		for i in range(self.objIdArr.__len__()-1,-1,-1):
-			#Looks through the objects in objIdArr and deletes them if they match.
-			for indL in indList:
-				if self.objIdArr[i].series_list_id == indL:
+		#deletes the objects
+		print indList
+		for indL in indList:
+				if self.objIdArr[indL].toFit == True:
 					
-					series_2_average.append(self.objIdArr[i].autoNorm)
+					series_2_average.append(self.objIdArr[indL].autoNorm)
 					if series_2_average.__len__() == 1:
-						autotime = self.objIdArr[i].autotime
+						autotime = self.objIdArr[indL].autotime
 						sum_auto = np.sum(np.array(autotime))
 					else:
-						if np.sum(self.objIdArr[i].autotime) != sum_auto:
+						if np.sum(self.objIdArr[indL].autotime) != sum_auto:
 							series_2_average.pop(-1)
 
-					break
+							
+		
+		
+
+
 		if series_2_average == []:
 			return
 		matrix_2_average = np.zeros((series_2_average.__len__(),series_2_average[0].__len__()))
@@ -1087,29 +1247,38 @@ class Form(QtGui.QMainWindow):
 
 		
 		corrObj1.name = 'average_data'
+		corrObj1.parent_name = 'average_data'
+		corrObj1.parent_uqid = 'average_data'
 		corrObj1.autotime = autotime
 		corrObj1.autoNorm = average_out
 
 		self.fill_series_list()
+		
 		
 
 		
 
 	def check_all_none(self):
 		
-		for objId in self.objIdArr:
-			if objId.toFit == True:
-				objId.checked = self.switch_true_false
-				
-		self.fill_series_list()
+		#for Id, objId in enumerate(self.objIdArr):
+		#	if objId.toFit == True:
+		#		objId.checked = self.switch_true_false
+
+
+		
 
 		if self.switch_true_false == True:
+			for file_id in self.root_name:
+				self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Checked)
 			self.switch_true_false = False
 			self.right_check_all_none.setText("check none")
 
 		else:
+			for file_id in self.root_name:
+				self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Unchecked)
 			self.switch_true_false = True
 			self.right_check_all_none.setText("check all")
+
 	def load_default_profile_fn(self):
 		
 		self.fit_profile = {}
@@ -1129,6 +1298,8 @@ class Form(QtGui.QMainWindow):
 		
 		
 		self.updateParamFirst()
+	def load_folder_fn(self):
+		self.load_folder_output.showDialog()
 	def save_default_profile_fn(self):
 		
 		self.fit_profile = {}
@@ -1166,43 +1337,96 @@ class Form(QtGui.QMainWindow):
 		
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
-		for v_ind in listToFit:
-			#Finds the unique item names which are currently selected.
-			indList.append(self.series_list_model.itemFromIndex(v_ind))
-
-		c = 0;
 		
-		for i in range(self.objIdArr.__len__()-1,-1,-1):
-			#Fits the ones which are highlighted.
-			for indL in indList:
-				if self.objIdArr[i].series_list_id == indL:
-					c = c+1
-					self.objIdArr[i].param = copy.deepcopy(self.objId_sel.param)
-					self.objIdArr[i].fitToParameters()
-					self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
-					self.app.processEvents()
+
+		for v_ind in listToFit:
+			item = self.series_list_model.itemFromIndex(v_ind)
+			if item.hasChildren():
+				indList.extend(self.return_grouped_data_fn(item))
+			else:
+				indList.append(self.hashlist[item])
+
+		
+		#Removes duplicates
+		indList = list(set(indList))
+		#Reverses order.
+		indList.sort(reverse=True)
+		
+		c =0
+		#deletes the objects
+		for indL in indList:
+
+					if self.objIdArr[indL].toFit == True:
+					
+						c = c+1
+						self.objIdArr[indL].param = copy.deepcopy(self.objId_sel.param)
+						self.objIdArr[indL].fitToParameters()
+						self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
+						self.app.processEvents()
 		self.fill_series_list()
+	def return_grouped_data_fn(self,indL):
+			#Go through each file id.
+			indList =[]
+			for file_id in self.root_name:
+				#Find the one with the matching item to the highlighted item.
+				if self.root_name[file_id]['file_item'] == indL:
+					#Get the objects in this file.
+					objId_list = self.root_name[file_id]['objIdArr']
+					
+
+					#Generate a list.
+					
+					
+					for objId in objId_list:
+						indList.append(self.hashlist[objId.series_list_id])
+
+							
+					#Order the list.
+					#indList.sort(reverse=True)
+					#for indL in indList:
+						#Looks through the objects in objIdArr and deletes them if they match.
+					#	del self.objIdArr[indL]
+			return indList			
+			
+
+					
+			
 	def removeDataFn(self):
 		"""Removes data from the displayed dataseries."""
-
+		
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
+		
+
 		for v_ind in listToFit:
-			#Finds the unique item names which are currently selected.
-			indList.append(self.series_list_model.itemFromIndex(v_ind))
+			item = self.series_list_model.itemFromIndex(v_ind)
+			if item.hasChildren():
+				indList.extend(self.return_grouped_data_fn(item))
+			else:
+				indList.append(self.hashlist[item])
+
+		
+		#Removes duplicates
+		indList = list(set(indList))
+		#Reverses order.
+		indList.sort(reverse=True)
 		
 		
-		for i in range(self.objIdArr.__len__()-1,-1,-1):
+		#deletes the objects
+		for indL in indList:
 			#Looks through the objects in objIdArr and deletes them if they match.
-			for indL in indList:
-				if self.objIdArr[i].series_list_id == indL:
-					del self.objIdArr[i]
-					break
+			if self.objIdArr[indL].toFit == True:
+				del self.objIdArr[indL]
+				
+					
+
 		
+		#Important as rehashes the index.
 		self.fill_series_list()
 		self.updateFitList()
-		self.on_show()
+		#self.on_show()
+		
 	def updateFitList(self):
 		"""This is the list which the user selects to bring up parameters.
 		All data is displayed here if it has not been filtered through either channel or another attribute."""
@@ -1385,17 +1609,28 @@ class Form(QtGui.QMainWindow):
 	def clearFits(self):
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
-		if listToFit ==[]:
-			indList = range(0,self.objIdArr.__len__())
-		else:
-			for v_ind in listToFit:
-				indList.append(v_ind.row())
 		
-		for v_ind in indList:
-			self.objIdArr[v_ind].fitted = False;
-			self.objIdArr[v_ind].param = copy.deepcopy(self.def_param)
-			self.objIdArr[v_ind].model_autoNorm =[]
-			self.objIdArr[v_ind].model_autotime = []
+
+		for v_ind in listToFit:
+			item = self.series_list_model.itemFromIndex(v_ind)
+			if item.hasChildren():
+				indList.extend(self.return_grouped_data_fn(item))
+			else:
+				indList.append(self.hashlist[item])
+
+		
+		#Removes duplicates
+		indList = list(set(indList))
+		#Reverses order.
+		indList.sort(reverse=True)
+		
+		
+		#deletes the objects
+		for indL in indList:
+			self.objIdArr[indL].fitted = False;
+			self.objIdArr[indL].param = copy.deepcopy(self.def_param)
+			self.objIdArr[indL].model_autoNorm =[]
+			self.objIdArr[indL].model_autotime = []
 		self.fill_series_list()
 		self.updateFitList()
 		self.on_show()
@@ -1651,7 +1886,7 @@ class Form(QtGui.QMainWindow):
 		#Make sure all table properties are stored
 		self.updateParamFirst()
 		c = 0;
-		for objId in self.objIdArr:
+		for Id, objId in enumerate(self.objIdArr):
 			if objId.toFit == True:
 				c = c+1
 				if objId != self.objId_sel:
@@ -1659,7 +1894,7 @@ class Form(QtGui.QMainWindow):
 					objId.param = copy.deepcopy(self.objId_sel.param)
 				
 				objId.fitToParameters()
-				self.update_calc(objId)
+				#self.update_calc(objId)
 				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(self.modelFitSel.model_obj_ind_list.__len__())+" images.")
 				self.app.processEvents()
 

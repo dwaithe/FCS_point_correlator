@@ -1,4 +1,5 @@
 from correlation_objects import corrObject
+from fitting_methods import calc_param_fcs
 import csv
 import numpy as np
 import copy
@@ -114,6 +115,7 @@ def fcs_import_method(fit_obj,file_path):
 			corrObj.siblings = None
 			corrObj.autoNorm = np.array(tdata).astype(np.float64).reshape(-1)
 			corrObj.autotime = np.array(tscale).astype(np.float64).reshape(-1)*1000
+			
 
 			#Average counts per bin. For it to be seconds (Hz), we have cscale-1 because the first value corresponds to zero recording time.
 			unit = cscale[-1]/(cscale.__len__()-1)
@@ -123,6 +125,8 @@ def fcs_import_method(fit_obj,file_path):
 			
 			corrObj.ch_type = channel;
 			corrObj.param = copy.deepcopy(fit_obj.def_param)
+			corrObj.calculate_suitability()
+			calc_param_fcs(fit_obj,corrObj)
 		
 def sin_import_method(fit_obj,file_path):
 		tscale = [];
@@ -165,6 +169,7 @@ def sin_import_method(fit_obj,file_path):
 		corrObj1.siblings = None
 		corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 		corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
+		
 		corrObj1.name = corrObj1.name+'-CH0'
 		corrObj1.ch_type = 0;
 		#Average counts per bin. For it to be seconds (Hz), must divide by duration.
@@ -172,12 +177,14 @@ def sin_import_method(fit_obj,file_path):
 		#And to be in kHz we divide by 1000.
 		corrObj1.kcount = np.average(np.array(int_tdata)/unit)/1000
 		corrObj1.param = copy.deepcopy(fit_obj.def_param)
-		
+		corrObj1.calculate_suitability()
+		calc_param_fcs(fit_obj,corrObj1)
 		fit_obj.objIdArr.append(corrObj1)
 		if tdata2 !=[]:
 			corrObj2 = corrObject(file_path,fit_obj)
 			corrObj2.autoNorm= np.array(tdata2).astype(np.float64).reshape(-1)
 			corrObj2.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
+			
 			corrObj2.name = corrObj2.name+'-CH1'
 			corrObj2.ch_type = 1;
 	
@@ -187,8 +194,10 @@ def sin_import_method(fit_obj,file_path):
 
 			corrObj1.siblings = [corrObj2]
 			corrObj2.siblings = [corrObj1]
+			
+			corrObj2.calculate_suitability()
+			calc_param_fcs(fit_obj,corrObj2)
 			fit_obj.objIdArr.append(corrObj2)
-	
 
 	
 def csv_import_method(fit_obj,file_path):
@@ -221,6 +230,7 @@ def csv_import_method(fit_obj,file_path):
 
 				corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 				corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+				corrObj1.calculate_suitability()
 				corrObj1.name = corrObj1.name+'-CH'+str(0)
 				corrObj1.ch_type = 0
 				corrObj1.datalen= len(tdata)
@@ -237,6 +247,8 @@ def csv_import_method(fit_obj,file_path):
 					corrObj1.type =str(r_obj.next()[1])
 					corrObj1.ch_type = int(r_obj.next()[1])
 					corrObj1.name = corrObj1.name+'-CH'+str(corrObj1.ch_type)
+					corrObj1.parent_name = 'no name'
+					corrObj1.parent_uqid = '0'
 					
 					line = r_obj.next()
 
@@ -257,6 +269,10 @@ def csv_import_method(fit_obj,file_path):
 							corrObj1.pbc_f0 = float(line[1])
 						if line[0] == 'pbc_tb':
 							corrObj1.pbc_tb = float(line[1])
+						if line[0] == 'parent_name':
+							corrObj1.parent_name = str(line[1])
+						if line[0] == 'parent_uqid':
+							corrObj1.parent_uqid = str(line[1])
 						
 						line = r_obj.next()
 
@@ -285,9 +301,17 @@ def csv_import_method(fit_obj,file_path):
 					corrObj2 = corrObject(file_path,fit_obj);
 					corrObj3 = corrObject(file_path,fit_obj);
 
+					
 					fit_obj.objIdArr.append(corrObj1)
 					fit_obj.objIdArr.append(corrObj2)
 					fit_obj.objIdArr.append(corrObj3)
+					
+					corrObj1.parent_name = 'no name'
+					corrObj1.parent_uqid = '0'
+					corrObj2.parent_name = 'no name'
+					corrObj2.parent_uqid = '0'
+					corrObj3.parent_name = 'no name'
+					corrObj3.parent_uqid = '0'
 					
 					line_type = r_obj.next()
 					corrObj1.type = str(line_type[1])
@@ -329,6 +353,14 @@ def csv_import_method(fit_obj,file_path):
 						if line[0] == 'pbc_tb':
 							corrObj1.pbc_tb = float(line[1])
 							corrObj2.pbc_tb = float(line[2])
+						if line[0] == 'parent_name':
+							corrObj1.parent_name = str(line[1])
+							corrObj2.parent_name = str(line[1])
+							corrObj3.parent_name = str(line[1])
+						if line[0] == 'parent_uqid':
+							corrObj1.parent_uqid = str(line[1])
+							corrObj2.parent_uqid = str(line[1])
+							corrObj3.parent_uqid = str(line[1])
 						
 						line = r_obj.next()
 					
@@ -361,6 +393,8 @@ def csv_import_method(fit_obj,file_path):
 					corrObj1.autoNorm= np.array(tdata0).astype(np.float64).reshape(-1)
 					corrObj2.autoNorm= np.array(tdata1).astype(np.float64).reshape(-1)
 					corrObj3.autoNorm= np.array(tdata2).astype(np.float64).reshape(-1)
+
+					
 					
 					corrObj1.siblings = [corrObj2,corrObj3]
 					corrObj2.siblings = [corrObj1,corrObj3]
@@ -369,6 +403,12 @@ def csv_import_method(fit_obj,file_path):
 					corrObj1.param = copy.deepcopy(fit_obj.def_param)
 					corrObj2.param = copy.deepcopy(fit_obj.def_param)
 					corrObj3.param = copy.deepcopy(fit_obj.def_param)
+
+					corrObj1.calculate_suitability()
+					corrObj2.calculate_suitability()
+					corrObj3.calculate_suitability()
+
+					calc_param_fcs(fit_obj,corrObj1)
 					
 
 

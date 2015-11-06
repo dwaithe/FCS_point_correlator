@@ -84,6 +84,8 @@ def initialise_fcs(int_obj):
 		ACAC = {'alias':'ACAC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 		ACCC = {'alias':'ACCC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 
+		above_zero = {'alias':'above zero','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
+
 
 		int_obj.def_param ={'A1':A1,'A2':A2,'A3':A3,'txy1':txy1,'txy2':txy2,'txy3':txy3,'offset':offset,'GN0':GN0,'alpha1':alpha1,'alpha2':alpha2,'alpha3':alpha3,'tz1':tz1,'tz2':tz2,'tz3':tz3,'AR1':AR1,'AR2':AR2,'AR3':AR3,'B1':B1,'B2':B2,'B3':B3,'T1':T1,'T2':T2,'T3':T3,'tauT1':tauT1,'tauT2':tauT2,'tauT3':tauT3}
 		int_obj.def_param['N_FCS'] = N_FCS
@@ -93,12 +95,13 @@ def initialise_fcs(int_obj):
 		int_obj.def_param['CV'] = CV
 		int_obj.def_param['f0'] = f0
 		int_obj.def_param['overtb'] = overtb
+		int_obj.def_param['above_zero'] = above_zero
 
 		int_obj.def_param['ACAC'] = ACAC
 		int_obj.def_param['ACCC'] = ACCC
 
 		
-		int_obj.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC']
+		int_obj.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
 
 
 def decide_which_to_show(int_obj):
@@ -171,7 +174,12 @@ def calc_param_fcs(int_obj,objId):
 		except:
 			objId.param['N_FCS']['value'] = 1
 			objId.param['N_FCS']['to_show'] = False
-		
+		try:
+			objId.param['above_zero']['value'] = objId.above_zero
+			objId.param['above_zero']['to_show'] = True
+		except:
+			objId.param['above_zero']['value'] = 1
+			objId.param['above_zero']['to_show'] = False
 		
 		try:
 			objId.param['cpm']['value'] = float(objId.kcount)/(1/objId.param['GN0']['value'])
@@ -185,6 +193,7 @@ def calc_param_fcs(int_obj,objId):
 		except:
 			objId.param['N_mom']['value'] =  1
 			objId.param['N_mom']['to_show'] = False
+
 		try:
 			objId.param['bri']['value'] = float(objId.brightnessNandB)
 			objId.param['bri']['to_show'] = True

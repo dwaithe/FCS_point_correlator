@@ -359,7 +359,7 @@ class visualHisto(QtGui.QMainWindow):
 		indList = range(0,self.parObj.objIdArr.__len__())
 		for v_ind in indList:
 			if self.parObj.objIdArr[v_ind].toFit == True:
-				if self.parObj.objIdArr[v_ind].fitted == True:
+				#if self.parObj.objIdArr[v_ind].fitted == True:
 					for art in self.parObj.objIdArr[v_ind].param:
 						if art == self.visual_param_select.currentText():
 							self.data.append(self.parObj.objIdArr[v_ind].param[art]['value'])
@@ -418,7 +418,7 @@ class visualHisto(QtGui.QMainWindow):
 		proceed=False;
 		for i in range(0,self.parObj.objIdArr.__len__()):
 			if self.parObj.objIdArr[i].toFit == True:
-				if self.parObj.objIdArr[i].fitted == True:
+				#if self.parObj.objIdArr[i].fitted == True:
 					v_ind = i;
 					proceed = True;
 					break;

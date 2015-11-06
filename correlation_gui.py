@@ -619,9 +619,10 @@ class Window(QtGui.QWidget):
             self.plt5.plot(decayScale1, photonDecayCh1,object.color)
             if object.numOfCH ==  2:
                 self.plt5.plot(decayScale2, photonDecayCh2,object.color,linestyle='dashed')
-            self.figure5.subplots_adjust(left=0.15,right=0.95, bottom=0.30,top=0.90)
+            self.figure5.subplots_adjust(left=0.1,right=0.95, bottom=0.20,top=0.90)
             self.plt5.set_xlabel('Time channels (1 ='+str(np.round(object.resolution,4))+' ns)', fontsize=12)
-            self.plt5.set_ylabel(axisText, fontsize=8)
+            self.plt5.set_ylabel(axisText, fontsize=12)
+            self.plt5.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
             self.plt5.xaxis.grid(True,'minor')
             self.plt5.xaxis.grid(True,'major')
             self.plt5.yaxis.grid(True,'minor')
