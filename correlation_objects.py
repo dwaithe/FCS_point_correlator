@@ -3,7 +3,7 @@ import os, sys
 from correlation_methods import *
 from import_methods import *
 import time
-from fitting_methods import equation_
+from fitting_methods import equation_, calc_param_fcs
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
 import copy
@@ -503,6 +503,12 @@ class corrObject():
 		 #   if objId.toFit == True:
 		  #      self.parentFn.modelFitSel.addItem(objId.name)
 		#self.parentFn.updateFitList()
+	def calculate_suitability(self):
+
+		size_of_sequence = float(self.autoNorm.__len__())
+		sum_below_origin = float(np.sum(self.autoNorm<0))
+		self.above_zero =  (size_of_sequence - sum_below_origin)/size_of_sequence
+
 	def residual(self, param, x, data,options):
 	
 		A = equation_(param, x,options)
@@ -524,21 +530,54 @@ class corrObject():
 				param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']) ,max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
 				
 		
+
+
+
 		#Find the index of the nearest point in the scale.
 		
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
 		scale = np.array(self.autotime).astype(np.float64).reshape(-1)
 		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
 		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
+
+		
+		
+		if  self.parentFn.bootstrap_enable_toggle == True:
+			num_of_straps = self.parentFn.bootstrap_samples.value()
+			aver_data = {}
+
+			lim_scale = scale[self.indx_L:self.indx_R+1]
+			lim_data  = data[self.indx_L:self.indx_R+1]
+			#Populate a container which will store our output variables from the bootstrap.
+			for art in self.param:
+					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
+						aver_data[art] = []
+			for i in range(0,num_of_straps):
+				#Bootstrap our sample, but remove duplicates.
+				boot_ind = np.random.choice(np.arange(0,lim_data.shape[0]),size=lim_data.shape[0],replace=True);
+				boot_scale = lim_scale[boot_ind]
+				boot_data = lim_data[boot_ind]
+				res = minimize(self.residual, param, args=(boot_scale,boot_data, self.parentFn.def_options))
+				for art in self.param:
+					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
+						aver_data[art].append(float(param[art].value))
+			for art in self.param:
+					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
+						self.param[art]['value'] = np.average(aver_data[art])
+						self.param[art]['stderr'] = np.std(aver_data[art])
 		
 		#Run the fitting.
-		res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
+		if  self.parentFn.bootstrap_enable_toggle == False:
+			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
+			#Repopulate the parameter object.
+			for art in self.param:
+				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
+					self.param[art]['value'] = param[art].value
+					self.param[art]['stderr'] = float(param[art].stderr)
 
-		#Repopulate the parameter object.
-		for art in self.param:
-			if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
-				self.param[art]['value'] = param[art].value
-				self.param[art]['stderr'] = float(param[art].stderr)
+
+
+		
 				
 		#Extra parameters, which are not fit or inherited.
 		#self.param['N_FCS']['value'] = np.round(1/self.param['GN0']['value'],4)
@@ -563,6 +602,7 @@ class corrObject():
 		self.model_autoNorm = equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		self.model_autotime = scale[self.indx_L:self.indx_R+1]
 		#self.parentFn.on_show()
+		calc_param_fcs(self.parentFn,self)
 
 		#self.parentFn.axes.plot(model_autotime,model_autoNorm, 'o-')
 		#self.parentFn.canvas.draw();
