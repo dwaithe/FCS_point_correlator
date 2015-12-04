@@ -151,7 +151,7 @@ class folderOutput(QtGui.QMainWindow):
 
 
 class Form(QtGui.QMainWindow):
-	def __init__(self, parent=None):
+	def __init__(self, type,parent=None):
 		super(Form, self).__init__(parent)
 		self.setWindowTitle('PyQt & matplotlib demo: Data plotting')
 		
@@ -167,6 +167,8 @@ class Form(QtGui.QMainWindow):
 		self.objId_sel = None
 		self.root_name ={}
 		self.win_obj = parent
+		self.type = type
+		
 
 			#Default parameters for each loaded file.
 		#self.def_param = Parameters()
@@ -917,7 +919,8 @@ class Form(QtGui.QMainWindow):
 		
 		left_vboxTop.addWidget(self.modelFitSel)
 		left_vboxTop.addLayout(fit_btns)
-		left_vboxTop.addLayout(bootstrap_panel)
+		if self.type == 'scan':
+			left_vboxTop.addLayout(bootstrap_panel)
 		left_vboxTop.addLayout(fit_layout)
 		
 		left_vboxTop.addLayout(default_profile_panel)

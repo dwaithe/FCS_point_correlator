@@ -6,9 +6,10 @@ if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     par_obj = ParameterClass()
     win_tab = QtGui.QTabWidget()
-    fit_obj = Form()
+    fit_obj = Form('point')
     #Ensures the the fit tab can refresh the display, for status updates.
     fit_obj.app = app
+
     corr_tab = Window(par_obj, fit_obj)
     win_tab.addTab(corr_tab, "Load TCSPC")
     win_tab.addTab(fit_obj, "Fit Function")
