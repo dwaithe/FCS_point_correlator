@@ -112,7 +112,7 @@ def fcs_import_method(fit_obj,file_path):
 			fit_obj.objIdArr.append(corrObj)
 			
 			corrObj.name = corrObj.name+'_'+str(ind)+'_'+str(name)
-			corrObj.parent_name = '.sin_files'
+			corrObj.parent_name = '.fcs files'
 			corrObj.parent_uqid = '0'
 			corrObj.siblings = None
 			corrObj.autoNorm = np.array(tdata).astype(np.float64).reshape(-1)
@@ -192,7 +192,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj2.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
 			corrObj2.name = corrObj2.name+'-CH1'
-			corrObj2.parent_name = '.sin_files'
+			corrObj2.parent_name = '.sin files'
 			corrObj2.parent_uqid = '0'
 			corrObj2.ch_type = 1;
 	
