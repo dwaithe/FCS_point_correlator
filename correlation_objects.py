@@ -477,6 +477,8 @@ class corrObject():
 		self.autotime=[]
 		self.model_autoNorm =[]
 		self.model_autotime = []
+		self.parent_name = 'Not known'
+		self.file_name = 'Not known'
 		self.datalen= []
 		self.objId = self;
 		self.param = []

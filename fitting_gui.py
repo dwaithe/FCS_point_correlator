@@ -1510,7 +1510,10 @@ class Form(QtGui.QMainWindow):
 		copyStr =""
 		
 		
-		keyArray.append('name of file')
+		keyArray.append('name_of_plot')
+		keyArray.append('master_file')
+		keyArray.append('parent_name')
+		keyArray.append('parent_uqid')
 		keyArray.append('time of fit')
 		keyArray.append('Diff_eq')
 		keyArray.append('Diff_species')
@@ -1579,6 +1582,9 @@ class Form(QtGui.QMainWindow):
 					param = self.objIdArr[v_ind].param
 					rowText = []
 					rowText.append(str(self.objIdArr[v_ind].name))
+					rowText.append(str(self.objIdArr[v_ind].file_name))
+					rowText.append(str(self.objIdArr[v_ind].parent_name))
+					rowText.append(str(self.objIdArr[v_ind].parent_uqid))
 					rowText.append(str(self.objIdArr[v_ind].localTime))
 					rowText.append(str(self.diffModEqSel.currentText()))
 					rowText.append(str(self.def_options['Diff_species']))
