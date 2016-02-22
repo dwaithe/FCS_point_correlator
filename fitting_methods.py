@@ -31,7 +31,7 @@ def initialise_fcs(int_obj):
 		
 
 		
-		A1 = {'alias':'A1','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':True,'stdev':False,'calc':False}
+		A1 = {'alias':'A1','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':True,'calc':False}
 		A2 = {'alias':'A2','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':True,'calc':False}
 		A3 = {'alias':'A3','value':1.0,'minv':0.0,'maxv':1.0,'vary':False,'to_show':True,'calc':False}		
 		#The offset
@@ -106,9 +106,9 @@ def initialise_fcs(int_obj):
 
 def decide_which_to_show(int_obj):
 	
-	for art in int_obj.objId_sel.param:
-		if int_obj.objId_sel.param[art]['to_show'] == True:
-			int_obj.objId_sel.param[art]['to_show'] = False
+		for art in int_obj.objId_sel.param:
+			if int_obj.objId_sel.param[art]['to_show'] == True:
+				int_obj.objId_sel.param[art]['to_show'] = False
 
 		int_obj.objId_sel.param[ 'offset']['to_show'] = True
 		int_obj.objId_sel.param[ 'GN0']['to_show'] = True
