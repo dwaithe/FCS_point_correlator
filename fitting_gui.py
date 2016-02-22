@@ -3,7 +3,6 @@ import sys, os, csv
 from PyQt4 import QtCore, QtWebKit
 from PyQt4 import QtGui
 from scipy.special import _ufuncs_cxx
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
@@ -22,7 +21,9 @@ import pyperclip
 import cPickle as pickle
 import copy
 from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
-from fitting_methods import update_param_fcs, calc_param_fcs, decide_which_to_show, initialise_fcs
+import fitting_methods as SE
+import fitting_methods_GS as GS
+#from fitting_methods import update_param_fcs, calc_param_fcs, decide_which_to_show, initialise_fcs
 from correlation_objects import corrObject
 
 """FCS Fitting Software
@@ -174,7 +175,8 @@ class Form(QtGui.QMainWindow):
 		#self.def_param = Parameters()
 		
 		#Initialise the FCS variables
-	   	initialise_fcs(self)
+	   	SE.initialise_fcs(self)
+
 		
 		self.series_list_model = QtGui.QStandardItemModel()
 		
@@ -734,6 +736,7 @@ class Form(QtGui.QMainWindow):
 		self.diffModEqSel.type ='Diff_eq'
 		self.diffModEqSel.addItem('Equation 1A')
 		self.diffModEqSel.addItem('Equation 1B')
+		self.diffModEqSel.addItem('GS neuron')
 		self.model_layout.addWidget(self.diffModEqSel)
 
 
@@ -1786,8 +1789,12 @@ class Form(QtGui.QMainWindow):
 				#Finds the active data set from the combo box.
 				if  self.modelFitSel.model_obj_list != []:
 					self.objId_sel = self.modelFitSel.model_obj_list[self.modelFitSel.currentIndex()]
-					decide_which_to_show(self)
-					calc_param_fcs(self,self.objId_sel)
+					if self.def_options['Diff_eq'] == 3: 
+						GS.decide_which_to_show(self)
+						GS.calc_param_fcs(self,self.objId_sel)
+					else:
+						SE.decide_which_to_show(self)
+						SE.calc_param_fcs(self,self.objId_sel)
 					param = copy.deepcopy(self.objId_sel.param)
 				else:
 					param = copy.deepcopy(self.def_param)
@@ -1872,7 +1879,11 @@ class Form(QtGui.QMainWindow):
 	
 				
 	def updateParam(self):
-		update_param_fcs(self)
+		print 'embark',self.def_options['Diff_eq'] 
+		if self.def_options['Diff_eq'] == 3:
+			GS.update_param_fcs(self)
+		else:
+			SE.update_param_fcs(self)
 	def update_calc(self,objId):
 		calc_param_fcs(self,objId)
 		
@@ -2024,7 +2035,18 @@ class comboBoxSp2(QtGui.QComboBox):
 		self.parent.updateParam()
 		
 		#Update the table display.
-		decide_which_to_show(self.parent)
+		if self.type == 'Diff_eq':
+			print 'self.type',self.type
+			print 'self.type',self.parent.def_options['Diff_eq']
+			if self.parent.def_options['Diff_eq'] == 3:
+				GS.initialise_fcs(self.parent)
+			else:
+				SE.decide_which_to_show(self.parent)
+
+		if self.parent.def_options['Diff_eq'] == 3:
+			GS.decide_which_to_show(self.parent)
+		else:
+			SE.decide_which_to_show(self.parent)
 		self.parent.defineTable()
 		
 class spinBoxSp3(QtGui.QDoubleSpinBox):
