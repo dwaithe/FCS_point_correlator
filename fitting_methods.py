@@ -101,8 +101,7 @@ def initialise_fcs(int_obj):
 		int_obj.def_param['ACCC'] = ACCC
 
 		
-		int_obj.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
-
+		
 
 def decide_which_to_show(int_obj):
 	

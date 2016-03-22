@@ -23,7 +23,8 @@ import copy
 from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
 import fitting_methods as SE
 import fitting_methods_GS as GS
-#from fitting_methods import update_param_fcs, calc_param_fcs, decide_which_to_show, initialise_fcs
+import fitting_methods_VD as VD
+
 from correlation_objects import corrObject
 
 """FCS Fitting Software
@@ -176,6 +177,9 @@ class Form(QtGui.QMainWindow):
 		
 		#Initialise the FCS variables
 	   	SE.initialise_fcs(self)
+	   	GS.initialise_fcs(self)
+	   	VD.initialise_fcs(self)
+	   	self.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
 
 		
 		self.series_list_model = QtGui.QStandardItemModel()
@@ -737,6 +741,7 @@ class Form(QtGui.QMainWindow):
 		self.diffModEqSel.addItem('Equation 1A')
 		self.diffModEqSel.addItem('Equation 1B')
 		self.diffModEqSel.addItem('GS neuron')
+		self.diffModEqSel.addItem('Vesicle Diffusion')
 		self.model_layout.addWidget(self.diffModEqSel)
 
 
@@ -1789,7 +1794,10 @@ class Form(QtGui.QMainWindow):
 				#Finds the active data set from the combo box.
 				if  self.modelFitSel.model_obj_list != []:
 					self.objId_sel = self.modelFitSel.model_obj_list[self.modelFitSel.currentIndex()]
-					if self.def_options['Diff_eq'] == 3: 
+					if self.def_options['Diff_eq'] == 4: 
+						VD.decide_which_to_show(self)
+						VD.calc_param_fcs(self,self.objId_sel)
+					elif self.def_options['Diff_eq'] == 3: 
 						GS.decide_which_to_show(self)
 						GS.calc_param_fcs(self,self.objId_sel)
 					else:
@@ -1811,7 +1819,7 @@ class Form(QtGui.QMainWindow):
 
 					self.filter_select.addItem(item)
 					if param[item]['calc'] == False:
-						self.paramFactory(paraTxt=item,setDec=4,paraMin=-1.0,paraMax=100000,setSingStep=0.01,row=row, param=param)
+						self.paramFactory(paraTxt=item,setDec=6,paraMin=-1.0,paraMax=100000,setSingStep=0.01,row=row, param=param)
 						self.labelArray.append(' '+param[item]['alias'])
 						row +=1
 					else:
@@ -1879,13 +1887,20 @@ class Form(QtGui.QMainWindow):
 	
 				
 	def updateParam(self):
-		print 'embark',self.def_options['Diff_eq'] 
-		if self.def_options['Diff_eq'] == 3:
+		#Update the parameters.
+		if self.def_options['Diff_eq'] == 4:
+			VD.update_param_fcs(self)
+		elif self.def_options['Diff_eq'] == 3:
 			GS.update_param_fcs(self)
 		else:
 			SE.update_param_fcs(self)
 	def update_calc(self,objId):
-		calc_param_fcs(self,objId)
+		if self.def_options['Diff_eq'] == 4:
+			VD.calc_param_fcs(self,objId)
+		elif self.def_options['Diff_eq'] == 3:
+			GS.calc_param_fcs(self,objId)
+		else:
+			SE.calc_param_fcs(self,objId)
 		
 	def updateParamFirst(self):
 		self.updateParam()
@@ -2036,14 +2051,19 @@ class comboBoxSp2(QtGui.QComboBox):
 		
 		#Update the table display.
 		if self.type == 'Diff_eq':
-			print 'self.type',self.type
-			print 'self.type',self.parent.def_options['Diff_eq']
-			if self.parent.def_options['Diff_eq'] == 3:
-				GS.initialise_fcs(self.parent)
+			
+			if self.parent.def_options['Diff_eq'] == 4:
+				self.parent.order_list = ['offset','alpha','dif']
+			elif self.parent.def_options['Diff_eq'] == 3:
+				#GS.initialise_fcs(self.parent)
+				self.parent.order_list = ['offset','GN0','Y','A1','A2','A3','tdiff1','tdiff2','tdiff3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3']
 			else:
-				SE.decide_which_to_show(self.parent)
+				self.parent.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
 
+				SE.decide_which_to_show(self.parent)
 		if self.parent.def_options['Diff_eq'] == 3:
+			VD.decide_which_to_show(self.parent)
+		elif self.parent.def_options['Diff_eq'] == 3:
 			GS.decide_which_to_show(self.parent)
 		else:
 			SE.decide_which_to_show(self.parent)

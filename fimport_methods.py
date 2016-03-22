@@ -1,5 +1,6 @@
 from correlation_objects import corrObject
-from fitting_methods import calc_param_fcs
+import fitting_methods as SE
+import fitting_methods_GS as GS
 import csv
 import numpy as np
 import copy
@@ -128,7 +129,17 @@ def fcs_import_method(fit_obj,file_path):
 			corrObj.ch_type = channel;
 			corrObj.param = copy.deepcopy(fit_obj.def_param)
 			corrObj.calculate_suitability()
-			calc_param_fcs(fit_obj,corrObj)
+			#if fit_obj.diffModEqSel.currentIndex()+1 == 3:
+			#	GS.calc_param_fcs(fit_obj,corrObj)
+			#else:
+		#		SE.calc_param_fcs(fit_obj,corrObj)
+
+			if fit_obj.def_options['Diff_eq'] == 4: 
+				VD.calc_param_fcs(fit_obj,corrObj)
+			elif fit_obj.def_options['Diff_eq'] == 3: 
+				GS.calc_param_fcs(fit_obj,corrObj)
+			else:
+				SE.calc_param_fcs(fit_obj,corrObj)
 		
 def sin_import_method(fit_obj,file_path):
 		tscale = [];
@@ -184,7 +195,14 @@ def sin_import_method(fit_obj,file_path):
 		corrObj1.kcount = np.average(np.array(int_tdata)/unit)/1000
 		corrObj1.param = copy.deepcopy(fit_obj.def_param)
 		corrObj1.calculate_suitability()
-		calc_param_fcs(fit_obj,corrObj1)
+
+		if fit_obj.def_options['Diff_eq'] == 4: 
+			VD.calc_param_fcs(fit_obj,corrObj1)
+		elif fit_obj.def_options['Diff_eq'] == 3: 
+			GS.calc_param_fcs(fit_obj,corrObj1)
+		else:
+			SE.calc_param_fcs(fit_obj,corrObj1)
+
 		fit_obj.objIdArr.append(corrObj1)
 		if tdata2 !=[]:
 			corrObj2 = corrObject(file_path,fit_obj)
@@ -204,7 +222,12 @@ def sin_import_method(fit_obj,file_path):
 			corrObj2.siblings = [corrObj1]
 			
 			corrObj2.calculate_suitability()
-			calc_param_fcs(fit_obj,corrObj2)
+			if fit_obj.def_options['Diff_eq'] == 4: 
+				VD.calc_param_fcs(fit_obj,corrObj2)
+			elif fit_obj.def_options['Diff_eq'] == 3: 
+				GS.calc_param_fcs(fit_obj,corrObj2)
+			else:
+				SE.calc_param_fcs(fit_obj,corrObj2)
 			fit_obj.objIdArr.append(corrObj2)
 
 	
@@ -416,7 +439,7 @@ def csv_import_method(fit_obj,file_path):
 					corrObj2.calculate_suitability()
 					corrObj3.calculate_suitability()
 
-					calc_param_fcs(fit_obj,corrObj1)
+					SE.calc_param_fcs(fit_obj,corrObj1)
 					
 
 
