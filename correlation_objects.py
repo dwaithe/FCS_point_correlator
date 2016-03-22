@@ -3,7 +3,9 @@ import os, sys
 from correlation_methods import *
 from import_methods import *
 import time
-from fitting_methods import equation_, calc_param_fcs
+import fitting_methods as SE
+import fitting_methods_GS as GS
+import fitting_methods_VD as VD
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
 import copy
@@ -512,8 +514,12 @@ class corrObject():
 		self.above_zero =  (size_of_sequence - sum_below_origin)/size_of_sequence
 
 	def residual(self, param, x, data,options):
-	
-		A = equation_(param, x,options)
+		if self.parentFn.def_options['Diff_eq'] == 4:
+			A = VD.equation_(param, x,options)
+		elif self.parentFn.def_options['Diff_eq'] == 3:
+			A = GS.equation_(param, x,options)
+		else:
+			A = SE.equation_(param, x,options)
 		residuals = data-A
 		return residuals
 	def fitToParameters(self):
@@ -601,10 +607,20 @@ class corrObject():
 		
 		
 		#self.parentFn.updateTableFirst();
-		self.model_autoNorm = equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		if self.parentFn.def_options['Diff_eq'] == 4:
+			self.model_autoNorm = VD.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		elif self.parentFn.def_options['Diff_eq'] == 3:
+			self.model_autoNorm = GS.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		else:
+			self.model_autoNorm = SE.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		self.model_autotime = scale[self.indx_L:self.indx_R+1]
 		#self.parentFn.on_show()
-		calc_param_fcs(self.parentFn,self)
+		if self.parentFn.def_options['Diff_eq'] == 4:
+			VD.calc_param_fcs(self.parentFn,self)
+		elif self.parentFn.def_options['Diff_eq'] == 3:
+			GS.calc_param_fcs(self.parentFn,self)
+		else:
+			SE.calc_param_fcs(self.parentFn,self)
 
 		#self.parentFn.axes.plot(model_autotime,model_autoNorm, 'o-')
 		#self.parentFn.canvas.draw();
