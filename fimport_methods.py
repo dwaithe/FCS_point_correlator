@@ -144,10 +144,13 @@ def fcs_import_method(fit_obj,file_path):
 def sin_import_method(fit_obj,file_path):
 		tscale = [];
 		tdata = [];
-		tdata2 = []
+		tdata2 = [];
+		tdata3 = [];
+		tdata4 = [];
 		int_tscale =[];
 		int_tdata = [];
-		int_tdata2 =[];
+		int_tdata2 = [];
+		
 		
 		proceed = False
 		
@@ -161,6 +164,10 @@ def sin_import_method(fit_obj,file_path):
 					tdata.append(float(line[1]))
 					if line.__len__()>2:
 						tdata2.append(float(line[2]))
+					if line.__len__()>3:
+						tdata3.append(float(line[3]))
+					if line.__len__()>4:
+						tdata4.append(float(line[4]))
 			if proceed =='intensity':
 				
 				if line ==[]:
@@ -171,6 +178,7 @@ def sin_import_method(fit_obj,file_path):
 					int_tdata.append(float(line[1]))
 					if line.__len__()>2:
 						int_tdata2.append(float(line[2]))
+					
 			if (str(line)  == "[\'[CorrelationFunction]\']"):
 				proceed = 'correlated';
 			elif (str(line)  == "[\'[IntensityHistory]\']"):
@@ -204,6 +212,8 @@ def sin_import_method(fit_obj,file_path):
 			SE.calc_param_fcs(fit_obj,corrObj1)
 
 		fit_obj.objIdArr.append(corrObj1)
+
+		#Basic 
 		if tdata2 !=[]:
 			corrObj2 = corrObject(file_path,fit_obj)
 			corrObj2.autoNorm= np.array(tdata2).astype(np.float64).reshape(-1)
@@ -229,6 +239,62 @@ def sin_import_method(fit_obj,file_path):
 			else:
 				SE.calc_param_fcs(fit_obj,corrObj2)
 			fit_obj.objIdArr.append(corrObj2)
+		if tdata3 !=[]:
+			corrObj3 = corrObject(file_path,fit_obj)
+			corrObj3.autoNorm= np.array(tdata3).astype(np.float64).reshape(-1)
+			corrObj3.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
+			
+			corrObj3.ch_type = 2;
+			corrObj3.name = corrObj3.name+'-CH10'
+			corrObj3.parent_name = '.sin files'
+			corrObj3.parent_uqid = '0'
+			
+	
+			#And to be in kHz we divide by 1000.
+			#corrObj3.kcount = np.average(np.array(int_tdata3)/unit)/1000
+			corrObj3.param = copy.deepcopy(fit_obj.def_param)
+
+			corrObj1.siblings = [corrObj2,corrObj3]
+			corrObj2.siblings = [corrObj1,corrObj3]
+			corrObj3.siblings = [corrObj1,corrObj2]
+			
+			corrObj3.calculate_suitability()
+			if fit_obj.def_options['Diff_eq'] == 4: 
+				VD.calc_param_fcs(fit_obj,corrObj3)
+			elif fit_obj.def_options['Diff_eq'] == 3: 
+				GS.calc_param_fcs(fit_obj,corrObj3)
+			else:
+				SE.calc_param_fcs(fit_obj,corrObj3)
+			fit_obj.objIdArr.append(corrObj3)
+		if tdata4 !=[]:
+			corrObj4 = corrObject(file_path,fit_obj)
+			corrObj4.autoNorm= np.array(tdata4).astype(np.float64).reshape(-1)
+			corrObj4.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
+			
+			corrObj4.ch_type = 3;
+			corrObj4.name = corrObj4.name+'-CH01'
+			corrObj4.parent_name = '.sin files'
+			corrObj4.parent_uqid = '0'
+			
+	
+			#And to be in kHz we divide by 1000.
+			#corrObj4.kcount = np.average(np.array(int_tdata4)/unit)/1000
+			corrObj4.param = copy.deepcopy(fit_obj.def_param)
+
+			corrObj1.siblings = [corrObj2,corrObj3,corrObj4]
+			corrObj2.siblings = [corrObj1,corrObj3,corrObj4]
+			corrObj3.siblings = [corrObj1,corrObj2,corrObj4]
+			corrObj4.siblings = [corrObj1,corrObj2,corrObj3]
+			
+			corrObj4.calculate_suitability()
+			if fit_obj.def_options['Diff_eq'] == 4: 
+				VD.calc_param_fcs(fit_obj,corrObj4)
+			elif fit_obj.def_options['Diff_eq'] == 3: 
+				GS.calc_param_fcs(fit_obj,corrObj4)
+			else:
+				SE.calc_param_fcs(fit_obj,corrObj4)
+			fit_obj.objIdArr.append(corrObj4)
+
 
 	
 def csv_import_method(fit_obj,file_path):

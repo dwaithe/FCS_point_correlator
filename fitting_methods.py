@@ -211,8 +211,8 @@ def calc_param_fcs(int_obj,objId):
 			objId.param['overtb']['to_show'] = True
 		except:
 			pass
-
-		if int_obj.objIdArr != [] and objId.siblings !=None and objId.ch_type != 2:
+		try:
+			if int_obj.objIdArr != [] and objId.siblings !=None and objId.ch_type != 2 and objId.ch_type != 3:
 					
 					if objId.siblings[0].fitted == True:
 						
@@ -220,7 +220,8 @@ def calc_param_fcs(int_obj,objId):
 						objId.param['ACAC']['to_show'] = True
 						objId.param['ACCC']['value'] = float(objId.param['GN0']['value'])/float(objId.siblings[1].param['GN0']['value'])
 						objId.param['ACCC']['to_show'] = True
-				
+		except:
+			pass
 
 def equation_(param, tc,options):
 	"""This is equation for fitting"""

@@ -202,13 +202,10 @@ class Form(QtGui.QMainWindow):
 		
 		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)')
 		self.load_series(files_to_load)
+		
 		try:
-			self.loadpath = str(QtCore.QFileInfo(file_path).absolutePath())
-			
-			
-					#self.update_ui()
+			self.loadpath = str(QtCore.QFileInfo(files_to_load[0]).absolutePath())
 			f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'w')
-
 			f.write(self.loadpath)
 			f.close()
 		except:
@@ -241,7 +238,7 @@ class Form(QtGui.QMainWindow):
 				self.image_status_text.showMessage("Applying to carpet: "+str(counter+1)+' of '+str(files_to_load.__len__()+1)+' selected.')
                 self.app.processEvents()
 				
-		self.image_status_text.showMessage("Loaded " + file_path)
+		self.image_status_text.showMessage("Files loaded")
 		self.image_status_text.setStyleSheet("QLabel {  color : green }")
 		self.fill_series_list()
 				
@@ -2053,7 +2050,7 @@ class comboBoxSp2(QtGui.QComboBox):
 		if self.type == 'Diff_eq':
 			
 			if self.parent.def_options['Diff_eq'] == 4:
-				self.parent.order_list = ['offset','alpha','dif']
+				self.parent.order_list = ['offset','GN0','alpha','dif']
 			elif self.parent.def_options['Diff_eq'] == 3:
 				#GS.initialise_fcs(self.parent)
 				self.parent.order_list = ['offset','GN0','Y','A1','A2','A3','tdiff1','tdiff2','tdiff3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3']
