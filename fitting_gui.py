@@ -2050,7 +2050,7 @@ class comboBoxSp2(QtGui.QComboBox):
 		if self.type == 'Diff_eq':
 			
 			if self.parent.def_options['Diff_eq'] == 4:
-				self.parent.order_list = ['offset','GN0','alpha','dif']
+				self.parent.order_list = ['offset','GN0','ves_radius','FWHM','D']
 			elif self.parent.def_options['Diff_eq'] == 3:
 				#GS.initialise_fcs(self.parent)
 				self.parent.order_list = ['offset','GN0','Y','A1','A2','A3','tdiff1','tdiff2','tdiff3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3']
