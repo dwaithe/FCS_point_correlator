@@ -3,10 +3,10 @@ import copy
 from scipy import special as sp
 def initialise_fcs(int_obj):
 	
-	GN0 = {'alias':'GN0','minv':0.001,'value':1,'maxv':1.0,'vary':True,'to_show':True,'calc':False}
-	ves_radius = { 'alias':'Ves. radius','value':0.01,'minv':0.00001,'maxv':10.0,'vary':True,'to_show':True,'calc':False}
-	D = {'alias':'D','value':0.01,'minv':0.00001,'maxv':10.0,'vary':True,'to_show':True,'calc':False}
-	FWHM = {'alias':'FWHM','value':0.01,'minv':0.00001,'maxv':10.0,'vary':True,'to_show':True,'calc':False}
+	GN0 = {'alias':'GN0','minv':0.001,'value':1,'maxv':10.0,'vary':True,'to_show':True,'calc':False}
+	ves_radius = { 'alias':'Ves. radius','value':0.01,'minv':0.00001,'maxv':500.0,'vary':True,'to_show':True,'calc':False}
+	D = {'alias':'D','value':0.01,'minv':0.00001,'maxv':50.0,'vary':True,'to_show':True,'calc':False}
+	FWHM = {'alias':'FWHM','value':0.01,'minv':0.00001,'maxv':500.0,'vary':True,'to_show':True,'calc':False}
 	offset = { 'alias':'offset','value':0.01,'minv':-0.5,'maxv':1.5,'vary':True,'to_show':True,'calc':False}
 
 	int_obj.def_param['GN0'] = GN0
@@ -24,7 +24,7 @@ def decide_which_to_show(int_obj):
 	int_obj.objId_sel.param['ves_radius']['to_show'] = True
 	int_obj.objId_sel.param['D']['to_show'] = True
 	int_obj.objId_sel.param['FWHM']['to_show'] = True
-	
+
 	
 	int_obj.objId_sel.param[ 'offset']['to_show'] = True
 	int_obj.objId_sel.param[ 'GN0']['to_show'] = True
