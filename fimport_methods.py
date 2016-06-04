@@ -380,8 +380,12 @@ def csv_import_method(fit_obj,file_path):
 					
 					tscale = []
 					tdata = []
-					null = r_obj.next()
+
+					#null = r_obj.next()
+					
+
 					line = r_obj.next()
+					
 					while  line[0] != 'end':
 
 						tscale.append(line[0])
@@ -468,7 +472,7 @@ def csv_import_method(fit_obj,file_path):
 						corrObj2.name = corrObj2.name +'_pc_m'+str(pc_text)
 						corrObj3.name = corrObj3.name +'_pc_m'+str(pc_text)
 					
-					null = r_obj.next()
+					#null = r_obj.next()
 					line = r_obj.next()
 					tscale = []
 					tdata0 = []

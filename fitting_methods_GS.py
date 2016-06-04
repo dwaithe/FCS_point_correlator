@@ -68,13 +68,13 @@ def decide_which_to_show(int_obj):
 
 	if int_obj.def_options['Triplet_eq'] == 2:
 			#Triplet State equation1
-			for i in range(1,int_obj.tripNumSpecSnp.pin.value()+1):			 
+			for i in range(1,int_obj.tripNumSpecSpin.value()+1):			 
 				int_obj.objId_sel.param['B'+str(i)]['to_show'] = True
 				int_obj.objId_sel.param['tauT'+str(i)]['to_show'] = True
 				
 	if int_obj.def_options['Triplet_eq'] == 3:
 			#Triplet State equation2
-			for i in range(1,int_obj.tripNumSpecSnp.pin.value()+1):
+			for i in range(1,int_obj.tripNumSpecSpin.value()+1):
 				int_obj.objId_sel.param['T'+str(i)]['to_show'] = True
 				int_obj.objId_sel.param['tauT'+str(i)]['to_show'] = True
 	
@@ -166,7 +166,7 @@ def equation_(param,tc,options):
 	if (options['Diff_species'] == 1):
 		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value;
 
-		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*(np.exp(-k*(np.pi/Y)**2 *tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
+		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2) *tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
 		gx1 = 1/np.sqrt(1+tc/tdiff1)
 		
 		GDiff = A1*gy1*gx1
@@ -177,9 +177,9 @@ def equation_(param,tc,options):
 		param['A2'].value = 1.0-A1
 		A2 = param['A2'].value
 
-		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*(np.exp(-k*(np.pi/Y)**2 *tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
+		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2) *tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
 		gx1 = 1/np.sqrt(1+tc/tdiff1)
-		gy2 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*(np.exp(-k*(np.pi/Y)**2 *tc/tdiff2)/(np.sqrt(1+tc/tdiff2))))
+		gy2 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2) *tc/tdiff2)/(np.sqrt(1+tc/tdiff2))))
 		gx2 = 1/np.sqrt(1+tc/tdiff2)
 
 		GDiff = A1*gy1*gx1 + A2*gy2*gx2
@@ -194,11 +194,11 @@ def equation_(param,tc,options):
 		A3 = param['A3'].value
 		
 
-		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*(np.exp(-k*(np.pi/Y)**2 *tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
+		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2)*tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
 		gx1 = 1/np.sqrt(1+tc/tdiff1)
-		gy2 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*(np.exp(-k*(np.pi/Y)**2 *tc/tdiff2)/(np.sqrt(1+tc/tdiff2))))
+		gy2 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2)*tc/tdiff2)/(np.sqrt(1+tc/tdiff2))))
 		gx2 = 1/np.sqrt(1+tc/tdiff2)
-		gy3 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*(np.exp(-k*(np.pi/Y)**2 *tc/tdiff3)/(np.sqrt(1+tc/tdiff3))))
+		gy3 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2)*tc/tdiff3)/(np.sqrt(1+tc/tdiff3))))
 		gx3 = 1/np.sqrt(1+tc/tdiff3)
 
 		GDiff = A1*gy1*gx1 + A2*gy2*gx2 + A3*gy3*gx3
