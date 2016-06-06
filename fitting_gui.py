@@ -24,6 +24,7 @@ from fimport_methods import fcs_import_method,sin_import_method,csv_import_metho
 import fitting_methods as SE
 import fitting_methods_GS as GS
 import fitting_methods_VD as VD
+import fitting_methods_PB as PB
 
 from correlation_objects import corrObject
 
@@ -179,6 +180,7 @@ class Form(QtGui.QMainWindow):
 	   	SE.initialise_fcs(self)
 	   	GS.initialise_fcs(self)
 	   	VD.initialise_fcs(self)
+	   	PB.initialise_fcs(self)
 	   	self.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
 
 		
@@ -739,6 +741,7 @@ class Form(QtGui.QMainWindow):
 		self.diffModEqSel.addItem('Equation 1B')
 		self.diffModEqSel.addItem('GS neuron')
 		self.diffModEqSel.addItem('Vesicle Diffusion')
+		self.diffModEqSel.addItem('PB Correction')
 		self.model_layout.addWidget(self.diffModEqSel)
 
 
@@ -1791,7 +1794,10 @@ class Form(QtGui.QMainWindow):
 				#Finds the active data set from the combo box.
 				if  self.modelFitSel.model_obj_list != []:
 					self.objId_sel = self.modelFitSel.model_obj_list[self.modelFitSel.currentIndex()]
-					if self.def_options['Diff_eq'] == 4: 
+					if self.def_options['Diff_eq'] == 5: 
+						PB.decide_which_to_show(self)
+						PB.calc_param_fcs(self,self.objId_sel)
+					elif self.def_options['Diff_eq'] == 4: 
 						VD.decide_which_to_show(self)
 						VD.calc_param_fcs(self,self.objId_sel)
 					elif self.def_options['Diff_eq'] == 3: 
@@ -1810,6 +1816,7 @@ class Form(QtGui.QMainWindow):
 			self.filter_select.clear()
 			
 			col =0
+			
 			for item in self.order_list:
 				
 				if param[item]['to_show'] == True:
@@ -1885,14 +1892,18 @@ class Form(QtGui.QMainWindow):
 				
 	def updateParam(self):
 		#Update the parameters.
-		if self.def_options['Diff_eq'] == 4:
+		if self.def_options['Diff_eq'] == 5:
+			PB.update_param_fcs(self)
+		elif self.def_options['Diff_eq'] == 4:
 			VD.update_param_fcs(self)
 		elif self.def_options['Diff_eq'] == 3:
 			GS.update_param_fcs(self)
 		else:
 			SE.update_param_fcs(self)
 	def update_calc(self,objId):
-		if self.def_options['Diff_eq'] == 4:
+		if self.def_options['Diff_eq'] == 5:
+			PB.calc_param_fcs(self,objId)
+		elif self.def_options['Diff_eq'] == 4:
 			VD.calc_param_fcs(self,objId)
 		elif self.def_options['Diff_eq'] == 3:
 			GS.calc_param_fcs(self,objId)
@@ -2049,7 +2060,9 @@ class comboBoxSp2(QtGui.QComboBox):
 		#Update the table display.
 		if self.type == 'Diff_eq':
 			
-			if self.parent.def_options['Diff_eq'] == 4:
+			if self.parent.def_options['Diff_eq'] == 5:
+				self.parent.order_list = ['offset','GN0','txy1','bA','Kz']
+			elif self.parent.def_options['Diff_eq'] == 4:
 				self.parent.order_list = ['offset','GN0','ves_radius','FWHM','D']
 			elif self.parent.def_options['Diff_eq'] == 3:
 				#GS.initialise_fcs(self.parent)
@@ -2057,8 +2070,10 @@ class comboBoxSp2(QtGui.QComboBox):
 			else:
 				self.parent.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
 
-				SE.decide_which_to_show(self.parent)
-		if self.parent.def_options['Diff_eq'] == 3:
+				
+		if self.parent.def_options['Diff_eq'] == 5:
+			VD.decide_which_to_show(self.parent)
+		elif self.parent.def_options['Diff_eq'] == 4:
 			VD.decide_which_to_show(self.parent)
 		elif self.parent.def_options['Diff_eq'] == 3:
 			GS.decide_which_to_show(self.parent)

@@ -6,6 +6,7 @@ import time
 import fitting_methods as SE
 import fitting_methods_GS as GS
 import fitting_methods_VD as VD
+import fitting_methods_PB as PB
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
 import copy
@@ -514,7 +515,9 @@ class corrObject():
 		self.above_zero =  (size_of_sequence - sum_below_origin)/size_of_sequence
 
 	def residual(self, param, x, data,options):
-		if self.parentFn.def_options['Diff_eq'] == 4:
+		if self.parentFn.def_options['Diff_eq'] == 5:
+			A = PB.equation_(param, x,options)
+		elif self.parentFn.def_options['Diff_eq'] == 4:
 			A = VD.equation_(param, x,options)
 		elif self.parentFn.def_options['Diff_eq'] == 3:
 			A = GS.equation_(param, x,options)
@@ -607,7 +610,9 @@ class corrObject():
 		
 		
 		#self.parentFn.updateTableFirst();
-		if self.parentFn.def_options['Diff_eq'] == 4:
+		if self.parentFn.def_options['Diff_eq'] == 5:
+			self.model_autoNorm = PB.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		elif self.parentFn.def_options['Diff_eq'] == 4:
 			self.model_autoNorm = VD.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		elif self.parentFn.def_options['Diff_eq'] == 3:
 			self.model_autoNorm = GS.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
@@ -615,7 +620,9 @@ class corrObject():
 			self.model_autoNorm = SE.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		self.model_autotime = scale[self.indx_L:self.indx_R+1]
 		#self.parentFn.on_show()
-		if self.parentFn.def_options['Diff_eq'] == 4:
+		if self.parentFn.def_options['Diff_eq'] == 5:
+			PB.calc_param_fcs(self.parentFn,self)
+		elif self.parentFn.def_options['Diff_eq'] == 4:
 			VD.calc_param_fcs(self.parentFn,self)
 		elif self.parentFn.def_options['Diff_eq'] == 3:
 			GS.calc_param_fcs(self.parentFn,self)
