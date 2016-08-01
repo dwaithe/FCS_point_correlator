@@ -5,7 +5,7 @@ import csv
 
 """FCS Bulk Correlation Software
 
-    Copyright (C) 2015  Dominic Waithe
+    Copyright (C) 2015, 2016  Dominic Waithe
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,254 @@ import csv
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
+import struct
+import string
+
+def ptuimport(filepath):
+
+    
+    tyEmpty8      = int('FFFF0008', 16);
+    tyBool8       = int('00000008', 16);
+    tyInt8        = int('10000008', 16);
+    tyBitSet64    = int('11000008', 16);
+    tyColor8      = int('12000008', 16);
+    tyFloat8      = int('20000008', 16);
+    tyTDateTime   = int('21000008', 16);
+    tyFloat8Array = int('2001FFFF', 16);
+    tyAnsiString  = int('4001FFFF', 16);
+    tyWideString  = int('4002FFFF', 16);
+    tyBinaryBlob  = int('FFFFFFFF', 16);
+
+    rtPicoHarpT3     = int('00010303', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $03 (PicoHarp)
+    rtPicoHarpT2     = int('00010203', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $03 (PicoHarp)
+    rtHydraHarpT3    = int('00010304', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $04 (HydraHarp)
+    rtHydraHarpT2    = int('00010204', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $04 (HydraHarp)
+    rtHydraHarp2T3   = int('01010304', 16);# (SubID = $01 ,RecFmt: $01) (V2), T-Mode: $03 (T3), HW: $04 (HydraHarp)
+    rtHydraHarp2T2   = int('01010204', 16);# (SubID = $01 ,RecFmt: $01) (V2), T-Mode: $02 (T2), HW: $04 (HydraHarp)
+    rtTimeHarp260NT3 = int('00010305', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $05 (TimeHarp260N)
+    rtTimeHarp260NT2 = int('00010205', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $05 (TimeHarp260N)
+    rtTimeHarp260PT3 = int('00010306', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $06 (TimeHarp260P)
+    rtTimeHarp260PT2 = int('00010206', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $06 (TimeHarp260P)
+
+    fid = 0
+    #TTResultFormat_TTTRRecType =0 ;
+    #TTResult_NumberOfRecords = 0; #% Number of TTTR Records in the File;
+    #MeasDesc_Resolution =0;      #% Resolution for the Dtime (T3 Only)
+    #MeasDesc_GlobalResolution =0;
+
+    f = open(filepath, 'r')
+    magic = str(f.read(8))
+    if magic[0:6] != "PQTTTR":
+        print 'Your file is an invalid .ptu'
+        return
+    version =  f.read(8)
+    #print 'version',version
+
+    file_type = {}
+    while True:
+            #read Tag Head
+            TagIdent = f.read(32); # TagHead.Ident
+            TagIdent = string.replace(TagIdent,'\x00','')
+            #print 'Tag',TagIdent
+            #TagIdent = TagIdent[TagIdent != 0]]#'; # remove #0 and more more readable
+
+            TagIdx =  struct.unpack('i', f.read(4))[0] #TagHead.Idx
+            TagTyp =  np.array(struct.unpack('i', f.read(4))[0]).astype(np.uint32) #TagHead.Typ
+            #TagHead.Value will be read in the right type function
+            #print 'TagIdx',TagIdx
+            if TagIdx > -1:
+                EvalName = TagIdent+'('+str(TagIdx+1)+')'
+            else:
+                EvalName = TagIdent
+
+            
+
+            #print('eval',str(EvalName))
+            
+            
+            
+            if TagTyp == tyEmpty8:
+                struct.unpack('l', f.read(8))[0]
+                #print('empty')
+            elif TagTyp ==tyBool8:
+                TagInt = struct.unpack('l', f.read(8))[0]
+                if TagInt == 0:
+                    #print('False')
+                    file_type[EvalName] = False
+                else:
+                    #print('True')
+                    file_type[EvalName] = True
+            elif TagTyp == tyInt8:
+                TagInt =  struct.unpack('l', f.read(8))[0]
+                file_type[EvalName] = TagInt
+                #print('tyInt8',TagInt)
+            elif TagTyp == tyBitSet64:
+                TagInt = struct.unpack('l', f.read(8))[0]
+                file_type[EvalName] = TagInt
+                #print('tyBitSet64',TagInt)
+            elif TagTyp == tyColor8:
+                TagInt = struct.unpack('l', f.read(8))[0]
+                file_type[EvalName] = TagInt
+                #print('tyColor8',TagInt)
+            elif TagTyp == tyFloat8:
+                TagInt = struct.unpack('d', f.read(8))[0]
+                file_type[EvalName] = TagInt
+                #print('tyFloat8',TagInt)
+            elif TagTyp == tyFloat8Array:
+                TagInt = struct.unpack('l', f.read(8))[0]
+                file_type[EvalName] = TagInt
+                #print '<Float array with'+str(TagInt / 8)+'Entries>'
+                #print('tyFloat8Array',TagInt)
+                f.seek(TagInt)
+            elif TagTyp == tyTDateTime:
+                TagFloat = struct.unpack('d', f.read(8))[0]
+                #print('date'+str(TagFloat))
+                file_type[EvalName] = TagFloat
+            elif TagTyp == tyAnsiString:
+                TagInt = int(struct.unpack('l', f.read(8))[0])
+                TagString = f.read(TagInt)
+                TagString = string.replace(TagString,'\x00','')
+
+                #print('tyAnsiString',TagString)
+                if TagIdx > -1:
+                    EvalName = TagIdent +'{'+str(TagIdx+1)+'}'
+                file_type[EvalName] = TagString
+            elif TagTyp == tyWideString:
+                TagInt = struct.unpack('i', f.read(4))[0].astype(np.float64)
+                TagString = struct.unpack('i', f.read(4))[0].astype(np.float64)
+
+                #print('tyWideString',TagString)
+                if TagIdx > -1:
+                    EvalName = TagIdent +'{'+str(TagIdx+1)+'}'
+                file_type[EvalName] = TagString
+            elif TagTyp == tyBinaryBlob:
+                TagInt = struct.unpack('i', f.read(4))[0].astype(np.float64)
+                #print('<Binary Blob with '+str(TagInt)+'Bytes>')
+                f.seek(TagInt)
+            else:
+                print('Illegal Type identifier found! Broken file?',TagTyp)
+                
+            if TagIdent == "Header_End":
+                
+                break
+
+    print('\n------------------------\n')
+    TTResultFormat_TTTRRecType = file_type['TTResultFormat_TTTRRecType']
+    if TTResultFormat_TTTRRecType == rtPicoHarpT3:
+        isT2 = False
+        print 'PicoHarp T3 data\n'
+
+    elif TTResultFormat_TTTRRecType == rtPicoHarpT2:
+        isT2 =True
+        print 'PicoHarp T2 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtHydraHarpT3:
+        isT2 = False
+        print 'HydraHarp V1 T3 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtHydraHarpT2:
+        isT2 = True
+        print 'HydraHarp V1 T2 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtHydraHarp2T3:
+        isT2 = False
+        print 'HydraHarp V2 T3 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtHydraHarp2T2:
+        isT2 = True
+        print 'HydraHarp V2 T2 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260NT3:
+        isT2 = False
+        print 'TimeHarp260N T3 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260NT2:
+        isT2 = True
+        print 'TimeHarp260P T3 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260PT3:
+        isT2 = False
+        print 'TimeHarp260P T3 data \n'
+
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2:
+        isT2 = True
+        print 'TimeHarp260P T2 data \n'
+
+    else:
+        print('Illegal RecordType')
+
+    #if (isT2):
+    #      print '\trecord#\tType\tCh\tTimeTag\tTrueTime/ps\n'
+    #else:
+    #      print '\trecord#\tType\tCh\tTimeTag\tTrueTime/ns\tDTime\n'
+
+
+    
+            
+    if TTResultFormat_TTTRRecType   == rtPicoHarpT3: 
+        return ReadPT3(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'])
+
+    elif TTResultFormat_TTTRRecType == rtPicoHarpT2: #ReadPT2
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtHydraHarpT3: #ReadHT3(1)
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtHydraHarpT2: #ReadHT3(1)
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtHydraHarp2T3: #ReadHT3(2);
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtHydraHarp2T2: #ReadHT2(2);
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260NT3: #ReadHT3(2);
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260NT2: #ReadHT2(2);
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260PT3: #ReadHT3(2);
+        print 'currently this type of file is not supported using this python implementation'
+    elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2: #ReadHT2(2);
+        print 'currently this type of file is not supported using this python implementation'
+    else: print('Illegal RecordType')
+        
+    ###Decoder functions
+
+    ##READ picoHarp T3
+def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
+
+    cnt_Ofl = 0
+    WRAPAROUND = 65536
+    ofltime = 0
+    chanArr = [0]*TTResult_NumberOfRecords
+    trueTimeArr =[0]*TTResult_NumberOfRecords
+    dTimeArr= [0]*TTResult_NumberOfRecords
+    truetime = 0
+
+    for b in range(0,TTResult_NumberOfRecords):
+        recNum = b
+        T3Record = struct.unpack('I', f.read(4))[0];
+        nsync = T3Record & 65535
+        chan = ((T3Record >> 28) & 15);
+        chanArr[b]=chan
+
+        dtime = 0
+        truensync = ofltime + nsync;
+        if chan >0 and chan <5:
+            dtime = dtime = ((T3Record >> 16) & 4095);
+            truetime = (truensync * MeasDesc_GlobalResolution * 1e9)
+        elif chan == 15:
+            markers = ((T3Record >> 16) & 15);
+            truetime = 0
+            if markers ==0:
+                ofltime = ofltime +WRAPAROUND;
+                cnt_Ofl = cnt_Ofl+1
+                
+            else:
+                cnt_M=cnt_M+1
+                #f1.write("MA:%1u "+markers+" ")
+            
+        trueTimeArr[b] = truetime
+        dTimeArr[b] = dtime
+        chanArr[b] = chan
+
+    return np.array(chanArr), np.array(trueTimeArr), np.array(dTimeArr), MeasDesc_GlobalResolution* 1e9    
 def csvimport(filepath):
     """Function for importing time-tag data directly into FCS point software. """
     r_obj = csv.reader(open(filepath, 'rb'))
@@ -218,6 +466,9 @@ def pt3import(filepath):
     f.close();
     #f1.close();
     
-    
+    #print trueTimeArr
+    #print dTimeArr
+    #print chanArr
+    print Resolution
     
     return np.array(chanArr), np.array(trueTimeArr), np.array(dTimeArr), Resolution

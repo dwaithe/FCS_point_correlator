@@ -261,6 +261,7 @@ class Form(QtGui.QMainWindow):
 		except:
 			pass
 		self.axes.set_ylabel('Correlation', fontsize=12)
+		self.axes.format_coord = lambda x, y: ''
 		
 		self.axes.xaxis.grid(True,'minor')
 		self.axes.xaxis.grid(True,'major')
@@ -268,6 +269,7 @@ class Form(QtGui.QMainWindow):
 		self.axes.yaxis.grid(True,'major')
 		self.axes2.clear()        
 		self.axes2.grid(True)
+		self.axes2.format_coord = lambda x, y: ''
 		
 		self.axes2.set_xlabel('Residual Tau (ms)', fontsize=12)
 		self.axes2.xaxis.grid(True,'minor')
@@ -513,6 +515,7 @@ class Form(QtGui.QMainWindow):
 			self.series_list_model.itemChanged.disconnect()
 			for file_id in self.root_name:
 				checked = self.root_name[file_id]['file_item'].checkState() == QtCore.Qt.Checked
+				
 				objId_list = self.root_name[file_id]['objIdArr']
 				for objId in objId_list:
 					if objId.toFit == True:
@@ -526,6 +529,25 @@ class Form(QtGui.QMainWindow):
 
 	def fill_series_list(self):
 		
+
+		try:
+			#Makes sure the root file names don't trigger strange effects
+			self.series_list_model.itemChanged.disconnect(self.file_item_edited)
+			for Id, objId in enumerate(self.objIdArr):
+				if objId.toFit == True:
+					model_index = objId.item_in_list
+
+					checked = model_index.checkState() == QtCore.Qt.Checked
+					
+					objId.checked = checked
+
+		except:
+			pass
+
+		
+
+
+
 		self.series_list_model.clear()
 		to_focus_item = None
 		to_focus = 0
@@ -564,10 +586,12 @@ class Form(QtGui.QMainWindow):
 		bid = 0
 		self.hashlist ={}
 		for file_id in self.root_name:
+		#Files are organised by their root name.
 
 			idx = 0
 			objId_list = self.root_name[file_id]['objIdArr']
 			for objId in objId_list:
+				#For each objecct.
 		
 				name = objId.name
 				objId.filter = False
@@ -575,8 +599,6 @@ class Form(QtGui.QMainWindow):
 				item = QtGui.QStandardItem(name)
 				self.hashlist[item] = bid
 				bid = bid + 1
-
-				
 
 				objId.series_list_id = item
 				#If the item has been checked. Restore that state.
@@ -670,6 +692,7 @@ class Form(QtGui.QMainWindow):
 		
 		self.updateFitList()
 		self.series_list_model.itemChanged.connect(self.file_item_edited)
+				
 
 
 				
@@ -1922,7 +1945,7 @@ class Form(QtGui.QMainWindow):
 		if self.objId_sel.toFit == True:
 			self.objId_sel.fitToParameters()
 			self.update_calc(self.objId_sel)
-			self.fill_series_list()
+			#self.fill_series_list()
 			self.on_show()	
 	def fitAll_equation(self):
 		"""Take the active parameters and applies them to all the other data which is not filtered"""
@@ -1945,7 +1968,7 @@ class Form(QtGui.QMainWindow):
 		
 		
 		self.on_show()	   
-		self.fill_series_list()
+		#self.fill_series_list()
 	
 		
 

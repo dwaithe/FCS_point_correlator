@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+
 """FCS Bulk Correlation Software
 
     Copyright (C) 2015  Dominic Waithe
@@ -17,7 +18,17 @@ import copy
     You should have received a copy of the GNU General Public License along
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""
+
+
+      .o8                              o8o      .   oooo                 
+     "888                              `"'    .o8   `888                 
+ .oooo888  oooo oooo    ooo  .oooo.   oooo  .o888oo  888 .oo.    .ooooo. 
+d88' `888   `88. `88.  .8'  `P  )88b  `888    888    888P"Y88b  d88' `88b
+888   888    `88..]88..8'    .oP"888   888    888    888   888  888ooo888
+888   888     `888'`888'    d8(  888   888    888 .  888   888  888    .o
+`Y8bod88P"     `8'  `8'     `Y888""8o o888o   "888" o888o o888o `Y8bod8P'
+
+"""                                                                         
 def initialise_fcs(int_obj):
 	#default options for the fitting.
 		int_obj.def_options ={}

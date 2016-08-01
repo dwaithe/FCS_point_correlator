@@ -74,6 +74,8 @@ class picoObject():
 		
 		if self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+		if self.ext == 'ptu':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = ptuimport(self.filepath)
 		if self.ext == 'csv':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
 			#If the file is empty.
@@ -94,6 +96,7 @@ class picoObject():
 		#How many channels there are in the files.
 		self.numOfCH =  np.unique(np.array(self.subChanArr)).__len__()-1 #Minus 1 because not interested in channel 15.
 		
+		
 		#Finds the numbers which address the channels.
 		self.ch_present = np.unique(np.array(self.subChanArr[0:100]))
 
@@ -106,7 +109,9 @@ class picoObject():
 		#Time series of photon counts. For visualisation.
 		self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
 		
+		
 		unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
+		
 		
 		#Converts to counts per 
 		self.kcount_CH1 = np.average(self.timeSeries1)
@@ -523,8 +528,8 @@ class corrObject():
 			A = GS.equation_(param, x,options)
 		else:
 			A = SE.equation_(param, x,options)
-		residuals = data-A
-		return residuals
+		residuals = np.array(data)-np.array(A)
+		return np.array(residuals).astype(np.float64)
 	def fitToParameters(self):
 		#self.parentFn.updateParamFirst()
 		#self.parentFn.updateTableFirst()
@@ -536,9 +541,9 @@ class corrObject():
 		#self.def_param.add('A1', value=1.0, min=0,max=1.0, vary=False)
 		for art in self.param:
 			
-			if self.param[art]['to_show'] == True:
+			if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 				
-				param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']) ,max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
+				param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']), max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
 				
 		
 
@@ -547,6 +552,7 @@ class corrObject():
 		#Find the index of the nearest point in the scale.
 		
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
+		
 		scale = np.array(self.autotime).astype(np.float64).reshape(-1)
 		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
 		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
@@ -571,7 +577,7 @@ class corrObject():
 				res = minimize(self.residual, param, args=(boot_scale,boot_data, self.parentFn.def_options))
 				for art in self.param:
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
-						aver_data[art].append(float(param[art].value))
+						aver_data[art].append(float(res.params[art].value))
 			for art in self.param:
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 						self.param[art]['value'] = np.average(aver_data[art])
@@ -579,12 +585,17 @@ class corrObject():
 		
 		#Run the fitting.
 		if  self.parentFn.bootstrap_enable_toggle == False:
+			
 			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 			#Repopulate the parameter object.
+			#print 'message',(fit_report(res))
+
 			for art in self.param:
 				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
-					self.param[art]['value'] = param[art].value
-					self.param[art]['stderr'] = float(param[art].stderr)
+
+					self.param[art]['value'] = res.params[art].value
+					self.param[art]['stderr'] = float(res.params[art].stderr)
+					
 
 
 
@@ -595,7 +606,7 @@ class corrObject():
 
 
 		self.residualVar = res.residual
-		output = fit_report(param)
+		output = fit_report(res.params)
 		print 'residual',res.chisqr
 		if(res.chisqr>0.05):
 			print 'CAUTION DATA DID NOT FIT WELL CHI^2 >0.05',res.chisqr
@@ -611,13 +622,13 @@ class corrObject():
 		
 		#self.parentFn.updateTableFirst();
 		if self.parentFn.def_options['Diff_eq'] == 5:
-			self.model_autoNorm = PB.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+			self.model_autoNorm = PB.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		elif self.parentFn.def_options['Diff_eq'] == 4:
-			self.model_autoNorm = VD.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+			self.model_autoNorm = VD.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		elif self.parentFn.def_options['Diff_eq'] == 3:
-			self.model_autoNorm = GS.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+			self.model_autoNorm = GS.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		else:
-			self.model_autoNorm = SE.equation_(param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+			self.model_autoNorm = SE.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
 		self.model_autotime = scale[self.indx_L:self.indx_R+1]
 		#self.parentFn.on_show()
 		if self.parentFn.def_options['Diff_eq'] == 5:

@@ -201,7 +201,7 @@ class FileDialog(QtGui.QMainWindow):
         #Create loop which opens dialog box and allows selection of files.
 
         self.win_obj.update_correlation_parameters()
-        for filename in fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);;All Files (*.*)'):
+        for filename in fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);All Files (*.*)'):
             pic = picoObject(filename,self.par_obj,self.fit_obj);
             if pic.exit == True:
                 return
@@ -245,9 +245,11 @@ class Window(QtGui.QWidget):
         #self.canvas1 = FigureCanvas(self.figure1)
         self.canvas1 = FigureCanvas(self.figure1)
         self.figure1.patch.set_facecolor('white')
+
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         self.toolbar1 = NavigationToolbar(self.canvas1, self)
+
 
         self.figure2 = plt.figure()
         self.canvas2 = FigureCanvas(self.figure2)
@@ -258,12 +260,12 @@ class Window(QtGui.QWidget):
         self.canvas3 = FigureCanvas(self.figure3)
         #self.toolbar3 = NavigationToolbar(self.canvas3, self)
 
-        self.figure4 = plt.figure(figsize=(7,3))
+        self.figure4 = plt.figure(figsize=(3,2.3))
         self.canvas4 = FigureCanvas(self.figure4)
         self.figure4.patch.set_facecolor('white')
         #self.toolbar4 = NavigationToolbar(self.canvas4, self)
 
-        self.figure5 = plt.figure(figsize=(4,3))
+        self.figure5 = plt.figure(figsize=(3,2.3))
         self.canvas5 = FigureCanvas(self.figure5)
         self.figure5.patch.set_facecolor('white')
         #Tself.toolbar5 = NavigationToolbar(self.canvas5, self)
@@ -352,8 +354,10 @@ class Window(QtGui.QWidget):
         self.modelTab.setColumnWidth(4,85);
         self.modelTab.setColumnWidth(5,70);
         self.modelTab.setColumnWidth(6,20);
-        self.modelTab.horizontalHeader().setStretchLastSection(True)
+        #self.modelTab.horizontalHeader().setStretchLastSection(True)
+        self.modelTab.resize(350,200)
         self.modelTab.setMinimumSize(350,200)
+        self.modelTab.setMaximumSize(350,200)
         self.modelTab.setHorizontalHeaderLabels(QtCore.QString(",From: , ,To: ,Apply to:, , , , ").split(","))
 
         #The table which shows the details of each correlated file. 
@@ -368,6 +372,8 @@ class Window(QtGui.QWidget):
         self.modelTab2.setColumnWidth(5,100);
         self.modelTab2.horizontalHeader().setStretchLastSection(True)
         self.modelTab2.resize(800,400)
+        
+
         self.modelTab2.setHorizontalHeaderLabels(QtCore.QString(",data name,plot,,file name").split(","))
 
         tableAndBtns =  QtGui.QVBoxLayout()
@@ -455,6 +461,7 @@ class Window(QtGui.QWidget):
         self.left_panel_centre_right.addWidget(self.NcascEndText)
         self.left_panel_centre_right.addWidget(self.NcascEndEdit)
         self.left_panel_centre_right.addWidget(self.reprocess_btn)
+
         
         self.left_panel_centre_right.setAlignment(QtCore.Qt.AlignTop)
         self.right_panel.addWidget(self.canvas1)
@@ -468,10 +475,12 @@ class Window(QtGui.QWidget):
         correlationBtns.addWidget(self.saveAll_btn)
         correlationBtns.addWidget(self.toolbar1)
         correlationBtns.setAlignment(QtCore.Qt.AlignLeft)
+        self.left_panel.addStretch()
         tableAndBtns.addWidget(self.modelTab2)
         
         self.setLayout(main_layout)
         main_layout.addLayout(self.left_panel)
+        main_layout.addStretch()
         #main_layout.addLayout(self.centre_panel)
         main_layout.addLayout(self.right_panel)
         #main_layout.addLayout(self.right_panel)
@@ -484,6 +493,12 @@ class Window(QtGui.QWidget):
         self.plt3= self.figure1.add_subplot(313)
         self.plt4= self.figure4.add_subplot(111)
         self.plt5= self.figure5.add_subplot(111)
+
+        
+
+        self.plt1.format_coord = lambda x, y: ''
+        self.plt2.format_coord = lambda x, y: ''
+        self.plt3.format_coord = lambda x, y: ''
 
         
    
