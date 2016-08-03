@@ -541,6 +541,7 @@ class Form(QtGui.QMainWindow):
 		try:
 			#Makes sure the root file names don't trigger strange effects
 			self.series_list_model.itemChanged.disconnect(self.file_item_edited)
+			#Trys to check to 
 			for Id, objId in enumerate(self.objIdArr):
 				if objId.toFit == True:
 					model_index = objId.item_in_list
@@ -555,7 +556,7 @@ class Form(QtGui.QMainWindow):
 		self.root_name_copy = {}
 		for file_id,idx in enumerate(self.root_name):
 			to_focus_item = self.root_name[file_id]['file_item']
-			self.root_name_copy[file_id] = self.series_list_view.isExpanded(self.series_list_model.indexFromItem(to_focus_item))
+			self.root_name_copy[file_id] = [self.series_list_view.isExpanded(self.series_list_model.indexFromItem(to_focus_item)),self.root_name[file_id]['file_item'].checkState()]
 			
 
 
@@ -587,14 +588,20 @@ class Form(QtGui.QMainWindow):
 					self.root_name[c] = {}
 					self.root_name[c]['file_item'] = QtGui.QStandardItem(parent_name)
 					self.root_name[c]['file_item'].setCheckable(True)
+					self.root_name[c]['file_item'].setCheckState(QtCore.Qt.Unchecked)
+					#print 'self.root_name_copy[c][1]',self.root_name_copy
+					
 					
 					self.root_name[c][parent_name] = []
 					self.root_name[c]['parent_uqid'] = parent_uqid
 					self.series_list_model.appendRow(self.root_name[c]['file_item'])
 
-					if c in self.root_name_copy and self.root_name_copy[c] == True:
-						
-						self.series_list_view.setExpanded(self.series_list_model.indexFromItem(self.root_name[c]['file_item']),True)
+					#If the root_name previously existed a
+					if c in self.root_name_copy:
+						#If the rootname was checked. Make sure it is (or isn't) when list is rebuilt.
+						self.root_name[c]['file_item'].setCheckState(self.root_name_copy[c][1])
+						#If the rootname was expanded make sure it is (or isn't) when list is rebuilt.
+						self.series_list_view.setExpanded(self.series_list_model.indexFromItem(self.root_name[c]['file_item']), self.root_name_copy[c][0])
 					self.root_name[c]['objIdArr'] = []
 
 				#Add the individual plots to the root list.
@@ -699,7 +706,7 @@ class Form(QtGui.QMainWindow):
 						item.setCheckState(QtCore.Qt.Unchecked)
 					else :
 						item.setCheckState(QtCore.Qt.Checked)
-					self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Checked)
+					#self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Checked)
 					#Context sensitive colour highlighting
 
 					self.colour_entry(objId)
@@ -2021,7 +2028,7 @@ class Form(QtGui.QMainWindow):
 				
 				objId.fitToParameters()
 				#self.update_calc(objId)
-				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(self.modelFitSel.model_obj_ind_list.__len__())+" images.")
+				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(self.modelFitSel.model_obj_ind_list.__len__())+" curves.")
 				self.app.processEvents()
 
 					
