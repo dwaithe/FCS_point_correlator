@@ -25,6 +25,7 @@ import fitting_methods as SE
 import fitting_methods_GS as GS
 import fitting_methods_VD as VD
 import fitting_methods_PB as PB
+import copy
 
 from correlation_objects import corrObject
 
@@ -504,11 +505,11 @@ class Form(QtGui.QMainWindow):
 		self.about_win.setLayout(layout)
 		self.about_win.show()
 		self.about_win.raise_()
-	def item_edited(self,model_index):
-		"""If the text is edited this will update the name of the object"""
-		for Id, objId in enumerate(self.objIdArr):
-			item = objId.series_list_id
-			objId.name = item.text()
+	#def item_edited(self,model_index):
+	#	"""If the text is edited this will update the name of the object"""
+	#	for Id, objId in enumerate(self.objIdArr):
+	#		item = objId.series_list_id
+	#lis		objId.name = item.text()
 	def file_item_edited(self, model_index):
 		
 		if model_index.hasChildren() == True:
@@ -526,7 +527,14 @@ class Form(QtGui.QMainWindow):
 							objId.checked = True
 							objId.item_in_list.setCheckState(QtCore.Qt.Checked)
 			self.series_list_model.itemChanged.connect(self.file_item_edited)
-
+	def colour_entry(self,objId):
+		#Context sensitive colour highlighting
+		if objId.goodFit == False:
+			objId.series_list_id.setBackground(QtGui.QColor('red'))
+		elif objId.fitted == True:
+			objId.series_list_id.setBackground(QtGui.QColor('green'))
+		else:    
+			objId.series_list_id.setBackground(QtGui.QColor('white'))
 	def fill_series_list(self):
 		
 
@@ -538,38 +546,43 @@ class Form(QtGui.QMainWindow):
 					model_index = objId.item_in_list
 
 					checked = model_index.checkState() == QtCore.Qt.Checked
-					
 					objId.checked = checked
 
 		except:
 			pass
 
 		
-
+		self.root_name_copy = {}
+		for file_id,idx in enumerate(self.root_name):
+			to_focus_item = self.root_name[file_id]['file_item']
+			self.root_name_copy[file_id] = self.series_list_view.isExpanded(self.series_list_model.indexFromItem(to_focus_item))
+			
 
 
 		self.series_list_model.clear()
 		to_focus_item = None
 		to_focus = 0
 
+
+
+
+		
+
+		#Regenerates root_name list.
 		self.root_name = {}
+		self.obj_hash_list = {}
 
 		c = -1
 		for Id, objId in enumerate(self.objIdArr):
 			#Find details of each dataset
 				parent_name = objId.parent_name
 				parent_uqid = objId.parent_uqid
-				try: 
-					
-					self.root_name[c][parent_name]
-					#checked = file_item.checkState() == QtCore.Qt.Checked
 
-					#if checked == True:
-					#	file_item.setCheckState(QtCore.Qt.Checked)
-					#else:
-					#	file_item.setCheckState(QtCore.Qt.Unchecked)
-					
-				except:
+				#If the name already exists.
+				if c in self.root_name and parent_name in self.root_name[c]:
+					pass
+				#If not then populate root_name with details.
+				else:
 					c = c+1
 					self.root_name[c] = {}
 					self.root_name[c]['file_item'] = QtGui.QStandardItem(parent_name)
@@ -578,36 +591,33 @@ class Form(QtGui.QMainWindow):
 					self.root_name[c][parent_name] = []
 					self.root_name[c]['parent_uqid'] = parent_uqid
 					self.series_list_model.appendRow(self.root_name[c]['file_item'])
+
+					if c in self.root_name_copy and self.root_name_copy[c] == True:
+						
+						self.series_list_view.setExpanded(self.series_list_model.indexFromItem(self.root_name[c]['file_item']),True)
 					self.root_name[c]['objIdArr'] = []
 
+				#Add the individual plots to the root list.
 				self.root_name[c]['objIdArr'].append(objId)
 
 					
 		bid = 0
-		self.hashlist ={}
+		lid = -1
+		self.tree_hash_list ={}
 		for file_id in self.root_name:
 		#Files are organised by their root name.
 
 			idx = 0
 			objId_list = self.root_name[file_id]['objIdArr']
 			for objId in objId_list:
+				lid = lid +1
 				#For each objecct.
 		
-				name = objId.name
+				
 				objId.filter = False
 				objId.toFit = True
-				item = QtGui.QStandardItem(name)
-				self.hashlist[item] = bid
-				bid = bid + 1
-
-				objId.series_list_id = item
-				#If the item has been checked. Restore that state.
-				if objId.checked == False:
-					item.setCheckState(QtCore.Qt.Unchecked)
-
-				else :
-					item.setCheckState(QtCore.Qt.Checked)
-					self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Checked)
+				
+				
 
 				#Filter for CH identification:
 				if self.ch_check_ch0.isChecked() == True and objId.ch_type == 0:
@@ -619,9 +629,7 @@ class Form(QtGui.QMainWindow):
 				elif self.ch_check_ch10.isChecked() == True and objId.ch_type == 3:
 					objId.toFit = True
 				else:
-					
 					objId.toFit = False
-					continue;
 				
 				for filt in self.tfb.filter_list:
 					if objId.filter == False:
@@ -664,39 +672,78 @@ class Form(QtGui.QMainWindow):
 
 
 				
-
 				
+				
+
+
+				#If the data should appear in the list:
 				if objId.toFit == True:
+					name = objId.name
+					#Creat an item.
+					item = QtGui.QStandardItem(name)
+					#Store the index
+					self.tree_hash_list[item] = bid
+					self.obj_hash_list[bid] = lid
+					#Iterate index for next.
+					bid = bid + 1
+
+					
+					
+					
+
+					#Store the item.
+					objId.series_list_id = item
+					#If the item has been checked. Restore that state.
+					#Remember whether it was checked or not.
+					if objId.checked == False:
+						item.setCheckState(QtCore.Qt.Unchecked)
+					else :
+						item.setCheckState(QtCore.Qt.Checked)
+					self.root_name[file_id]['file_item'].setCheckState(QtCore.Qt.Checked)
 					#Context sensitive colour highlighting
 
-					if objId.goodFit == False:
-						item.setBackground(QtGui.QColor('red'))
-					elif objId.fitted == True:
-						item.setBackground(QtGui.QColor('green'))
-					else:    
-						item.setBackground(QtGui.QColor('white'))
-					if objId.clicked == True:
-						item.setBackground(QtGui.QColor(0, 0, 255, 127))
-						to_focus = self.series_list_model.rowCount()
-						to_focus_item = item
+					self.colour_entry(objId)
 
 
 				
 					self.root_name[file_id]['file_item'].setChild(idx,item)
 					idx = idx +1
 					item.setCheckable(True)
+					item.setEditable(False)
+					
 					objId.item_in_list = item
 					
 		if to_focus_item != None:
 			self.series_list_view.scrollTo(self.series_list_model.indexFromItem(to_focus_item))
+
+		
 		
 		self.updateFitList()
 		self.series_list_model.itemChanged.connect(self.file_item_edited)
+		self.series_list_view.doubleClicked.connect(self.dbl_click_method)
+
 				
 
 
 				
-	
+	def dbl_click_method(self,index):
+		
+		#Returns the indices of what has been double clicked.
+		itemToSelect = self.series_list_view.selectedIndexes()[0]
+		#Gets the associated index.
+		item = self.series_list_model.itemFromIndex(itemToSelect)
+		if item.hasChildren():
+			#If we double click header we don't want to do anything.
+			pass
+		else:
+			#Returns actual value.
+			to_select = self.tree_hash_list[item]
+			#updates selected.
+			self.modelFitSel.setCurrentIndex(to_select)
+			#updates the whole list (not necessary but makes sure all is correct)
+			self.updateFitList()
+			
+    	#print item.model().itemFromIndex(index).text()
 	def create_main_frame(self):
 		"""Creates the main layout of the fitting interface """
 		self.main_frame = QtGui.QWidget()
@@ -1229,7 +1276,7 @@ class Form(QtGui.QMainWindow):
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.hashlist[item])
+				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
 
 		
 		#Removes duplicates
@@ -1378,7 +1425,7 @@ class Form(QtGui.QMainWindow):
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.hashlist[item])
+				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
 
 		
 		#Removes duplicates
@@ -1397,7 +1444,10 @@ class Form(QtGui.QMainWindow):
 						self.objIdArr[indL].fitToParameters()
 						self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
 						self.app.processEvents()
-		self.fill_series_list()
+						#Context sensitive colour highlighting
+						self.colour_entry(self.objIdArr[indL])
+		self.updateFitList()
+		self.on_show()
 	def return_grouped_data_fn(self,indL):
 			#Go through each file id.
 			indList =[]
@@ -1412,7 +1462,8 @@ class Form(QtGui.QMainWindow):
 					
 					
 					for objId in objId_list:
-						indList.append(self.hashlist[objId.series_list_id])
+						if objId.series_list_id != None:
+							indList.append(self.obj_hash_list[self.tree_hash_list[objId.series_list_id]])
 
 							
 					#Order the list.
@@ -1431,14 +1482,14 @@ class Form(QtGui.QMainWindow):
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
-		
+		print listToFit
 
 		for v_ind in listToFit:
 			item = self.series_list_model.itemFromIndex(v_ind)
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.hashlist[item])
+				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
 
 		
 		#Removes duplicates
@@ -1449,6 +1500,7 @@ class Form(QtGui.QMainWindow):
 		
 		#deletes the objects
 		for indL in indList:
+			print self.objIdArr[indL].toFit
 			#Looks through the objects in objIdArr and deletes them if they match.
 			if self.objIdArr[indL].toFit == True:
 				del self.objIdArr[indL]
@@ -1646,7 +1698,9 @@ class Form(QtGui.QMainWindow):
 			pyperclip.copy(copyStr)
 		else:
 			csvfile.close()
+
 	def clearFits(self):
+		"""If items are selected in the tree view. Clear their fit settings."""
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
 		
@@ -1656,7 +1710,7 @@ class Form(QtGui.QMainWindow):
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.hashlist[item])
+				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
 
 		
 		#Removes duplicates
@@ -1668,6 +1722,7 @@ class Form(QtGui.QMainWindow):
 		#deletes the objects
 		for indL in indList:
 			self.objIdArr[indL].fitted = False;
+			self.objIdArr[indL].goodFit = True;
 			self.objIdArr[indL].param = copy.deepcopy(self.def_param)
 			self.objIdArr[indL].model_autoNorm =[]
 			self.objIdArr[indL].model_autotime = []
@@ -1946,7 +2001,12 @@ class Form(QtGui.QMainWindow):
 			self.objId_sel.fitToParameters()
 			self.update_calc(self.objId_sel)
 			#self.fill_series_list()
-			self.on_show()	
+			self.on_show()
+			self.updateFitList()
+			#Context sensitive colour highlighting
+			self.colour_entry(self.objId_sel)
+
+
 	def fitAll_equation(self):
 		"""Take the active parameters and applies them to all the other data which is not filtered"""
 		#Make sure all table properties are stored
@@ -1964,10 +2024,16 @@ class Form(QtGui.QMainWindow):
 				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(self.modelFitSel.model_obj_ind_list.__len__())+" images.")
 				self.app.processEvents()
 
+					
+				#Context sensitive colour highlighting
+				self.colour_entry(objId)
+					
+
 
 		
 		
-		self.on_show()	   
+		self.on_show()
+		self.updateFitList() 
 		#self.fill_series_list()
 	
 		
@@ -1996,7 +2062,13 @@ class draggableLine:
 		if event.inaxes != self.line.axes: return
 		contains, attrd = self.line.contains(event)
 		if not contains: return
+		if self.parent.mpl_toolbar._active == "PAN" or self.parent.mpl_toolbar._active == "ZOOM": return
 		self.press = True
+		
+			
+
+		
+			
 		
 
 	def on_motion(self, event):

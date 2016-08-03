@@ -183,6 +183,8 @@ class FileDialog(QtGui.QMainWindow):
         
         self.setGeometry(300, 300, 350, 500)
         self.setWindowTitle('File dialog')
+    def count(self):
+        print 'workes'
         #self.show()
         
     def showDialog(self):
@@ -201,9 +203,18 @@ class FileDialog(QtGui.QMainWindow):
         #Create loop which opens dialog box and allows selection of files.
 
         self.win_obj.update_correlation_parameters()
-        for filename in fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);All Files (*.*)'):
+        file_imports = fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);All Files (*.*)')
+        bt = QtGui.QPushButton("cancel")
+        
+        for c,filename in enumerate(file_imports):
+            self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:green;font-weight:regular;}")
+            self.win_obj.image_status_text.showMessage("Processing file "+str(c+1)+" of "+str(file_imports.__len__()))
+            self.fit_obj.app.processEvents()
             pic = picoObject(filename,self.par_obj,self.fit_obj);
             if pic.exit == True:
+                self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:red;font-weight:bold;}")
+                self.win_obj.image_status_text.showMessage("Your data-file is not a supported format.")
+                self.fit_obj.app.processEvents()
                 return
             self.loadpath = str(QtCore.QFileInfo(filename).absolutePath())
             self.par_obj.numOfLoaded = self.par_obj.numOfLoaded+1
@@ -213,6 +224,8 @@ class FileDialog(QtGui.QMainWindow):
             self.win_obj.cbx.setCurrentIndex(self.par_obj.numOfLoaded-1)
             self.win_obj.plot_PhotonCount(self.par_obj.numOfLoaded-1)
         self.win_obj.plotDataQueueFn()
+        self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:green;font-weight:regular;}")
+        self.win_obj.image_status_text.showMessage("Processing finished")
         try:
             
             f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'w')
@@ -461,6 +474,11 @@ class Window(QtGui.QWidget):
         self.left_panel_centre_right.addWidget(self.NcascEndText)
         self.left_panel_centre_right.addWidget(self.NcascEndEdit)
         self.left_panel_centre_right.addWidget(self.reprocess_btn)
+
+        self.left_panel_bottom_bottom = QtGui.QHBoxLayout()
+        self.image_status_text = QtGui.QStatusBar()
+        self.left_panel_bottom_bottom.addWidget(self.image_status_text)
+        self.left_panel.addLayout(self.left_panel_bottom_bottom)
 
         
         self.left_panel_centre_right.setAlignment(QtCore.Qt.AlignTop)

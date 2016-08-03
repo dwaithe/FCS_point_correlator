@@ -75,7 +75,15 @@ class picoObject():
 		if self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
 		if self.ext == 'ptu':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = ptuimport(self.filepath)
+			out = ptuimport(self.filepath)
+			if out != False:
+				self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = out
+			else:
+				self.par_obj.data.pop(-1)
+				self.par_obj.objectRef.pop(-1)
+				self.exit = True
+				
+				return
 		if self.ext == 'csv':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
 			#If the file is empty.
@@ -84,8 +92,7 @@ class picoObject():
 				self.par_obj.data.pop(-1);
 				self.par_obj.objectRef.pop(-1)
 				self.exit = True
-				self.par_obj.image_status_text.showMessage("Your sample is not in the correct format.")
-				self.par_obj.fit_obj.app.processEvents()
+				
 				return
 
 					
@@ -94,12 +101,13 @@ class picoObject():
 		self.color = self.par_obj.colors[self.unqID % len(self.par_obj.colors)]
 
 		#How many channels there are in the files.
-		self.numOfCH =  np.unique(np.array(self.subChanArr)).__len__()-1 #Minus 1 because not interested in channel 15.
+		
+		self.ch_present = np.unique(np.array(self.subChanArr))
+		self.numOfCH =  self.ch_present.__len__()-1 #Minus 1 because not interested in channel 15.
 		
 		
 		#Finds the numbers which address the channels.
-		self.ch_present = np.unique(np.array(self.subChanArr[0:100]))
-
+		
 		#Calculates decay function for both channels.
 		self.photonDecayCh1,self.decayScale1 = delayTime2bin(np.array(self.dTimeArr),np.array(self.subChanArr),self.ch_present[0],self.winInt)
 		
@@ -497,6 +505,7 @@ class corrObject():
 		self.toFit = False
 		self.kcount = None
 		self.filter = False
+		self.series_list_id = None
 	   
 	def prepare_for_fit(self):
 		if self.parentFn.ch_check_ch0.isChecked() == True and self.ch_type == 0:

@@ -61,7 +61,7 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
         
         #del k1
         #del cs
-        num =np.zeros((k1shape,2))
+        num =np.zeros((y.shape[0],2))
         
 
         
@@ -86,7 +86,7 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
                 #i2= np.in1d(y+lag,y,assume_unique=True)
                 
                 #New method, cython
-                i1,i2 = fib4.dividAndConquer(y, y+lag,y.shape[0])
+                i1,i2 = fib4.dividAndConquer(y, y+lag,y.shape[0]+1)
 
                 #If the weights (num) are one as in the first Ncasc round, then the correlation is equal to np.sum(i1)
                 i1 = i1.astype(np.bool);
@@ -94,7 +94,9 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
 
                 #Now we want to weight each photon corectly.
                 #Faster dot product method, faster than converting to matrix.
-                auto[(k+(j)*Nsub),:,:] = np.dot((num[i1,:]).T,num[i2,:])/delta    
+                jin = np.dot((num[i1,:]).T,num[i2,:])/delta
+                   
+                auto[(k+(j)*Nsub),:,:] = jin
             
             autotime[k+(j)*Nsub] =shift;
         
@@ -108,8 +110,9 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
 
 
     #Removes the trailing zeros.
+    auto = auto[autotime.reshape(-1) != 0,:,:]
     autotime = autotime[autotime != 0]
-    auto = auto[autotime != 0,:,:]
+    
     return auto, autotime
 
 
