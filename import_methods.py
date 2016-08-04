@@ -377,7 +377,7 @@ def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
             else:
                 cnt_M=cnt_M+1
                 #f1.write("MA:%1u "+markers+" ")
-            
+        print RecNum,'dtime',dtime,'channel',chan,'special'
         trueTimeArr[b] = truetime
         dTimeArr[b] = dtime
         chanArr[b] = chan
