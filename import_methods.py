@@ -202,7 +202,7 @@ def ptuimport(filepath):
     #else:
     #      print '\trecord#\tType\tCh\tTimeTag\tTrueTime/ns\tDTime\n'
 
-
+    print file_type
     
             
     if TTResultFormat_TTTRRecType   == rtPicoHarpT3: 
