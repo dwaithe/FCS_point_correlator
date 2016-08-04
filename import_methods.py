@@ -212,8 +212,7 @@ def ptuimport(filepath):
         print 'currently this type of file is not supported using this python implementation'
         return False
     elif TTResultFormat_TTTRRecType == rtHydraHarpT3: #ReadHT3(1)
-        print 'currently this type of file is not supported using this python implementation'
-        return False
+        return ReadHT3(1,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarpT2: #ReadHT3(1)
         print 'currently this type of file is not supported using this python implementation'
         return False
@@ -223,14 +222,12 @@ def ptuimport(filepath):
         print 'currently this type of file is not supported using this python implementation'
         return False
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT3: #ReadHT3(2);
-        print 'currently this type of file is not supported using this python implementation'
-        return False
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT2: #ReadHT2(2);
         print 'currently this type of file is not supported using this python implementation'
         return False
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT3: #ReadHT3(2);
-        print 'currently this type of file is not supported using this python implementation'
-        return False
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2: #ReadHT2(2);
         print 'currently this type of file is not supported using this python implementation'
         return False
