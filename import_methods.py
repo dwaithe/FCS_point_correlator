@@ -249,6 +249,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     dTimeArr= [0]*TTResult_NumberOfRecords
     for b in range(0,TTResult_NumberOfRecords):
         RecNum = b
+        print'RecNum',b
         T3Record = struct.unpack('I', f.read(4))[0];
         nsync = T3Record & 1023
         truetime = 0
