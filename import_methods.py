@@ -56,7 +56,7 @@ def ptuimport(filepath):
     #MeasDesc_Resolution =0;      #% Resolution for the Dtime (T3 Only)
     #MeasDesc_GlobalResolution =0;
 
-    f = open(filepath, 'r')
+    f = open(filepath, 'rb')
     magic = str(f.read(8))
     if magic[0:6] != "PQTTTR":
         print 'Your file is an invalid .ptu'
@@ -202,8 +202,7 @@ def ptuimport(filepath):
     #else:
     #      print '\trecord#\tType\tCh\tTimeTag\tTrueTime/ns\tDTime\n'
 
-    print file_type
-    print 'Eval',EvalName
+    
     
             
     if TTResultFormat_TTTRRecType   == rtPicoHarpT3: 
@@ -280,7 +279,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
             if channel >-1 and channel < 16:
                 true_nSync = OverflowCorrection + nsync
                 cnt_ma = cnt_ma +1
-        print RecNum,'dtime',dtime,'channel',channel,'special',truetime,'f.tell',f.tell()
+        
         trueTimeArr[cnt_ph] = truetime
         dTimeArr[cnt_ph] = dtime
         chanArr[cnt_ph] = channel+1
@@ -380,7 +379,7 @@ def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
             else:
                 cnt_M=cnt_M+1
                 #f1.write("MA:%1u "+markers+" ")
-        print recNum,'dtime',dtime,'channel',chan,'special',truetime,'f.tell',f.tell()
+        
         trueTimeArr[b] = truetime
         dTimeArr[b] = dtime
         chanArr[b] = chan
