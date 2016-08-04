@@ -260,7 +260,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
         channel = ((T3Record >> 25) & 63);
         special = ((T3Record >> 31) & 1);
 
-        print 'dtime',dtime,'channel',channel,'special',special
+        print RecNum,'dtime',dtime,'channel',channel,'special'
 
         if special == 0:
             true_nSync = OverflowCorrection + nsync
