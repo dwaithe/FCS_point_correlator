@@ -237,6 +237,7 @@ def ptuimport(filepath):
         return False
         
     ###Decoder functions
+f.close()
 # Read HydraHarp/TimeHarp260 T3
 def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     T3WRAPAROUND = 1024
@@ -260,7 +261,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
         channel = ((T3Record >> 25) & 63);
         special = ((T3Record >> 31) & 1);
 
-        print RecNum,'dtime',dtime,'channel',channel,'special'
+        
 
         if special == 0:
             true_nSync = OverflowCorrection + nsync
@@ -279,6 +280,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
             if channel >-1 and channel < 16:
                 true_nSync = OverflowCorrection + nsync
                 cnt_ma = cnt_ma +1
+        print RecNum,'dtime',dtime,'channel',channel,'special',truetime
         trueTimeArr[cnt_ph] = truetime
         dTimeArr[cnt_ph] = dtime
         chanArr[cnt_ph] = channel+1
@@ -354,6 +356,7 @@ def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     trueTimeArr =[0]*TTResult_NumberOfRecords
     dTimeArr= [0]*TTResult_NumberOfRecords
     truetime = 0
+    cnt_M = 0
 
     for b in range(0,TTResult_NumberOfRecords):
         recNum = b
