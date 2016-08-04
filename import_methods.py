@@ -280,7 +280,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
             if channel >-1 and channel < 16:
                 true_nSync = OverflowCorrection + nsync
                 cnt_ma = cnt_ma +1
-        print RecNum,'dtime',dtime,'channel',channel,'special',truetime
+        print RecNum,'dtime',dtime,'channel',channel,'special',truetime,'f.tell',f.tell()
         trueTimeArr[cnt_ph] = truetime
         dTimeArr[cnt_ph] = dtime
         chanArr[cnt_ph] = channel+1
