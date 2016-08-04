@@ -88,10 +88,10 @@ def ptuimport(filepath):
             
             
             if TagTyp == tyEmpty8:
-                struct.unpack('l', f.read(8))[0]
+                struct.unpack('q', f.read(8))[0]
                 #print('empty')
             elif TagTyp ==tyBool8:
-                TagInt = struct.unpack('l', f.read(8))[0]
+                TagInt = struct.unpack('q', f.read(8))[0]
                 if TagInt == 0:
                     #print('False')
                     file_type[EvalName] = False
@@ -99,15 +99,15 @@ def ptuimport(filepath):
                     #print('True')
                     file_type[EvalName] = True
             elif TagTyp == tyInt8:
-                TagInt =  struct.unpack('l', f.read(8))[0]
+                TagInt =  struct.unpack('q', f.read(8))[0]
                 file_type[EvalName] = TagInt
                 #print('tyInt8',TagInt)
             elif TagTyp == tyBitSet64:
-                TagInt = struct.unpack('l', f.read(8))[0]
+                TagInt = struct.unpack('q', f.read(8))[0]
                 file_type[EvalName] = TagInt
                 #print('tyBitSet64',TagInt)
             elif TagTyp == tyColor8:
-                TagInt = struct.unpack('l', f.read(8))[0]
+                TagInt = struct.unpack('q', f.read(8))[0]
                 file_type[EvalName] = TagInt
                 #print('tyColor8',TagInt)
             elif TagTyp == tyFloat8:
@@ -115,7 +115,7 @@ def ptuimport(filepath):
                 file_type[EvalName] = TagInt
                 #print('tyFloat8',TagInt)
             elif TagTyp == tyFloat8Array:
-                TagInt = struct.unpack('l', f.read(8))[0]
+                TagInt = struct.unpack('q', f.read(8))[0]
                 file_type[EvalName] = TagInt
                 #print '<Float array with'+str(TagInt / 8)+'Entries>'
                 #print('tyFloat8Array',TagInt)
@@ -125,7 +125,7 @@ def ptuimport(filepath):
                 #print('date'+str(TagFloat))
                 file_type[EvalName] = TagFloat
             elif TagTyp == tyAnsiString:
-                TagInt = int(struct.unpack('l', f.read(8))[0])
+                TagInt = int(struct.unpack('q', f.read(8))[0])
                 TagString = f.read(TagInt)
                 TagString = string.replace(TagString,'\x00','')
 
