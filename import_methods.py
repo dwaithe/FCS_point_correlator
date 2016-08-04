@@ -237,7 +237,7 @@ def ptuimport(filepath):
         return False
         
     ###Decoder functions
-f.close()
+    f.close()
 # Read HydraHarp/TimeHarp260 T3
 def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     T3WRAPAROUND = 1024
