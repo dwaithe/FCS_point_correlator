@@ -203,6 +203,7 @@ def ptuimport(filepath):
     #      print '\trecord#\tType\tCh\tTimeTag\tTrueTime/ns\tDTime\n'
 
     print file_type
+    print 'Eval',EvalName
     
             
     if TTResultFormat_TTTRRecType   == rtPicoHarpT3: 
@@ -249,7 +250,7 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     dTimeArr= [0]*TTResult_NumberOfRecords
     for b in range(0,TTResult_NumberOfRecords):
         RecNum = b
-        print'RecNum',b
+       
         T3Record = struct.unpack('I', f.read(4))[0];
         nsync = T3Record & 1023
         truetime = 0
@@ -258,6 +259,8 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
         dtime = ((T3Record >> 10) & 32767);
         channel = ((T3Record >> 25) & 63);
         special = ((T3Record >> 31) & 1);
+
+        print 'dtime',dtime,'channel',channel,'special',special
 
         if special == 0:
             true_nSync = OverflowCorrection + nsync
