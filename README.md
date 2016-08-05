@@ -7,8 +7,14 @@
 
 <H4>Python TCSPC (Time Correlated Single Photon Counting) FCS (Fluorescence Correlation Spectroscopy)  data visualiser. </H4>
 
-<p> The software which is available through the following link allows immediate access to FoCuS-point technique:
+<p> The software for Windows and OSX is available through the following link and allows immediate access to FoCuS-point technique:
 <p><a href ="http://sara.molbiol.ox.ac.uk/dwaithe/download_page.html#FoCuS">Click for downloads</a></p>
+<p> For linux the software can be directly installed using pip. Using naive Ubuntu 14.04:</ol>
+<ol> sudo apt-get install python-setuptools python-dev build-essential git-all libpng-dev libfreetype6-dev</ol>
+<ol> sudo easy_install pip</ol>
+<ol> sudo pip install —upgrade virtualenv numpy</ol>
+<ol> sudo -H pip install git+https://github.com/dwaithe/FCS_point_correlator/ —upgrade</ol>
+<ol> To run: python -m focuspoint.FCS_point_correlator</ol>
 <p>Furthermore there is a technical manual which goes into the software in high detail.</p>
 <p><a href ="http://sara.molbiol.ox.ac.uk/dwaithe/download_page.html#FoCuS-manual">Click for downloads</a></p>
 
