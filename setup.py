@@ -6,6 +6,9 @@ setup(name='focuspoint',
 	install_requires=['numpy','scipy','lmfit','pypng','matplotlib','cython'],
 	include_package_data=True,
 	packages = ['focuspoint'],
+	package_data={
+        'focuspoint': ['fib4.pyx'],
+    },
 	entry_points={
         'console_scripts': [
             'sample=sample:main',
