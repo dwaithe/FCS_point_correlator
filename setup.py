@@ -15,7 +15,7 @@ setup(name='focuspoint',
 
 	)
 from distutils.command.sdist import sdist as _sdist
-
+cmdclass = { }
 class sdist(_sdist):
     def run(self):
         # Make sure the compiled Cython files in the distribution are up-to-date
