@@ -23,6 +23,8 @@ setup(name='focuspoint',
 import numpy
 
 setup(
+	name='cythonmaxima',
+	version='0.1',
 include_dirs=[numpy.get_include()],
 ext_modules=[Extension('focuspoint.fib4', ['focuspoint/fib4.c'])]
 	)
