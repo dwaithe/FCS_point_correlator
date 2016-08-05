@@ -5,10 +5,10 @@ setup(name='fcspointcorrelator',
 	author='Dominic Waithe',
 	#install_requires=['numpy','scipy','lmfit'],
 	include_package_data=True,
-	packages = find_packages(),
+	packages = ['sample'],
 	entry_points={
         'console_scripts': [
-            'fcspointcorrelator=fcspointcorrelator:main',
+            'sample=sample:main',
         ],
     },
 
