@@ -11,7 +11,7 @@ setup(name='focuspoint',
             'sample=sample:main',
         ],
     },
-    ext_modules=['fib4.pyx']
+    
 
 	)
 from distutils.command.sdist import sdist as _sdist
