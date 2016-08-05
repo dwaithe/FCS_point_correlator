@@ -11,7 +11,7 @@ setup(name='focuspoint',
             'sample=sample:main',
         ],
     },
-    
+
 
 	)
 from distutils.command.sdist import sdist as _sdist
@@ -22,4 +22,5 @@ class sdist(_sdist):
         from Cython.Build import cythonize
         cythonize(['fib4.pyx'])
         _sdist.run(self)
+        print 'ccccccchhhuuuubahhh'
 cmdclass['sdist'] = sdist
