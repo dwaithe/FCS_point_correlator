@@ -14,13 +14,12 @@ setup(name='focuspoint',
 
 
 	)
-from distutils.command.sdist import sdist as _sdist
-cmdclass = { }
-class sdist(_sdist):
-    def run(self):
-        # Make sure the compiled Cython files in the distribution are up-to-date
-        from Cython.Build import cythonize
-        cythonize(['fib4.pyx'])
-        _sdist.run(self)
-        print 'ccccccchhhuuuubahhh'
-cmdclass['sdist'] = sdist
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+import numpy
+
+setup(
+    include_dirs=[numpy.get_include()] ,cmdclass = {'build_ext': build_ext},
+    ext_modules = [Extension("fib4", ["fib4.pyx"])]
+)
