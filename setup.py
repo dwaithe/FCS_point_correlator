@@ -1,9 +1,9 @@
 from distutils.core import setup
 
 
-setup(name='FCSpointcorrelator',
+setup(name='fcspointcorrelator',
 	author='Dominic Waithe',
 	install_requires=['numpy','scipy','lmfit'],
-	packages='FCSpointcorrelator'
+	packages='fcspointcorrelator'
 
 	)
