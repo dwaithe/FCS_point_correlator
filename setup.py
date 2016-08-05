@@ -6,7 +6,7 @@ setup(name='focuspoint',
 	install_requires=['numpy','scipy','lmfit','pypng','matplotlib','cython'],
 	include_package_data=True,
 	packages = ['focuspoint'],
-	ext_modules=[Extension('focuspoint.fib4', ['focuspoint.fib4.c'])],
+	ext_modules=[Extension('focuspoint.fib4', ['focuspoint/fib4.c'])],
 	package_data={
         'focuspoint': ['fib4.pyx'],
     },
