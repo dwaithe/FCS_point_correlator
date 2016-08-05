@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-setup(name='fcspointcorrelator',
+setup(name='focuspoint',
 	version='0.1',
 	author='Dominic Waithe',
 	#install_requires=['numpy','scipy','lmfit'],
 	include_package_data=True,
-	py_modules=["FCS_point_correlator"],
+	packages = ['focuspoint'],
 	entry_points={
         'console_scripts': [
             'sample=sample:main',
