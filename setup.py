@@ -23,6 +23,9 @@ from Cython.Distutils import build_ext
 import numpy
 
 setup(
+	package_data={
+        'focuspoint': ['fib4.pyx'],
+    },
     include_dirs=[numpy.get_include()] ,cmdclass = {'build_ext': build_ext},
     ext_modules = [Extension("fib4", ["fib4.pyx"])]
 )
