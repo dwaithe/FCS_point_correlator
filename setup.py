@@ -23,6 +23,7 @@ from Cython.Distutils import build_ext
 import numpy
 
 setup(
+	packages = ['focuspoint'],
 	package_data={
         'focuspoint': ['fib4.pyx'],
     },
