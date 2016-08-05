@@ -5,9 +5,9 @@ setup(name='focuspoint',
 	author='Dominic Waithe',
 	install_requires=['numpy','scipy','lmfit','pypng','matplotlib','cython'],
 	include_package_data=True,
-	include_dirs=[numpy.get_include()],
+	
 	packages = ['focuspoint'],
-	ext_modules=[Extension('focuspoint.fib4', ['focuspoint/fib4.c'])],
+	
 	package_data={
         'focuspoint': ['fib4.pyx'],
     },
@@ -18,4 +18,11 @@ setup(name='focuspoint',
     },
 
 
+	)
+
+import numpy
+
+setup(
+include_dirs=[numpy.get_include()],
+ext_modules=[Extension('focuspoint.fib4', ['focuspoint/fib4.c'])]
 	)
