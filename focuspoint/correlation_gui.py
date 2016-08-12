@@ -248,9 +248,17 @@ class Window(QtGui.QWidget):
         self.fit_obj = fit_obj
         self.par_obj = par_obj
         self.generateWindow()
+    def on_resize1(self,event): 
+        self.figure1.tight_layout(pad=1.20)
+    
+    def on_resize4(self,event): 
+        self.figure4.tight_layout(pad=1.08)
+    def on_resize5(self,event): 
+        self.figure5.tight_layout(pad=1.08)
     def generateWindow(self):
         # a figure instance to plot on
-        self.figure1 = plt.figure(figsize=(10,8))
+        self.figure1 = plt.figure(figsize=(6,8))
+        self.figure1.subplots_adjust(left=0.15,bottom=0.25)
 
 
         # this is the Canvas Widget that displays the `figure`
@@ -258,32 +266,42 @@ class Window(QtGui.QWidget):
         #self.canvas1 = FigureCanvas(self.figure1)
         self.canvas1 = FigureCanvas(self.figure1)
         self.figure1.patch.set_facecolor('white')
+        
 
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         self.toolbar1 = NavigationToolbar(self.canvas1, self)
 
 
-        self.figure2 = plt.figure()
-        self.canvas2 = FigureCanvas(self.figure2)
+        #self.figure2 = plt.figure()
+        #self.canvas2 = FigureCanvas(self.figure2)
         
         #self.toolbar2 = NavigationToolbar(self.canvas2, self)
 
-        self.figure3 = plt.figure()
-        self.canvas3 = FigureCanvas(self.figure3)
+        #self.figure3 = plt.figure()
+        #self.canvas3 = FigureCanvas(self.figure3)
         #self.toolbar3 = NavigationToolbar(self.canvas3, self)
 
-        self.figure4 = plt.figure(figsize=(3,2.3))
+        self.figure4 = plt.figure(figsize=(6,2.3))
+        self.figure4.subplots_adjust(left=0.15,bottom=0.25)
+
         self.canvas4 = FigureCanvas(self.figure4)
         self.figure4.patch.set_facecolor('white')
         #self.toolbar4 = NavigationToolbar(self.canvas4, self)
 
-        self.figure5 = plt.figure(figsize=(3,2.3))
+        self.figure5 = plt.figure(figsize=(6,2.3))
+        self.figure5.subplots_adjust(left=0.15,bottom=0.25)
+
+        # this is the Navigation widget
         self.canvas5 = FigureCanvas(self.figure5)
         self.figure5.patch.set_facecolor('white')
         #Tself.toolbar5 = NavigationToolbar(self.canvas5, self)
-
-
+        self.canvas1.mpl_connect('resize_event',self.on_resize1)
+        #self.canvas2.mpl_connect('resize_event',self.on_resize2)
+        #self.canvas3.mpl_connect('resize_event',self.on_resize3)
+        self.canvas4.mpl_connect('resize_event',self.on_resize4)
+        self.canvas5.mpl_connect('resize_event',self.on_resize5)
+        
         self.ex = FileDialog(self, self.par_obj, self.fit_obj)
 
         self.folderOutput = folderOutput(self.par_obj)
@@ -332,6 +350,8 @@ class Window(QtGui.QWidget):
         self.winIntText = QtGui.QLabel('Bin Size (CH):')
 
         self.winIntEdit = lineEditSp('10',self)
+        self.winIntEdit.setMaxLength(5)
+        self.winIntEdit.setFixedWidth(40)
         self.winIntEdit.type = 'winInt'
         self.winIntEdit.parObj = self
         self.folderSelect_btn = QtGui.QPushButton('Output Folder')
@@ -369,8 +389,8 @@ class Window(QtGui.QWidget):
         self.modelTab.setColumnWidth(6,20);
         #self.modelTab.horizontalHeader().setStretchLastSection(True)
         self.modelTab.resize(350,200)
-        self.modelTab.setMinimumSize(350,200)
-        self.modelTab.setMaximumSize(350,200)
+        self.modelTab.setMinimumSize(310,200)
+        self.modelTab.setMaximumSize(310,200)
         self.modelTab.setHorizontalHeaderLabels(QtCore.QString(",From: , ,To: ,Apply to:, , , , ").split(","))
 
         #The table which shows the details of each correlated file. 
@@ -405,7 +425,10 @@ class Window(QtGui.QWidget):
 
         #LEFT PANEL
         self.left_panel = QtGui.QVBoxLayout()
-        self.left_panel.addWidget(self.canvas4)
+        self.left_panel_top = QtGui.QHBoxLayout()
+        self.left_panel.addLayout(self.left_panel_top)
+        self.left_panel_top.addWidget(self.canvas4)
+        self.left_panel_top.addStretch()
         
         #LEFT PANEL TOP
         self.left_panel_top_btns= QtGui.QHBoxLayout()
@@ -413,8 +436,10 @@ class Window(QtGui.QWidget):
         self.plotText.setText('Plot: ')
         self.left_panel_top_btns.addWidget(self.plotText)
         self.photonCountText =QtGui.QLabel()
-        self.photonCountText.setText('Bin  Duration (ms): ')
+        self.photonCountText.setText('Bin Duration (ms): ')
         self.photonCountEdit = lineEditSp('25',self)
+        self.photonCountEdit.setMaxLength(5)
+        self.photonCountEdit.setFixedWidth(40)
         self.photonCountEdit.parObj = self
         self.photonCountEdit.resize(40,50)
 
@@ -423,6 +448,7 @@ class Window(QtGui.QWidget):
         self.cbx = comboBoxSp(self)
         self.cbx.type ='PhotonCount'
         self.updateCombo()
+
         self.left_panel_top_btns.addWidget(self.cbx)
         self.left_panel_top_btns.addWidget(self.photonCountText)
         self.left_panel_top_btns.addWidget(self.photonCountEdit)
@@ -442,10 +468,14 @@ class Window(QtGui.QWidget):
         
         self.left_panel_centre.addWidget(self.modelTab)
         self.left_panel_centre.addLayout(self.left_panel_centre_right)
+        self.left_panel_centre.addStretch()
         
         #LEFT PANEL bottom
         self.left_panel_bottom = QtGui.QVBoxLayout()
-        self.left_panel_bottom.addWidget(self.canvas5)
+        self.left_panel_bottom_fig = QtGui.QHBoxLayout()
+        self.left_panel_bottom.addLayout(self.left_panel_bottom_fig)
+        self.left_panel_bottom_fig.addWidget(self.canvas5)
+        self.left_panel_bottom_fig.addStretch()
         
         self.left_panel.addLayout(self.left_panel_bottom)
         #LEFT PANEL bottom buttons
@@ -521,7 +551,10 @@ class Window(QtGui.QWidget):
         
    
 
-        self.figure1.suptitle('Correlation', fontsize=20)
+        self.plt1.set_title('Correlation', fontsize=12)
+        self.plt1.set_ylabel('Auto-correlation CH0 (tau)', fontsize=8)
+        self.plt2.set_ylabel('Auto-correlation CH1 (tau)', fontsize=8)
+        self.plt3.set_ylabel('Cross-correlation CH01 (tau)', fontsize=8)
         self.figure4.suptitle('Photon Count', fontsize=12)
         self.figure5.suptitle('Photon Decay Curve', fontsize=12)
         self.plt5.a = Annotate(self,self.par_obj,self.TGScrollBoxObj)
@@ -605,29 +638,34 @@ class Window(QtGui.QWidget):
         self.plt1.plot(autotime,auto[:,0,0],object.color)
         self.plt1.set_xscale('log')
         self.plt1.set_xlim([0, np.max(autotime)])
+       
         self.plt1.set_xlabel('Tau (ms)', fontsize=12)
-        self.plt1.set_ylabel(corrText+' CH0', fontsize=12)
+        self.plt1.set_ylabel('Auto-correlation CH0 (tau)', fontsize=8)
         self.plt1.xaxis.grid(True,'minor')
         self.plt1.xaxis.grid(True,'major')
         self.plt1.yaxis.grid(True,'minor')
         self.plt1.yaxis.grid(True,'major')
+        self.plt2.set_ylabel('Auto-correlation CH1 (tau)', fontsize=8)
+        self.plt2.xaxis.grid(True,'minor')
+        self.plt3.set_ylabel('Cross-correlation CH01 (tau)', fontsize=8)
+        self.plt3.xaxis.grid(True,'minor')
         if object.numOfCH ==  2:
             self.plt2.plot(autotime,auto[:,1,1],object.color)
             self.plt2.set_xscale('log')
             self.plt2.set_xlim([0, np.max(autotime)])
+            
             self.plt2.set_xlabel('Tau (ms)', fontsize=12)
-            self.plt2.set_ylabel(corrText+' CH1', fontsize=12)
             self.plt2.xaxis.grid(True,'minor')
             self.plt2.xaxis.grid(True,'major')
             self.plt2.yaxis.grid(True,'minor')
             self.plt2.yaxis.grid(True,'major')
             
             self.plt3.plot(autotime,auto[:,0,1],object.color)
-            self.figure3.subplots_adjust()
             self.plt3.set_xscale('log')
             self.plt3.set_xlim([0, np.max(autotime)])
+         
             self.plt3.set_xlabel('Tau (ms)', fontsize=12)
-            self.plt3.set_ylabel('Cross-correlation', fontsize=12)
+            
             self.plt3.xaxis.grid(True,'minor')
             self.plt3.xaxis.grid(True,'major')
             self.plt3.yaxis.grid(True,'minor')

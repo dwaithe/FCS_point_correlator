@@ -1,5 +1,10 @@
+import matplotlib
+print 'matplotlib',matplotlib.get_backend()
+matplotlib.use('Agg')
+
 from fitting_gui import Form
 from correlation_gui import *
+import sys
    
 if __name__ == '__main__':
     """ Initialises the gui. """

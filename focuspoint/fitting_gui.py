@@ -2,6 +2,9 @@ import sys, os, csv
 from PyQt4 import QtCore, QtWebKit
 from PyQt4 import QtGui
 from scipy.special import _ufuncs_cxx
+
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -176,11 +179,11 @@ class Form(QtGui.QMainWindow):
 		#self.def_param = Parameters()
 		
 		#Initialise the FCS variables
-	   	SE.initialise_fcs(self)
-	   	GS.initialise_fcs(self)
-	   	VD.initialise_fcs(self)
-	   	PB.initialise_fcs(self)
-	   	self.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
+		SE.initialise_fcs(self)
+		GS.initialise_fcs(self)
+		VD.initialise_fcs(self)
+		PB.initialise_fcs(self)
+		self.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
 
 		
 		self.series_list_model = QtGui.QStandardItemModel()
@@ -237,7 +240,7 @@ class Form(QtGui.QMainWindow):
 				#Where we add the names.
 				counter = counter+1
 				self.image_status_text.showMessage("Applying to carpet: "+str(counter+1)+' of '+str(files_to_load.__len__()+1)+' selected.')
-                self.app.processEvents()
+				self.app.processEvents()
 				
 		self.image_status_text.showMessage("Files loaded")
 		self.image_status_text.setStyleSheet("QLabel {  color : green }")
@@ -249,6 +252,10 @@ class Form(QtGui.QMainWindow):
 	   
 
 		
+	def on_resize(self,event):
+		
+		
+		self.fig.tight_layout(pad=1.08,w_pad=1.08)
 		
 	
 	
@@ -259,6 +266,7 @@ class Form(QtGui.QMainWindow):
 			self.canvas.mpl_disconnect(self.cid)
 		except:
 			pass
+		self.canvas.mpl_connect('resize_event',self.on_resize)
 		self.axes.set_ylabel('Correlation', fontsize=12)
 		self.axes.format_coord = lambda x, y: ''
 		
@@ -368,7 +376,7 @@ class Form(QtGui.QMainWindow):
 						if minValue < scaleMin:
 							scaleMin = minValue
 						self.axes2.set_ylim([scaleMin,scaleMax])
-						self.axes2.plot(self.mod_scale,objId.residualVar,color="grey",label=objId.name,alpha=alpha)
+						self.axes2.plot(self.mod_scale,objId.residualVar, color="grey", label=objId.name,alpha=alpha)
 						self.axes2.set_ylim([scaleMin,scaleMax])
 						
 				row +=1        
@@ -748,14 +756,14 @@ class Form(QtGui.QMainWindow):
 			#updates the whole list (not necessary but makes sure all is correct)
 			self.updateFitList()
 			
-    	#print item.model().itemFromIndex(index).text()
+		#print item.model().itemFromIndex(index).text()
 	def create_main_frame(self):
 		"""Creates the main layout of the fitting interface """
 		self.main_frame = QtGui.QWidget()
 		
 		plot_frame = QtGui.QWidget()
 		
-		self.dpi = 300
+		self.dpi = 72
 		self.fig = Figure((8.0, 16.0), )
 		self.fig.patch.set_facecolor('white')
 		self.canvas = FigureCanvas(self.fig)
@@ -1654,7 +1662,7 @@ class Form(QtGui.QMainWindow):
 			for v_ind in listToFit:
 				indList.append(v_ind.row())
 		
-	  	
+		
 		#Opens export files
 		outPath = self.folderOutput.filepath
 		filenameTxt = str(self.fileNameText.text())
