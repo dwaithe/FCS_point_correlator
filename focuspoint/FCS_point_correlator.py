@@ -1,7 +1,3 @@
-import matplotlib
-print 'matplotlib',matplotlib.get_backend()
-matplotlib.use('Agg')
-
 from fitting_gui import Form
 from correlation_gui import *
 import sys
@@ -18,6 +14,6 @@ if __name__ == '__main__':
     corr_tab = Window(par_obj, fit_obj)
     win_tab.addTab(corr_tab, "Load TCSPC")
     win_tab.addTab(fit_obj, "Fit Function")
-    win_tab.resize(1200,800)
+    win_tab.resize(1200,1000)
     win_tab.show()
     sys.exit(app.exec_())

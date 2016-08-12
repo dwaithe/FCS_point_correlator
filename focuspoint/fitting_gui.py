@@ -811,8 +811,9 @@ class Form(QtGui.QMainWindow):
 		on_about_btn = QtGui.QPushButton()
 		on_about_btn.setText("About Equation")
 		on_about_btn.clicked.connect(self.on_about)
-		self.load_box.addStretch()
+		
 		self.load_box.addWidget(on_about_btn)
+		self.load_box.addStretch()
 		
 
 		self.model_layout = QtGui.QHBoxLayout()
@@ -906,6 +907,7 @@ class Form(QtGui.QMainWindow):
 		default_profile_panel.addWidget(save_default_profile)
 		default_profile_panel.addWidget(store_default_profile)
 		default_profile_panel.addWidget(apply_default_profile)
+		default_profile_panel.addStretch()
 
 		
 		save_default_profile.clicked.connect(self.save_default_profile_fn)
@@ -1079,6 +1081,7 @@ class Form(QtGui.QMainWindow):
 
 		output_layout.addWidget(self.fileNameText)
 		output_layout.addWidget(self.folderSelect_btn)
+		output_layout.addStretch()
 
 		left_vboxBot.addLayout(copy_layout)
 		left_vboxBot.addLayout(save_layout)

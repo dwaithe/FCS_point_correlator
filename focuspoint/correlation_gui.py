@@ -7,7 +7,7 @@ import sys, csv, os
 
 from PyQt4 import QtGui, QtCore
 import matplotlib
-import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -249,7 +249,8 @@ class Window(QtGui.QWidget):
         self.par_obj = par_obj
         self.generateWindow()
     def on_resize1(self,event): 
-        self.figure1.tight_layout(pad=1.20)
+        self.figure1.subplots_adjust(wspace=0.73, hspace=0.24,top=0.96, bottom =0.14,left=0.09, right=0.98)
+        self.figure1.tight_layout()
     
     def on_resize4(self,event): 
         self.figure4.tight_layout(pad=1.08)
@@ -257,8 +258,9 @@ class Window(QtGui.QWidget):
         self.figure5.tight_layout(pad=1.08)
     def generateWindow(self):
         # a figure instance to plot on
-        self.figure1 = plt.figure(figsize=(6,8))
-        self.figure1.subplots_adjust(left=0.15,bottom=0.25)
+        self.figure1 = plt.figure()
+        self.figure1.set_size_inches(5.0,5.4)
+        self.figure1.subplots_adjust(wspace=0.73, hspace=0.24,top=0.96, bottom =0.14,left=0.09, right=0.98)
 
 
         # this is the Canvas Widget that displays the `figure`
@@ -282,14 +284,14 @@ class Window(QtGui.QWidget):
         #self.canvas3 = FigureCanvas(self.figure3)
         #self.toolbar3 = NavigationToolbar(self.canvas3, self)
 
-        self.figure4 = plt.figure(figsize=(6,2.3))
+        self.figure4 = plt.figure(figsize=(5.4,2.1))
         self.figure4.subplots_adjust(left=0.15,bottom=0.25)
 
         self.canvas4 = FigureCanvas(self.figure4)
         self.figure4.patch.set_facecolor('white')
         #self.toolbar4 = NavigationToolbar(self.canvas4, self)
 
-        self.figure5 = plt.figure(figsize=(6,2.3))
+        self.figure5 = plt.figure(figsize=(5.4,2.1))
         self.figure5.subplots_adjust(left=0.15,bottom=0.25)
 
         # this is the Navigation widget
@@ -309,6 +311,7 @@ class Window(QtGui.QWidget):
 
         # Just some button connected to `plot` method
         self.openFile = QtGui.QPushButton('Open File')
+        self.openFile.setFixedWidth(120)
         self.openFile.clicked.connect(self.ex.showDialog)
         self.replot_btn = QtGui.QPushButton('Replot Data')
         self.replot_btn.clicked.connect(self.plotDataQueueFn)
@@ -328,22 +331,28 @@ class Window(QtGui.QWidget):
         self.globalText.setText('Correlation Para:')
         self.reprocess_btn = QtGui.QPushButton('reprocess data')
         self.reprocess_btn.clicked.connect(self.reprocessDataFn)
+        self.reprocess_btn.setFixedWidth(120)
         self.reprocess_btn2 = QtGui.QPushButton('reprocess data')
         self.reprocess_btn2.clicked.connect(self.reprocessDataFn)
+        self.reprocess_btn2.setFixedWidth(120)
         self.reprocess_btn3 = QtGui.QPushButton('reprocess data')
         self.reprocess_btn3.clicked.connect(self.reprocessDataFn)
-        
+        self.reprocess_btn3.setFixedWidth(120)
         self.NsubText = QtGui.QLabel('Nsub:')
         self.NsubText.resize(50,40)
+        
         self.NsubEdit =lineEditSp('6',self)
+        self.NsubEdit.setFixedWidth(60)
         self.NsubEdit.type ='nsub'
         
         self.NcascStartText = QtGui.QLabel('Ncasc Start:')
         self.NcascStartEdit = lineEditSp('0',self)
+        self.NcascStartEdit.setFixedWidth(60)
         self.NcascStartEdit.parentId = self
         self.NcascStartEdit.type = 'ncasc'
         self.NcascEndText = QtGui.QLabel('Ncasc End:')
         self.NcascEndEdit = lineEditSp('25',self)
+        self.NcascEndEdit.setFixedWidth(60)
         self.NcascEndEdit.type = 'ncascEnd'
         self.NcascEndEdit.parentId = self
         
@@ -515,6 +524,7 @@ class Window(QtGui.QWidget):
         self.right_panel.addWidget(self.canvas1)
         self.right_panel.addLayout(correlationBtns)
         self.right_panel.addWidget(self.modelTab2)
+        self.right_panel.addStrut(800)
 
         
         
