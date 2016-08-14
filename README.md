@@ -17,7 +17,7 @@
 <ol> sudo apt-get install libpng-dev libfreetype6-dev (Matplotlib dependencies)</ol>
 <ol> sudo -H pip install git+https://github.com/dwaithe/FCS_point_correlator/ —upgrade (should work for all OS as long as the dependencies are met).</ol>
 <ol> To run: python -m focuspoint.FCS_point_correlator</ol>
-<p>Furthermore there is a technical manual which goes into the software in high detail.</p>
+
 
 
 <h3>FAQ</h3>
