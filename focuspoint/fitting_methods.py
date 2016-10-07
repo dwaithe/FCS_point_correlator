@@ -224,13 +224,20 @@ def calc_param_fcs(int_obj,objId):
 			pass
 		try:
 			if int_obj.objIdArr != [] and objId.siblings !=None and objId.ch_type != 2 and objId.ch_type != 3:
-					
-					if objId.siblings[0].fitted == True:
-						
-						objId.param['ACAC']['value'] = float(objId.param['GN0']['value'])/float(objId.siblings[0].param['GN0']['value'])
-						objId.param['ACAC']['to_show'] = True
-						objId.param['ACCC']['value'] = float(objId.param['GN0']['value'])/float(objId.siblings[1].param['GN0']['value'])
-						objId.param['ACCC']['to_show'] = True
+				pass
+				#print 'objIDchannnel',objId.ch_type
+				#Is a bit wasteful to do this everytime, but it gets the job done.
+				#objId.param['ACAC']['value'] = float(objId.param['GN0']['value'])/float(objId.siblings[0].param['GN0']['value'])
+				#objId.param['ACAC']['to_show'] = True
+				#objId.param['ACCC']['value'] = float(objId.param['GN0']['value'])/float(objId.siblings[1].param['GN0']['value'])
+				#objId.param['ACCC']['to_show'] = True
+				#objId.siblings[0].param['ACAC']['value'] = float(objId.siblings[0].param['GN0']['value'])/float(objId.param['GN0']['value'])
+				#objId.siblings[0].param['ACAC']['to_show'] = True
+				#objId.siblings[0].param['ACCC']['value'] = float(objId.siblings[1].param['GN0']['value'])/float(objId.param['GN0']['value'])
+				#objId.siblings[0].param['ACCC']['to_show'] = True
+
+
+
 		except:
 			pass
 

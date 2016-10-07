@@ -20,13 +20,13 @@ import os.path
 import subprocess
 import pyperclip
 import cPickle as pickle
-import copy
+
 from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
 import fitting_methods as SE
 import fitting_methods_GS as GS
 import fitting_methods_VD as VD
 import fitting_methods_PB as PB
-import copy
+
 
 from correlation_objects import corrObject
 
@@ -300,7 +300,6 @@ class Form(QtGui.QMainWindow):
 			ydata = thisline.get_ydata()
 			ind = event.ind
 			
-
 			#Finds the model which has been clicked based on the label association.
 			for Id, objId in enumerate(self.objIdArr):
 				objId.clicked = False
@@ -595,7 +594,6 @@ class Form(QtGui.QMainWindow):
 					self.root_name[c]['file_item'] = QtGui.QStandardItem(parent_name)
 					self.root_name[c]['file_item'].setCheckable(True)
 					self.root_name[c]['file_item'].setCheckState(QtCore.Qt.Unchecked)
-					#print 'self.root_name_copy[c][1]',self.root_name_copy
 					
 					
 					self.root_name[c][parent_name] = []
@@ -725,6 +723,10 @@ class Form(QtGui.QMainWindow):
 					item.setEditable(False)
 					
 					objId.item_in_list = item
+					if objId.clicked == True:
+						item.setBackground(QtGui.QColor(0, 0, 255, 127))
+						to_focus = self.series_list_model.rowCount()
+						to_focus_item = item
 					
 		if to_focus_item != None:
 			self.series_list_view.scrollTo(self.series_list_model.indexFromItem(to_focus_item))
@@ -756,7 +758,6 @@ class Form(QtGui.QMainWindow):
 			#updates the whole list (not necessary but makes sure all is correct)
 			self.updateFitList()
 			
-		#print item.model().itemFromIndex(index).text()
 	def create_main_frame(self):
 		"""Creates the main layout of the fitting interface """
 		self.main_frame = QtGui.QWidget()
@@ -1302,7 +1303,6 @@ class Form(QtGui.QMainWindow):
 		
 		series_2_average = []
 		#deletes the objects
-		print indList
 		for indL in indList:
 				if self.objIdArr[indL].toFit == True:
 					
@@ -1479,7 +1479,8 @@ class Form(QtGui.QMainWindow):
 					
 					for objId in objId_list:
 						if objId.series_list_id != None:
-							indList.append(self.obj_hash_list[self.tree_hash_list[objId.series_list_id]])
+							if objId.toFit == True:
+								indList.append(self.obj_hash_list[self.tree_hash_list[objId.series_list_id]])
 
 							
 					#Order the list.
@@ -1498,7 +1499,7 @@ class Form(QtGui.QMainWindow):
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
-		print listToFit
+		
 
 		for v_ind in listToFit:
 			item = self.series_list_model.itemFromIndex(v_ind)
@@ -1516,7 +1517,6 @@ class Form(QtGui.QMainWindow):
 		
 		#deletes the objects
 		for indL in indList:
-			print self.objIdArr[indL].toFit
 			#Looks through the objects in objIdArr and deletes them if they match.
 			if self.objIdArr[indL].toFit == True:
 				del self.objIdArr[indL]
@@ -1604,56 +1604,26 @@ class Form(QtGui.QMainWindow):
 		self.saveOutputDataFn(True)
 	def saveOutputDataFn(self,copy_fn=False):
 		localTime = time.asctime( time.localtime(time.time()) )
-		keyArray = []
+		coreArray = []
 		
 		copyStr =""
 		
 		
-		keyArray.append('name_of_plot')
-		keyArray.append('master_file')
-		keyArray.append('parent_name')
-		keyArray.append('parent_uqid')
-		keyArray.append('time of fit')
-		keyArray.append('Diff_eq')
-		keyArray.append('Diff_species')
-		keyArray.append('Triplet_eq')
-		keyArray.append('Triplet_species')
-		keyArray.append('Dimen')
-		keyArray.append('xmin')
-		keyArray.append('xmax')
+		coreArray.append('name_of_plot')
+		coreArray.append('master_file')
+		coreArray.append('parent_name')
+		coreArray.append('parent_uqid')
+		coreArray.append('time of fit')
+		coreArray.append('Diff_eq')
+		coreArray.append('Diff_species')
+		coreArray.append('Triplet_eq')
+		coreArray.append('Triplet_species')
+		coreArray.append('Dimen')
+		coreArray.append('xmin')
+		coreArray.append('xmax')
 		
-
-
-		#Ensures the headings are relevant to the fit.
-		for i in range(0,self.objIdArr.__len__()):
-
-			if self.objIdArr[i].fitted == True:
-				v_ind = i;
-				break;
-			else:
-				v_ind =0;
-
-		#Includes the headers for the data which is present.
-		for item in self.order_list:
-			if self.objId_sel.param[item]['to_show'] == True:
-				if  self.objId_sel.param[item]['calc'] == False:
-					keyArray.append(str(self.objId_sel.param[item]['alias']))
-					keyArray.append('stdev('+str(self.objId_sel.param[item]['alias'])+')')
-				else:
-					keyArray.append(str(self.objId_sel.param[item]['alias']))
-
-				
-		
-		
-		
-
-		headerText = '\t'.join(keyArray)
-		copyStr +=headerText +'\n'
-		
-		
-		
-		
-		   
+		#Old key Array. 
+		okeyArray =[None]
 		
 		#Find highlighted indices
 		listToFit = self.series_list_view.selectedIndexes()
@@ -1663,7 +1633,11 @@ class Form(QtGui.QMainWindow):
 			indList = range(0,self.objIdArr.__len__())
 		else:
 			for v_ind in listToFit:
-				indList.append(v_ind.row())
+				item = self.series_list_model.itemFromIndex(v_ind)
+				if item.hasChildren():
+					indList.extend(self.return_grouped_data_fn(item))
+				else:
+					indList.append(self.obj_hash_list[self.tree_hash_list[item]])
 		
 		
 		#Opens export files
@@ -1671,13 +1645,44 @@ class Form(QtGui.QMainWindow):
 		filenameTxt = str(self.fileNameText.text())
 		if copy_fn == False:
 			csvfile = open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a')
-			spamwriter = csv.writer(csvfile)
-			spamwriter.writerow(keyArray)
+			#spamwriter = csv.writer(csvfile)
+			spamwriter = csv.writer(csvfile,  dialect='excel')
+			
 		for v_ind in indList:
 			
 				
 			if(self.objIdArr[v_ind].toFit == True):
 				if(self.objIdArr[v_ind].fitted == True):
+					
+					#Includes the headers for the data which is present.
+					keyArray = copy.deepcopy(coreArray)
+					for item in self.order_list:
+						if self.objIdArr[v_ind].param[item]['to_show'] == True:
+							if  self.objIdArr[v_ind].param[item]['calc'] == False:
+								keyArray.append(str(self.objIdArr[v_ind].param[item]['alias']))
+								keyArray.append('stdev('+str(self.objIdArr[v_ind].param[item]['alias'])+')')
+							else:
+								keyArray.append(str(self.objIdArr[v_ind].param[item]['alias']))
+
+					#If there are any dissimilarities between the current keys and the last we reprint the headers.
+					reprint = False
+					
+					if keyArray.__len__() != okeyArray.__len__():
+						#If they are not same length then something is different.
+						reprint = True
+					else:
+						#Just to be really sure. Might remove if gets too slow.
+						for key,okey in zip(keyArray, okeyArray):
+							if key != okey:
+								reprint = True
+								break
+
+					if reprint == True:
+						headerText = '\t'.join(keyArray)
+						copyStr +=headerText +'\n'
+						if copy_fn == False:
+							spamwriter.writerow(keyArray)
+
 					param = self.objIdArr[v_ind].param
 					rowText = []
 					rowText.append(str(self.objIdArr[v_ind].name))
@@ -1692,8 +1697,8 @@ class Form(QtGui.QMainWindow):
 					rowText.append(str(self.dimenModSel.currentText()))
 					rowText.append(str(self.objIdArr[v_ind].model_autotime[0]))
 					rowText.append(str(self.objIdArr[v_ind].model_autotime[-1]))
+					
 					for item in self.order_list:
-						
 							if  param[item]['calc'] == False:
 								if param[item]['to_show'] == True:
 									rowText.append(str(param[item]['value']))
@@ -1701,13 +1706,15 @@ class Form(QtGui.QMainWindow):
 							else:
 								if param[item]['to_show'] == True:
 									rowText.append(str(param[item]['value']))
-								else:
-									rowText.append(str(' '))
+
+								
 					if copy_fn == True:
 						copyStr += str('\t'.join(rowText)) +'\n'
 					if copy_fn == False:
-						spamwriter = csv.writer(csvfile,  dialect='excel')
 						spamwriter.writerow(rowText)
+					
+					#Updates the old  key array
+					okeyArray = copy.deepcopy(keyArray)
 
 		if copy_fn == True:
 			copyStr += str('end\n')

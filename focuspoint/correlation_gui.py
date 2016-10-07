@@ -6,8 +6,8 @@ from matplotlib.patches import Rectangle
 import sys, csv, os
 
 from PyQt4 import QtGui, QtCore
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
