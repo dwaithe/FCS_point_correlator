@@ -1,6 +1,9 @@
 from fitting_gui import Form
 from correlation_gui import *
 import sys
+import datetime
+now = datetime.datetime.now()
+
    
 if __name__ == '__main__':
     """ Initialises the gui. """
@@ -10,6 +13,10 @@ if __name__ == '__main__':
     fit_obj = Form('point')
     #Ensures the the fit tab can refresh the display, for status updates.
     fit_obj.app = app
+
+    if now.year == 2017:
+        print 'trial version expired'
+        exit()
 
     corr_tab = Window(par_obj, fit_obj)
     win_tab.addTab(corr_tab, "Load TCSPC")
