@@ -21,8 +21,8 @@
 
 
 <h3>FAQ</h3>
-<p>Q: What datafiles does FoCuS-point support? A: Presently FoCuS-point supports '.pt3' uncorrelated files and in the fitting software FoCuS-point supports '.SIN' correlated files and '.csv' correlated files in FoCuS-point's own format.
-<p>Q: I have data files which are not '.pt3' what can I do?  A: You can create an issue using github and I will make the software support your file format if possible. Furthermore you can write a parser which converts your file format to the FoCuS-point generic format which is comma delimited. More details can be found by following this link:<a href ="http://sara.molbiol.ox.ac.uk/dwaithe/download_page.html#FoCuS-generic"> Click for generic format</a></p>
+<p>Q: What datafiles does FoCuS-point support? A: Presently FoCuS-point supports '.pt3' and '.ptu' uncorrelated files and under the fitting tab the FoCuS-point software supports '.SIN' and '.fcs' correlated files and '.csv' files correlated in FoCuS-point's own format.
+<p>Q: I have data files which are not '.pt3' or any of the current formats, what can I do?  A: You can create an issue using github and I will make the software support your file format if possible. <a href="https://github.com/dwaithe/FCS_point_correlator/issues">Issues</a></p>
 
 </body>
 </html>
