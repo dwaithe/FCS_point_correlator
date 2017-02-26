@@ -799,12 +799,15 @@ class Form(QtGui.QMainWindow):
 		
 		self.load_box = QtGui.QHBoxLayout()
 		loadCorrFile = QtGui.QPushButton("Load Correlated File")
+		loadCorrFile.setToolTip('Open dialog for importing correlated files.')
 		loadCorrFile.clicked.connect(self.load_file)
+
 		self.load_box.addWidget(loadCorrFile)
 		
 		load_folder = QtGui.QPushButton('load Folder')
 		self.load_folder_output = folderOutput(self)
 		self.load_folder_output.type = 'folder_to_process'
+		self.load_folder_output.setToolTip('Open dialog for selecting a folder which contains correlated files.')
 		load_folder.clicked.connect(self.load_folder_fn)
 		self.load_box.addWidget(load_folder)
 
@@ -821,6 +824,7 @@ class Form(QtGui.QMainWindow):
 		
 		#Drop down list of equations for diffusing species
 		self.diffModEqSel = comboBoxSp2(self);
+		self.diffModEqSel.setToolTip('Set the type of equation to fit (see documentation for more advice).')
 		self.diffModEqSel.type ='Diff_eq'
 		self.diffModEqSel.addItem('Equation 1A')
 		self.diffModEqSel.addItem('Equation 1B')
@@ -834,6 +838,7 @@ class Form(QtGui.QMainWindow):
 		#Spin box for number of diffusing species
 		diffNumSpecies = QtGui.QHBoxLayout()
 		diffNumSpecLabel = QtGui.QLabel('Num. of: diffusing species')
+		diffNumSpecLabel.setToolTip('Set the number of diffusing species to be included in the fitting.')
 
 
 		self.diffNumSpecSpin = QtGui.QSpinBox()
@@ -844,6 +849,7 @@ class Form(QtGui.QMainWindow):
 		
 		#Drop down list of equations for Triplet equations
 		self.tripModEqSel = comboBoxSp2(self);
+		self.tripModEqSel.setToolTip('Set the number of Triplet states to be included in the fitting')
 		self.tripModEqSel.type ='Triplet_eq'
 		self.tripModEqSel.addItem('no triplet')
 		self.tripModEqSel.addItem('Triplet Eq 2A')
@@ -851,6 +857,7 @@ class Form(QtGui.QMainWindow):
 		self.model_layout.addWidget(self.tripModEqSel)
 		#Drop down box for selecting 2D or 3D model:
 		self.dimenModSel = comboBoxSp2(self)
+		self.dimenModSel.setToolTip('Set the dimensionality of the equation for fitting.')
 		self.dimenModSel.type ='Dimen'
 		self.dimenModSel.addItem('2D')
 		self.dimenModSel.addItem('3D')
@@ -971,7 +978,8 @@ class Form(QtGui.QMainWindow):
 
 		#bootstrap.
 		bootstrap_panel = QtGui.QHBoxLayout()
-		bootstrap_panel.addStretch()
+		
+		bootstrap_panel.addSpacing(180)
 		self.bootstrap_enable_toggle = False
 		self.bootstrap_enable_btn = QtGui.QPushButton('OFF')
 		self.bootstrap_enable_btn.setStyleSheet("color: red");
@@ -984,6 +992,7 @@ class Form(QtGui.QMainWindow):
 		bootstrap_panel.addWidget(QtGui.QLabel('bootstrap:'))
 		bootstrap_panel.addWidget(self.bootstrap_enable_btn)
 		bootstrap_panel.addWidget(self.bootstrap_samples)
+		bootstrap_panel.addStretch()
 		
 		
 
@@ -1923,6 +1932,7 @@ class Form(QtGui.QMainWindow):
 				if param[item]['to_show'] == True:
 
 					self.filter_select.addItem(item)
+
 					if param[item]['calc'] == False:
 						self.paramFactory(paraTxt=item,setDec=6,paraMin=-1.0,paraMax=100000,setSingStep=0.01,row=row, param=param)
 						self.labelArray.append(' '+param[item]['alias'])
@@ -1930,17 +1940,23 @@ class Form(QtGui.QMainWindow):
 					else:
 						if col == 0:
 							label = QtGui.QLabel(' '+str(np.round(param[item]['value'],3)))
+							
 							self.fitTable.setCellWidget(row, 0, label)
 							self.labelArray.append(' '+param[item]['alias'])
+
 							
 							col = 2
 							row +=1
 							continue;
 						if col ==2:
 							label = QtGui.QLabel(' '+str(np.round(param[item]['value'],3)))
+							#label.setToolTip('test'+str(item))
+							#self.fitTable.horizontalHeader().Item[0].setToolTip("header 0")
+
 							label_2 = QtGui.QLabel(str(' '+param[item]['alias']))
 							self.fitTable.setCellWidget(row-1, 3, label)
 							self.fitTable.setCellWidget(row-1, 2,label_2)
+							#self.fitTable.verticalHeaderItem(row-1).setToolTip("Column 1 ")
 							
 							col = 0
 

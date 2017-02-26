@@ -462,7 +462,7 @@ def csv_import_method(fit_obj,file_path):
 							corrObj1.parent_uqid = str(line[1])
 							corrObj2.parent_uqid = str(line[1])
 							corrObj3.parent_uqid = str(line[1])
-						
+						print line
 						line = r_obj.next()
 					
 					

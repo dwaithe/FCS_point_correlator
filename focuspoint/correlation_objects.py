@@ -572,22 +572,34 @@ class corrObject():
 			num_of_straps = self.parentFn.bootstrap_samples.value()
 			aver_data = {}
 
-			lim_scale = scale[self.indx_L:self.indx_R+1]
-			lim_data  = data[self.indx_L:self.indx_R+1]
+			lim_scale = scale[self.indx_L:self.indx_R+1].astype(np.float64)
+			lim_data  = data[self.indx_L:self.indx_R+1].astype(np.float64)
 			#Populate a container which will store our output variables from the bootstrap.
 			for art in self.param:
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 						aver_data[art] = []
+
+
 			for i in range(0,num_of_straps):
 				#Bootstrap our sample, but remove duplicates.
 				boot_ind = np.random.choice(np.arange(0,lim_data.shape[0]),size=lim_data.shape[0],replace=True);
+
+
+				#boot_ind = np.arange(0,lim_data.shape[0])#np.sort(boot_ind)
 				boot_scale = lim_scale[boot_ind]
 				boot_data = lim_data[boot_ind]
+				
 				res = minimize(self.residual, param, args=(boot_scale,boot_data, self.parentFn.def_options))
 				for art in self.param:
+
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
-						aver_data[art].append(float(res.params[art].value))
+						aver_data[art].append(res.params[art].value)
+						
+				
 			for art in self.param:
+				 	
+				 		
+
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 						self.param[art]['value'] = np.average(aver_data[art])
 						self.param[art]['stderr'] = np.std(aver_data[art])
@@ -613,8 +625,38 @@ class corrObject():
 		#Extra parameters, which are not fit or inherited.
 		#self.param['N_FCS']['value'] = np.round(1/self.param['GN0']['value'],4)
 
+		#Populate param for the plotting. Would like to use same method as 
+		plot_param = Parameters()
+		#self.def_param.add('A1', value=1.0, min=0,max=1.0, vary=False)
+		for art in self.param:
+			
+			if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
+				
+				plot_param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']), max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
+				
 
-		self.residualVar = res.residual
+		
+		
+		
+		#Display fitted equation.
+		
+		if self.parentFn.def_options['Diff_eq'] == 5:
+			self.model_autoNorm = PB.equation_(plot_param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		elif self.parentFn.def_options['Diff_eq'] == 4:
+			self.model_autoNorm = VD.equation_(plot_param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		elif self.parentFn.def_options['Diff_eq'] == 3:
+			self.model_autoNorm = GS.equation_(plot_param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		else:
+			self.model_autoNorm = SE.equation_(plot_param, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
+		self.model_autotime = scale[self.indx_L:self.indx_R+1]
+
+
+		if  self.parentFn.bootstrap_enable_toggle == False:
+			self.residualVar = res.residual
+		else:
+			self.residualVar = self.model_autoNorm - data[self.indx_L:self.indx_R+1].astype(np.float64)
+
+
 		output = fit_report(res.params)
 		print 'residual',res.chisqr
 		if(res.chisqr>0.05):
@@ -627,19 +669,9 @@ class corrObject():
 		
 		self.localTime =  time.asctime( time.localtime(time.time()) )
 		
-		
-		
-		#self.parentFn.updateTableFirst();
-		if self.parentFn.def_options['Diff_eq'] == 5:
-			self.model_autoNorm = PB.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
-		elif self.parentFn.def_options['Diff_eq'] == 4:
-			self.model_autoNorm = VD.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
-		elif self.parentFn.def_options['Diff_eq'] == 3:
-			self.model_autoNorm = GS.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
-		else:
-			self.model_autoNorm = SE.equation_(res.params, scale[self.indx_L:self.indx_R+1],self.parentFn.def_options)
-		self.model_autotime = scale[self.indx_L:self.indx_R+1]
-		#self.parentFn.on_show()
+
+		#Update the displayed options.
+
 		if self.parentFn.def_options['Diff_eq'] == 5:
 			PB.calc_param_fcs(self.parentFn,self)
 		elif self.parentFn.def_options['Diff_eq'] == 4:
@@ -649,10 +681,5 @@ class corrObject():
 		else:
 			SE.calc_param_fcs(self.parentFn,self)
 
-		#self.parentFn.axes.plot(model_autotime,model_autoNorm, 'o-')
-		#self.parentFn.canvas.draw();
-	
-
-		
 		
 		
