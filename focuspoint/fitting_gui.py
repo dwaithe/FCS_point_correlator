@@ -766,12 +766,14 @@ class Form(QtGui.QMainWindow):
 		
 		self.dpi = 72
 		self.fig = Figure((8.0, 16.0), )
-		self.fig.patch.set_facecolor('white')
+		#self.fig.patch.set_facecolor('#C6d3e0')
 		self.canvas = FigureCanvas(self.fig)
 		self.canvas.setParent(self.main_frame)
 		gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1]) 
 		self.axes = self.fig.add_subplot(gs[0])
 		self.axes2 = self.fig.add_subplot(gs[1])
+		self.axes.set_axis_bgcolor('#C6d3e0')
+		self.axes2.set_axis_bgcolor('#C6d3e0')
 		self.fig.subplots_adjust(bottom = 0.1,top=0.95, right=0.95)
 
 
@@ -798,6 +800,7 @@ class Form(QtGui.QMainWindow):
 		#############The left panel.
 		
 		self.load_box = QtGui.QHBoxLayout()
+		self.load_box.setSpacing(16)
 		loadCorrFile = QtGui.QPushButton("Load Correlated File")
 		loadCorrFile.setToolTip('Open dialog for importing correlated files.')
 		loadCorrFile.clicked.connect(self.load_file)
@@ -821,6 +824,7 @@ class Form(QtGui.QMainWindow):
 		
 
 		self.model_layout = QtGui.QHBoxLayout()
+		self.model_layout.setSpacing(16)
 		
 		#Drop down list of equations for diffusing species
 		self.diffModEqSel = comboBoxSp2(self);
@@ -837,6 +841,7 @@ class Form(QtGui.QMainWindow):
 
 		#Spin box for number of diffusing species
 		diffNumSpecies = QtGui.QHBoxLayout()
+		diffNumSpecies.setSpacing(16)
 		diffNumSpecLabel = QtGui.QLabel('Num. of: diffusing species')
 		diffNumSpecLabel.setToolTip('Set the number of diffusing species to be included in the fitting.')
 
@@ -875,10 +880,11 @@ class Form(QtGui.QMainWindow):
 		self.modelFitSel.type = 'Fit'
 
 		fit_layout = QtGui.QHBoxLayout()
+		fit_layout.setSpacing(16)
 		
 
 		
-		self.fit_btn_min_label = QtGui.QLabel("Fit: from:")
+		self.fit_btn_min_label = QtGui.QLabel("Fit from:")
 		self.fit_btn_min = spinBoxSp3(self)
 		self.fit_btn_min.type ='min'
 		self.fit_btn_min.setMaximumWidth(90)
@@ -896,6 +902,7 @@ class Form(QtGui.QMainWindow):
 
 		#Profile panel for different buttons.
 		default_profile_panel = QtGui.QHBoxLayout()
+		default_profile_panel.setSpacing(16)
 
 		text_default_profile = QtGui.QLabel('Profile:')
 
@@ -940,6 +947,8 @@ class Form(QtGui.QMainWindow):
 		
 			#Table which has the fitting
 		self.fitTable = QtGui.QTableWidget()
+
+
 		
 
 		
@@ -960,6 +969,7 @@ class Form(QtGui.QMainWindow):
 
 		#Horizontal Layout for fit_btns.
 		fit_btns = QtGui.QHBoxLayout()
+		fit_btns.setSpacing(16)
 		
 		#Fit components
 		self.fit_btn_txt = QtGui.QLabel("Fit with param: ")
@@ -978,8 +988,9 @@ class Form(QtGui.QMainWindow):
 
 		#bootstrap.
 		bootstrap_panel = QtGui.QHBoxLayout()
+		bootstrap_panel.setSpacing(16)
 		
-		bootstrap_panel.addSpacing(180)
+		bootstrap_panel.addSpacing(200)
 		self.bootstrap_enable_toggle = False
 		self.bootstrap_enable_btn = QtGui.QPushButton('OFF')
 		self.bootstrap_enable_btn.setStyleSheet("color: red");
@@ -1001,6 +1012,7 @@ class Form(QtGui.QMainWindow):
 		
 		
 		modelFitSel_box = QtGui.QHBoxLayout()
+		modelFitSel_box.setSpacing(16)
 		self.modelFitSel_label = QtGui.QLabel('Display model parameters for data:')
 		modelFitSel_box.addWidget(self.modelFitSel_label)
 		modelFitSel_box.addStretch()
@@ -1011,9 +1023,16 @@ class Form(QtGui.QMainWindow):
 		left_vboxMid = QtGui.QVBoxLayout()
 		left_vboxBot = QtGui.QVBoxLayout()
 		
-		left_vboxTop.setSpacing(0.5)
-		left_vboxBot.setSpacing(0.5)
-		self.load_box.setSpacing(0.5)
+		left_vboxTop.setContentsMargins(0,0,0,0)
+		left_vboxTop.setSpacing(2)
+		left_vboxMid.setContentsMargins(0,0,0,0)
+		left_vboxMid.setSpacing(2)
+		left_vboxBot.setContentsMargins(0,0,0,0)
+		left_vboxBot.setSpacing(2)
+		#self.load_box.setContentsMargins(0,0,0,0)
+		#self.load_box.setSpacing(16)
+		#left_vboxBot.setSpacing(0.5)
+		#self.load_box.setSpacing(0.5)
 		left_vboxTop.addLayout(self.load_box)
 		left_vboxTop.addLayout(self.model_layout) 
 		left_vboxTop.addLayout(diffNumSpecies) 
@@ -1027,7 +1046,9 @@ class Form(QtGui.QMainWindow):
 		left_vboxTop.addLayout(fit_layout)
 		
 		left_vboxTop.addLayout(default_profile_panel)
+		left_vboxTop.addSpacing(4)
 		left_vboxTop.addWidget(self.fitTable)
+		left_vboxTop.addSpacing(4)
 		left_vboxTop.setAlignment(QtCore.Qt.AlignLeft)
 
 		
@@ -1056,6 +1077,7 @@ class Form(QtGui.QMainWindow):
 		self.copy_model_btn.clicked.connect(self.copyModelFile)
 
 		copy_layout = QtGui.QHBoxLayout()
+		copy_layout.setSpacing(16)
 		copy_layout.addWidget(copy_text)
 		copy_layout.addWidget(self.copy_output_btn)
 		copy_layout.addWidget(self.copy_model_btn)
@@ -1074,6 +1096,7 @@ class Form(QtGui.QMainWindow):
 		self.save_model_btn.clicked.connect(self.saveModelFile)
 
 		save_layout = QtGui.QHBoxLayout()
+		save_layout.setSpacing(16)
 		save_layout.addWidget(save_text)
 		save_layout.addWidget(self.save_output_btn)
 		save_layout.addWidget(self.save_model_btn)
@@ -1081,6 +1104,7 @@ class Form(QtGui.QMainWindow):
 
 
 		output_layout = QtGui.QHBoxLayout()
+		output_layout.setSpacing(16)
 		self.fileNameText = QtGui.QLineEdit('outputFileName')
 		
 
@@ -1093,6 +1117,7 @@ class Form(QtGui.QMainWindow):
 		output_layout.addWidget(self.folderSelect_btn)
 		output_layout.addStretch()
 
+		left_vboxBot.addSpacing(12)
 		left_vboxBot.addLayout(copy_layout)
 		left_vboxBot.addLayout(save_layout)
 		left_vboxBot.addLayout(output_layout)
@@ -1103,6 +1128,9 @@ class Form(QtGui.QMainWindow):
 		left_vboxBot.addStretch()
 
 		left_vbox = QtGui.QVBoxLayout()
+		left_vbox.setContentsMargins(0,0,0,0)
+		left_vbox.setSpacing(16)
+
 		left_stretch = QtGui.QSplitter(QtCore.Qt.Vertical)
 		left_vboxTopWid = QtGui.QWidget()
 		left_vboxBotWid = QtGui.QWidget()
@@ -1123,6 +1151,7 @@ class Form(QtGui.QMainWindow):
 		self.turnOffAutoScale.setCheckable(True)
 		self.turnOffAutoScale.clicked.connect(self.autoScaleFn)
 		center_hbox = QtGui.QHBoxLayout()
+		center_hbox.setSpacing(16)
 		center_vbox.addLayout(center_hbox)
 		center_hbox.addWidget(resetScale)
 		center_hbox.addWidget(self.turnOffAutoScale)
@@ -1137,6 +1166,7 @@ class Form(QtGui.QMainWindow):
 		#right_vbox.addLayout(spins_hbox)
 
 		legend_box = QtGui.QHBoxLayout()
+		legend_box.setSpacing(16)
 		#self.legend_cb = QtGui.QCheckBox("Show L&egend")
 		#self.legend_cb.setChecked(False)
 		#legend_box.addWidget(self.legend_cb)
@@ -1154,6 +1184,7 @@ class Form(QtGui.QMainWindow):
 		right_vbox.addLayout(legend_box)
 
 		right_ch_check = QtGui.QHBoxLayout()
+		right_ch_check.setSpacing(16)
 		#Channel 0 auto-correlation
 		ch_check_ch0_label = QtGui.QLabel("ac: CH0")
 		self.ch_check_ch0 = QtGui.QCheckBox()
