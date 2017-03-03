@@ -781,7 +781,7 @@ class Form(QtGui.QMainWindow):
 
 		self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
 		
-		log_label = QtGui.QLabel("Data series:")
+		log_label = QtGui.QLabel("Data Series Viewer:")
 		self.series_list_view = QtGui.QTreeView()
 		self.series_list_view.setHeaderHidden(True)
 		
@@ -810,13 +810,14 @@ class Form(QtGui.QMainWindow):
 		load_folder = QtGui.QPushButton('load Folder')
 		self.load_folder_output = folderOutput(self)
 		self.load_folder_output.type = 'folder_to_process'
-		self.load_folder_output.setToolTip('Open dialog for selecting a folder which contains correlated files.')
+		self.load_folder_output.setToolTip('Opens dialog for selecting a folder to import all correlated files from.')
 		load_folder.clicked.connect(self.load_folder_fn)
 		self.load_box.addWidget(load_folder)
 
 
 		on_about_btn = QtGui.QPushButton()
 		on_about_btn.setText("About Equation")
+		on_about_btn.setToolTip("Provides more information about the equations used for fitting the correlation functions.")
 		on_about_btn.clicked.connect(self.on_about)
 		
 		self.load_box.addWidget(on_about_btn)
@@ -851,6 +852,7 @@ class Form(QtGui.QMainWindow):
 		self.diffNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
 		diffNumSpecies.addWidget(diffNumSpecLabel)
 		diffNumSpecies.addWidget(self.diffNumSpecSpin)
+
 		
 		#Drop down list of equations for Triplet equations
 		self.tripModEqSel = comboBoxSp2(self);
@@ -859,6 +861,7 @@ class Form(QtGui.QMainWindow):
 		self.tripModEqSel.addItem('no triplet')
 		self.tripModEqSel.addItem('Triplet Eq 2A')
 		self.tripModEqSel.addItem('Triplet Eq 2B')
+
 		self.model_layout.addWidget(self.tripModEqSel)
 		#Drop down box for selecting 2D or 3D model:
 		self.dimenModSel = comboBoxSp2(self)
@@ -870,7 +873,15 @@ class Form(QtGui.QMainWindow):
 		self.model_layout.addStretch()
 		#Drop-down list with all the available models.
 		
+		#Spin box for number of diffusing species
 		
+		tripNumSpecLabel = QtGui.QLabel('Triplet states')
+		self.tripNumSpecSpin = QtGui.QSpinBox()
+		self.tripNumSpecSpin.setRange(1,3);
+		self.tripNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
+		diffNumSpecies.addWidget(tripNumSpecLabel)
+		diffNumSpecies.addWidget(self.tripNumSpecSpin)
+		diffNumSpecies.addStretch()
 		
 
 
@@ -886,6 +897,7 @@ class Form(QtGui.QMainWindow):
 		
 		self.fit_btn_min_label = QtGui.QLabel("Fit from:")
 		self.fit_btn_min = spinBoxSp3(self)
+		self.fit_btn_min.setToolTip("Sets the position of the lower limit handle for the data fitting")
 		self.fit_btn_min.type ='min'
 		self.fit_btn_min.setMaximumWidth(90)
 		self.fit_btn_min.setDecimals = 3
@@ -894,6 +906,7 @@ class Form(QtGui.QMainWindow):
 
 		self.fit_btn_max_label = QtGui.QLabel("to:")
 		self.fit_btn_max = spinBoxSp3(self)
+		self.fit_btn_min.setToolTip("Sets the position of the upper limit handle for the data fitting")
 		self.fit_btn_max.type ='max'
 		self.fit_btn_max.setMaximumWidth(90)
 		self.fit_btn_max.setDecimals = 3
@@ -907,15 +920,19 @@ class Form(QtGui.QMainWindow):
 		text_default_profile = QtGui.QLabel('Profile:')
 
 		load_default_profile = QtGui.QPushButton('load')
+		load_default_profile.setToolTip('Will open a dialog to load a previously saved paramter fit profile')
 		self.load_default_profile_output = folderOutput(self)
 		self.load_default_profile_output.type = 'profile_load'
 		
 		save_default_profile = QtGui.QPushButton('save')
+		save_default_profile.setToolTip('Will open a dialog to save a parameter profile for the fitting')
 		self.save_default_profile_output = folderOutput(self)
 		self.save_default_profile_output.type = 'profile_save'
 
 		store_default_profile = QtGui.QPushButton('store')
+		store_default_profile.setToolTip('Allows you to temporary store a parameter fit profile')
 		apply_default_profile = QtGui.QPushButton('apply')
+		store_default_profile.setToolTip('Allows you to apply a parameter fit profile which has been previously loaded or stored')
 		
 		default_profile_panel.addWidget(text_default_profile)
 		default_profile_panel.addWidget(load_default_profile)
@@ -931,15 +948,7 @@ class Form(QtGui.QMainWindow):
 		apply_default_profile.clicked.connect(self.apply_default_profile_fn)
 
 
-		#Spin box for number of diffusing species
 		
-		tripNumSpecLabel = QtGui.QLabel('Triplet states')
-		self.tripNumSpecSpin = QtGui.QSpinBox()
-		self.tripNumSpecSpin.setRange(1,3);
-		self.tripNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
-		diffNumSpecies.addWidget(tripNumSpecLabel)
-		diffNumSpecies.addWidget(self.tripNumSpecSpin)
-		diffNumSpecies.addStretch()
 		
 		
 		
@@ -965,6 +974,7 @@ class Form(QtGui.QMainWindow):
 
 
 		self.fitAll_btn = QtGui.QPushButton("All")
+		self.fitAll_btn.setToolTip('This will fit all the data in the \"Data Series Viewer\" ')
 		self.fitAll_btn.clicked.connect(self.fitAll_equation)
 
 		#Horizontal Layout for fit_btns.
@@ -974,10 +984,8 @@ class Form(QtGui.QMainWindow):
 		#Fit components
 		self.fit_btn_txt = QtGui.QLabel("Fit with param: ")
 		self.fitSelected_btn = QtGui.QPushButton("Only highlighted")
+		self.fitSelected_btn.setToolTip("This will fit data which is highlighted in the \"Data Series Viewer\"")
 		self.fitSelected_btn.clicked.connect(self.fitSelected_equation)
-
-
-
 
 		#Fit button adding to layout.
 		fit_btns.addWidget(self.fit_btn_txt)
@@ -989,16 +997,18 @@ class Form(QtGui.QMainWindow):
 		#bootstrap.
 		bootstrap_panel = QtGui.QHBoxLayout()
 		bootstrap_panel.setSpacing(16)
-		
 		bootstrap_panel.addSpacing(200)
+
 		self.bootstrap_enable_toggle = False
 		self.bootstrap_enable_btn = QtGui.QPushButton('OFF')
 		self.bootstrap_enable_btn.setStyleSheet("color: red");
 		self.bootstrap_enable_btn.setFixedWidth(60)
 		self.bootstrap_enable_btn.clicked.connect(self.bootstrap_enable_toggle_fn)
+		self.bootstrap_enable_btn.setToolTip('This will enable bootstapping (see documentation formore details)')
 		self.bootstrap_samples = QtGui.QSpinBox()
 		self.bootstrap_samples.setRange (1,400)
 		self.bootstrap_samples.setValue(100)
+		self.bootstrap_samples.setToolTip('This number represents the quantity of bootstrap samples to use.')
 
 		bootstrap_panel.addWidget(QtGui.QLabel('bootstrap:'))
 		bootstrap_panel.addWidget(self.bootstrap_enable_btn)
@@ -1070,7 +1080,7 @@ class Form(QtGui.QMainWindow):
 		#Copy Fit parameters and the raw data inc. fit.
 		copy_text = QtGui.QLabel("Copy: ")
 		self.copy_output_btn = QtGui.QPushButton("parameters")
-		self.copy_output_btn.setToolTip("Copies the learnt parameters to the clipboard.")
+		self.copy_output_btn.setToolTip("Copies the fit parameters to the clipboard.")
 		self.copy_output_btn.clicked.connect(self.copyOutputDataFn)
 		self.copy_model_btn = QtGui.QPushButton("plot data")
 		self.copy_model_btn.setToolTip("Copies the raw data and fit data to the clipboard.");
@@ -1109,6 +1119,7 @@ class Form(QtGui.QMainWindow):
 		
 
 		self.folderSelect_btn = QtGui.QPushButton('Output Folder')
+		self.folderSelect_btn.setToolTip('Select the output folder for saving the files to.')
 		self.folderOutput = folderOutput(self)
 		self.folderOutput.type = 'output_dir'
 		self.folderSelect_btn.clicked.connect(self.folderOutput.showDialog)
@@ -1146,10 +1157,14 @@ class Form(QtGui.QMainWindow):
 		center_vbox.addWidget(self.canvas)
 		center_vbox.addWidget(self.mpl_toolbar)
 		resetScale = QtGui.QPushButton("Reset Scale")
+		resetScale.setToolTip('Will reset the scale to be the bounds of the plot with the largest amplitude')
 		resetScale.clicked.connect(self.resetScaleFn)
+		
 		self.turnOffAutoScale = QtGui.QPushButton("Keep Scale")
+		self.turnOffAutoScale.setToolTip("Will stop the scale from dynamically changeing.")
 		self.turnOffAutoScale.setCheckable(True)
 		self.turnOffAutoScale.clicked.connect(self.autoScaleFn)
+		
 		center_hbox = QtGui.QHBoxLayout()
 		center_hbox.setSpacing(16)
 		center_vbox.addLayout(center_hbox)
@@ -1227,16 +1242,21 @@ class Form(QtGui.QMainWindow):
 
 		right_vbox.addWidget(self.right_check_all_none)
 		self.remove_btn = QtGui.QPushButton("Remove Highlighted Data")
+		self.remove_btn.setToolTip('Remove highlighted data from \"Data Series Viewer\" ')
 		self.remove_btn.clicked.connect(self.removeDataFn)
 		self.create_average_btn = QtGui.QPushButton("Create average of Highlighted")
+		self.create_average_btn.setToolTip('Creates a new average plot from any plots highlighted in the \"Data Series Viewer\" ')
 		self.create_average_btn.clicked.connect(self.create_average_fn)
 		self.clearFits_btn = QtGui.QPushButton("Clear Fit Data All/Highlighted")
+		self.clearFits_btn.setToolTip('Clears the fit parameters only from any data-files highlighted in the \"Data Series Viewer\" ')
 		self.clearFits_btn.clicked.connect(self.clearFits)
 		self.visual_histo = visualHisto(self)
 		visual_histo_btn = QtGui.QPushButton("Generate Histogram");
+		visual_histo_btn.setToolTip('Opens the Generate Histogram plot dialog')
 		visual_histo_btn.clicked.connect(self.visual_histo.create_main_frame)
 		self.visual_scatter = visualScatter(self)
 		visual_scatter_btn = QtGui.QPushButton("Generate Scatter");
+		visual_histo_btn.setToolTip('Opens the Generate Scatter plot dialog')
 		visual_scatter_btn.clicked.connect(self.visual_scatter.create_main_frame)
 
 		right_vbox.addWidget(self.remove_btn)
@@ -1257,6 +1277,7 @@ class Form(QtGui.QMainWindow):
 		self.filter_add_panel = QtGui.QHBoxLayout()
 		self.filter_select = QtGui.QComboBox()
 		self.filter_select.setMaximumWidth(100)
+		self.filter_select.setToolTip('Specifies parameter of fit to filter')
 		
 
 		for item in self.def_param:
@@ -1265,11 +1286,13 @@ class Form(QtGui.QMainWindow):
 		self.filter_lessthan = QtGui.QComboBox()
 		self.filter_lessthan.addItem('<')
 		self.filter_lessthan.addItem('>')
+		self.filter_lessthan.setToolTip("Species direction of filter")
 		self.filter_lessthan.setMaximumWidth(50)
 		self.filter_value = QtGui.QLineEdit('10.0')
 		self.filter_value.setMaximumWidth(50)
 		self.filter_value.setMinimumWidth(50)
 		self.filter_add = QtGui.QPushButton('add')
+		self.filter_add.setToolTip('Will add a filter which processes the data in the \"Data Series Viewer\"')
 		self.filter_add_panel.addWidget(self.filter_select)
 		self.filter_add_panel.addWidget(self.filter_lessthan)
 		self.filter_add_panel.addWidget(self.filter_value)
