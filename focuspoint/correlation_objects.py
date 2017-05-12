@@ -171,6 +171,8 @@ class picoObject():
 			self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
 			self.objId1.autotime = np.array(self.autotime).reshape(-1)
 			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
+			self.objId1.max = np.max(self.objId1.autoNorm)
+			self.objId1.min = np.min(self.objId1.autoNorm)
 			
 			
 			if self.numOfCH ==  2:
@@ -190,6 +192,8 @@ class picoObject():
 				self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 				self.objId3.autotime = np.array(self.autotime).reshape(-1)
 				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
+				self.objId3.max = np.max(self.objId3.autoNorm)
+				self.objId3.min = np.min(self.objId3.autoNorm)
 				
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
@@ -206,6 +210,8 @@ class picoObject():
 				self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 				self.objId2.autotime = np.array(self.autotime).reshape(-1)
 				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
+				self.objId2.max = np.max(self.objId2.autoNorm)
+				self.objId2.min = np.min(self.objId2.autoNorm)
 				
 
 				if self.objId4 == None:
@@ -223,6 +229,8 @@ class picoObject():
 				self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
 				self.objId4.autotime = np.array(self.autotime).reshape(-1)
 				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
+				self.objId4.max = np.max(self.objId4.autoNorm)
+				self.objId4.min = np.min(self.objId4.autoNorm)
 				
 			self.fit_obj.fill_series_list()
 		self.dTimeMin = 0
@@ -659,8 +667,8 @@ class corrObject():
 
 		output = fit_report(res.params)
 		print 'residual',res.chisqr
-		if(res.chisqr>0.05):
-			print 'CAUTION DATA DID NOT FIT WELL CHI^2 >0.05',res.chisqr
+		if(res.chisqr>self.parentFn.chisqr):
+			print 'CAUTION DATA DID NOT FIT WELL CHI^2 >',self.parentFn.chisqr,' ',res.chisqr
 			self.goodFit = False
 		else:
 			self.goodFit = True

@@ -90,6 +90,7 @@ def initialise_fcs(int_obj):
 		CV = {'alias':'Coincidence','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 		f0 = {'alias':'PBC f0','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 		overtb = {'alias':'PBC tb','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
+		s2n = {'alias':'s2n','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
 
 		
 		ACAC = {'alias':'ACAC','value':0.0,'minv':0.001,'maxv':1000.0,'vary':True,'to_show':True,'calc':True}
@@ -105,6 +106,7 @@ def initialise_fcs(int_obj):
 		int_obj.def_param['bri'] = bri
 		int_obj.def_param['CV'] = CV
 		int_obj.def_param['f0'] = f0
+		int_obj.def_param['s2n'] = s2n
 		int_obj.def_param['overtb'] = overtb
 		int_obj.def_param['above_zero'] = above_zero
 
@@ -178,6 +180,13 @@ def update_param_fcs(int_obj):
 		calc_param_fcs(int_obj,objId=int_obj.objId_sel)
 def calc_param_fcs(int_obj,objId):
 		#Calculated parameters.
+
+		try:
+			objId.param['s2n']['value'] = float(objId.s2n)
+			objId.param['s2n']['to_show'] = True
+		except:
+			objId.param['s2n']['value'] = 1
+			objId.param['s2n']['to_show'] = False
 		try:
 			objId.param['N_FCS']['value'] = 1/objId.param['GN0']['value']
 			objId.param['N_FCS']['to_show'] = True
@@ -190,7 +199,6 @@ def calc_param_fcs(int_obj,objId):
 		except:
 			objId.param['above_zero']['value'] = 1
 			objId.param['above_zero']['to_show'] = False
-		
 		try:
 			objId.param['cpm']['value'] = float(objId.kcount)/(1/objId.param['GN0']['value'])
 			objId.param['cpm']['to_show'] = True

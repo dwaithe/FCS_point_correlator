@@ -173,6 +173,8 @@ class Form(QtGui.QMainWindow):
 		self.root_name ={}
 		self.win_obj = parent
 		self.type = type
+		self.chisqr = 0.05
+		self.norm_to_one = False
 		
 
 			#Default parameters for each loaded file.
@@ -183,7 +185,7 @@ class Form(QtGui.QMainWindow):
 		GS.initialise_fcs(self)
 		VD.initialise_fcs(self)
 		PB.initialise_fcs(self)
-		self.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
+		self.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero','s2n']
 
 		
 		self.series_list_model = QtGui.QStandardItemModel()
@@ -290,7 +292,23 @@ class Form(QtGui.QMainWindow):
 		if self.setAutoScale == False:
 			self.axes.set_autoscale_on(False)
 		else:
-			self.axes.set_autoscale_on(True)
+			if self.norm_to_one == True:
+				self.axes.set_ylim(-0.1,1.1)
+			else:
+				try:
+					max_arr = []
+					min_arr = []
+					for Id, objId in enumerate(self.objIdArr):
+						model_index = objId.item_in_list
+
+						checked = model_index.checkState() == QtCore.Qt.Checked
+						if checked:
+							max_arr.append(objId.max)
+							min_arr.append(objId.min)
+
+					self.axes.set_ylim(np.min(np.array(min_arr)),np.max(np.array(max_arr))*1.1)
+				except:
+					self.axes.set_autoscale_on(True)
 			
 		row = 0;
 		row_checked = 0
@@ -331,6 +349,12 @@ class Form(QtGui.QMainWindow):
 					self.scale = objId.autotime
 					
 					self.series = objId.autoNorm
+
+					if self.norm_to_one == True:
+						self.series = self.series - np.average(self.series[-5:])
+						self.series = self.series / np.average(self.series[:5])
+
+
 					
 					
 					self.axes.plot(self.scale, self.series, 'o',markersize=2, color="grey", label=objId,picker=4.0,alpha=alpha)
@@ -364,6 +388,10 @@ class Form(QtGui.QMainWindow):
 						self.mod_scale = objId.model_autotime
 
 						self.mod_series = objId.model_autoNorm
+
+						if self.norm_to_one == True:
+							self.mod_series = self.mod_series - np.average(self.mod_series[-5:])
+							self.mod_series = self.mod_series / np.average(self.mod_series[:5])
 						
 							#self.colors[row % len(self.colors)]
 						self.axes.plot(self.mod_scale, self.mod_series, '-', color="blue", label=objId,picker=4.0, alpha=alpha)       
@@ -1164,12 +1192,18 @@ class Form(QtGui.QMainWindow):
 		self.turnOffAutoScale.setToolTip("Will stop the scale from dynamically changeing.")
 		self.turnOffAutoScale.setCheckable(True)
 		self.turnOffAutoScale.clicked.connect(self.autoScaleFn)
+
+		self.norm_to_one_btn = QtGui.QPushButton("Normalize Function")
+		self.norm_to_one_btn.setToolTip("Will ensure all curves scale between 1.0 and 0.0")
+		self.norm_to_one_btn.setCheckable(True)
+		self.norm_to_one_btn.clicked.connect(self.norm_to_one_fn)
 		
 		center_hbox = QtGui.QHBoxLayout()
 		center_hbox.setSpacing(16)
 		center_vbox.addLayout(center_hbox)
 		center_hbox.addWidget(resetScale)
 		center_hbox.addWidget(self.turnOffAutoScale)
+		center_hbox.addWidget(self.norm_to_one_btn)
 		center_hbox.setAlignment(QtCore.Qt.AlignLeft)
 
 
@@ -1241,6 +1275,21 @@ class Form(QtGui.QMainWindow):
 		
 
 		right_vbox.addWidget(self.right_check_all_none)
+		
+		self.chi_limit_label = QtGui.QLabel('chi^2 cut-off value')
+		self.chi_limit = QtGui.QDoubleSpinBox()
+		self.chi_limit.setToolTip('The Data Series Viewer cut-off. Fits with chi^2 above this value will be red, lower geen.')
+		self.chi_limit.setMinimum(0)
+		self.chi_limit.setDecimals(3)
+		self.chi_limit.setMaximum(99.999)
+		self.chi_limit.setSingleStep(0.001)
+		self.chi_limit.setValue(self.chisqr)
+		self.chi_limit.valueChanged.connect(self.chi_limit_update)
+		chi_limit_box = QtGui.QHBoxLayout()
+		chi_limit_box.addStretch()
+		chi_limit_box.addWidget(self.chi_limit_label)
+		chi_limit_box.addWidget(self.chi_limit)
+
 		self.remove_btn = QtGui.QPushButton("Remove Highlighted Data")
 		self.remove_btn.setToolTip('Remove highlighted data from \"Data Series Viewer\" ')
 		self.remove_btn.clicked.connect(self.removeDataFn)
@@ -1259,6 +1308,7 @@ class Form(QtGui.QMainWindow):
 		visual_histo_btn.setToolTip('Opens the Generate Scatter plot dialog')
 		visual_scatter_btn.clicked.connect(self.visual_scatter.create_main_frame)
 
+		right_vbox.addLayout(chi_limit_box)
 		right_vbox.addWidget(self.remove_btn)
 		right_vbox.addWidget(self.create_average_btn)
 		right_vbox.addWidget(self.clearFits_btn)
@@ -1329,6 +1379,10 @@ class Form(QtGui.QMainWindow):
 		self.main_frame.setLayout(hbox)
 
 		self.setCentralWidget(self.main_frame)
+	def chi_limit_update(self):
+		
+
+		self.chisqr = float(self.chi_limit.value())
 	def bootstrap_enable_toggle_fn(self):
 		#Toggle the bootstrap toggle.
 		if self.bootstrap_enable_toggle == False:
@@ -1662,6 +1716,12 @@ class Form(QtGui.QMainWindow):
 			self.setAutoScale = False;
 		else:
 			self.setAutoScale = True;
+	def norm_to_one_fn(self):
+		if self.norm_to_one_btn.isChecked() == True:
+			self.norm_to_one = True;
+		else:
+			self.norm_to_one =  False;
+		
 	def copyOutputDataFn(self):
 
 		self.saveOutputDataFn(True)
@@ -2256,7 +2316,7 @@ class comboBoxSp2(QtGui.QComboBox):
 				#GS.initialise_fcs(self.parent)
 				self.parent.order_list = ['offset','GN0','Y','A1','A2','A3','tdiff1','tdiff2','tdiff3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3']
 			else:
-				self.parent.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero']
+				self.parent.order_list = ['offset','GN0','N_FCS','cpm','A1','A2','A3','txy1','txy2','txy3','tz1','tz2','tz3','alpha1','alpha2','alpha3','AR1','AR2','AR3','B1','B2','B3','T1','T2','T3','tauT1','tauT2','tauT3','N_mom','bri','CV','f0','overtb','ACAC','ACCC','above_zero','s2n']
 
 				
 		if self.parent.def_options['Diff_eq'] == 5:
