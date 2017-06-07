@@ -1,13 +1,14 @@
 from PyQt4 import QtGui
+from PyQt4.QtGui import QTableWidget,QPushButton,QMainWindow
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 import pyperclip
-class TableFilterBox(QtGui.QTableWidget):
+class TableFilterBox(QTableWidget):
 	
 	def __init__(self,int_obj):
-		QtGui.QTableWidget.__init__(self,int_obj)
-		#self.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
+		QTableWidget.__init__(self,int_obj)
+		#self.setSelectionMode(QAbstractItemView.NoSelection)
 		self.setShowGrid(False);
 
 		self.verticalHeader().setVisible(False)
@@ -52,14 +53,14 @@ class TableFilterBox(QtGui.QTableWidget):
 		self.reset()
 		for ind, filt in enumerate(self.filter_list):
 			
-			item = QtGui.QLabel(' '+str(filt[0])+' '+str(filt[1])+' '+str(filt[2]))
+			item = QLabel(' '+str(filt[0])+' '+str(filt[1])+' '+str(filt[2]))
 			#item.setCheckState(QtCore.Qt.Checked)
 			curr_row = self.rowCount()
 			self.setRowCount(curr_row + 1)
 			
 			x_btn = self.XBtn('',self,ind)
 
-			checkbox = QtGui.QCheckBox()
+			checkbox = QCheckBox()
 			checkbox.setChecked(True)
 			
 			
@@ -72,11 +73,11 @@ class TableFilterBox(QtGui.QTableWidget):
 			self.setCellWidget(curr_row-1,2,self.toggle_btn)
 			self.setCellWidget(curr_row-1,3,x_btn)
 		self.int_obj.fill_series_list()
-	class XBtn(QtGui.QPushButton):
+	class XBtn(QPushButton):
 	
 		def __init__(self,txt,table,ind):
-			QtGui.QPushButton.__init__(self)
-			self.setIcon(QtGui.qApp.style().standardIcon(QtGui.QStyle.SP_TitleBarCloseButton))
+			QPushButton.__init__(self)
+			self.setIcon(qApp.style().standardIcon(QStyle.SP_TitleBarCloseButton))
 			self.table = table
 			self.ind = ind
 			self.clicked.connect(self.remove_row)
@@ -88,10 +89,10 @@ class TableFilterBox(QtGui.QTableWidget):
 			self.table.filter_list.pop(self.ind)
 			self.table.setRowCount(0)
 			self.table.filter_generate_list()
-	class ToggleBtn(QtGui.QPushButton):
+	class ToggleBtn(QPushButton):
 	
 		def __init__(self,txt,table,ind):
-			QtGui.QPushButton.__init__(self)
+			QPushButton.__init__(self)
 			self.switch = {0:'off',1:'show',2:'apply'}
 			self.table = table
 			self.ind = ind
@@ -121,18 +122,18 @@ class TableFilterBox(QtGui.QTableWidget):
 				self.repaint()
 				return
 
-class visualScatter(QtGui.QMainWindow):
+class visualScatter(QMainWindow):
 	def __init__(self,parObj):
-		QtGui.QMainWindow.__init__(self)
+		QMainWindow.__init__(self)
 		self.parObj = parObj
 	def create_main_frame(self):
 		
 		#self.trace_idx = self.parObj.clickedS1
 
-		page = QtGui.QWidget()        
-		hbox_main = QtGui.QHBoxLayout()
-		vbox1 = QtGui.QVBoxLayout()
-		vbox0 = QtGui.QVBoxLayout()
+		page = QWidget()        
+		hbox_main = QHBoxLayout()
+		vbox1 = QVBoxLayout()
+		vbox0 = QVBoxLayout()
 		self.setWindowTitle("Data Visualisation")
 		self.figure1 = plt.figure(figsize=(10,4))
 		self.figure1.patch.set_facecolor('white')
@@ -147,17 +148,17 @@ class visualScatter(QtGui.QMainWindow):
 		
 		
 		
-		self.generate_scatter_btn = QtGui.QPushButton('Generate Scatter')
+		self.generate_scatter_btn = QPushButton('Generate Scatter')
 		
-		self.visual_param_select_1_panel = QtGui.QHBoxLayout()
-		self.visual_param_select_1 = QtGui.QComboBox();
-		self.visual_param_select_1_check = QtGui.QCheckBox('norm',self)
+		self.visual_param_select_1_panel = QHBoxLayout()
+		self.visual_param_select_1 = QComboBox();
+		self.visual_param_select_1_check = QCheckBox('norm',self)
 		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1)
 		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1_check)
 
-		self.visual_param_select_2_panel = QtGui.QHBoxLayout()
-		self.visual_param_select_2 = QtGui.QComboBox();
-		self.visual_param_select_2_check = QtGui.QCheckBox('norm',self)
+		self.visual_param_select_2_panel = QHBoxLayout()
+		self.visual_param_select_2 = QComboBox();
+		self.visual_param_select_2_check = QCheckBox('norm',self)
 		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2)
 		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2_check)
 
@@ -168,9 +169,9 @@ class visualScatter(QtGui.QMainWindow):
 		
 		self.generate_scatter_btn.clicked.connect(self.generate_scatter)
 		
-		copy_data_btn = QtGui.QPushButton('Copy to clipboard')
+		copy_data_btn = QPushButton('Copy to clipboard')
 		copy_data_btn.clicked.connect(self.copy_to_clipboard)
-		save_data_btn = QtGui.QPushButton('Save to file')
+		save_data_btn = QPushButton('Save to file')
 		save_data_btn.clicked.connect(self.save_to_file)
 		hbox_main.addLayout(vbox0)
 		hbox_main.addLayout(vbox1)
@@ -273,18 +274,18 @@ class visualScatter(QtGui.QMainWindow):
 				if self.parObj.objIdArr[v_ind].param[art]['to_show'] !=False:
 					combo.addItem(art)
 			
-class visualHisto(QtGui.QMainWindow):
+class visualHisto(QMainWindow):
 	def __init__(self,parObj):
-		QtGui.QMainWindow.__init__(self)
+		QMainWindow.__init__(self)
 		self.parObj = parObj
 	def create_main_frame(self):
 		
 		#self.trace_idx = self.parObj.clickedS1
 
-		page = QtGui.QWidget()        
-		hbox_main = QtGui.QHBoxLayout()
-		vbox1 = QtGui.QVBoxLayout()
-		vbox0 = QtGui.QVBoxLayout()
+		page = QWidget()        
+		hbox_main = QHBoxLayout()
+		vbox1 = QVBoxLayout()
+		vbox0 = QVBoxLayout()
 		self.setWindowTitle("Data Visualisation")
 		self.figure1 = plt.figure(figsize=(10,4))
 		self.figure1.patch.set_facecolor('white')
@@ -299,35 +300,35 @@ class visualHisto(QtGui.QMainWindow):
 		
 		
 		
-		self.generate_histogram_btn = QtGui.QPushButton('Generate Histogram')
+		self.generate_histogram_btn = QPushButton('Generate Histogram')
 		
-		self.visual_param_select = QtGui.QComboBox();
+		self.visual_param_select = QComboBox();
 
-		self.min_range_lbl = QtGui.QLabel("min range:") 
-		self.min_range_txt = QtGui.QLineEdit();
+		self.min_range_lbl = QLabel("min range:") 
+		self.min_range_txt = QLineEdit();
 		self.min_range_txt.setPlaceholderText("default:input data min")
-		self.max_range_lbl = QtGui.QLabel("max range:") 
-		self.max_range_txt = QtGui.QLineEdit();
+		self.max_range_lbl = QLabel("max range:") 
+		self.max_range_txt = QLineEdit();
 		self.max_range_txt.setPlaceholderText("default:input data max")
-		self.num_of_bins_lbl = QtGui.QLabel("bin width:") 
-		self.num_of_bins_txt = QtGui.QLineEdit('2');
+		self.num_of_bins_lbl = QLabel("bin width:") 
+		self.num_of_bins_txt = QLineEdit('2');
 
-		min_box = QtGui.QHBoxLayout();
+		min_box = QHBoxLayout();
 		min_box.addWidget(self.min_range_lbl)
 		min_box.addWidget(self.min_range_txt)
-		max_box = QtGui.QHBoxLayout();
+		max_box = QHBoxLayout();
 		max_box.addWidget(self.max_range_lbl)
 		max_box.addWidget(self.max_range_txt)
-		bin_box = QtGui.QHBoxLayout();
+		bin_box = QHBoxLayout();
 		bin_box.addWidget(self.num_of_bins_lbl)
 		bin_box.addWidget(self.num_of_bins_txt)
 
 		self.generate_menu(self.visual_param_select) 
 		self.generate_histogram_btn.clicked.connect(self.generate_histo)
 		
-		copy_data_btn = QtGui.QPushButton('Copy to clipboard')
+		copy_data_btn = QPushButton('Copy to clipboard')
 		copy_data_btn.clicked.connect(self.copy_to_clipboard)
-		save_data_btn = QtGui.QPushButton('Save to file')
+		save_data_btn = QPushButton('Save to file')
 		save_data_btn.clicked.connect(self.save_to_file)
 		hbox_main.addLayout(vbox0)
 		hbox_main.addLayout(vbox1)

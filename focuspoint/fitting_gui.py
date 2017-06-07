@@ -1,6 +1,9 @@
 import sys, os, csv
-from PyQt4 import QtCore, QtWebKit
+from PyQt4 import QtCore
 from PyQt4 import QtGui
+from PyQt4.QtGui import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
+from PyQt4.QtGui import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QIcon,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
+from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog
 from scipy.special import _ufuncs_cxx
 
 import matplotlib
@@ -49,7 +52,7 @@ from correlation_objects import corrObject
 	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 
-class folderOutput(QtGui.QMainWindow):
+class folderOutput(QMainWindow):
 	
 	def __init__(self,parent):
 		super(folderOutput, self).__init__()
@@ -89,11 +92,11 @@ class folderOutput(QtGui.QMainWindow):
 		
 	def initUI(self):      
 
-		self.textEdit = QtGui.QTextEdit()
+		self.textEdit = QTextEdit()
 		self.setCentralWidget(self.textEdit)
 		self.statusBar()
 
-		openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
+		openFile = QAction(QIcon('open.png'), 'Open', self)
 		openFile.triggered.connect(self.showDialog)
 
 		menubar = self.menuBar()
@@ -108,7 +111,7 @@ class folderOutput(QtGui.QMainWindow):
 
 		if self.type == 'output_dir':
 			
-			tfilepath = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",self.filepath))
+			tfilepath = str(QFileDialog.getExistingDirectory(self, "Select Directory",self.filepath))
 			
 			if tfilepath !='':
 				self.filepath = tfilepath
@@ -117,7 +120,7 @@ class folderOutput(QtGui.QMainWindow):
 				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
 		if self.type == 'folder_to_process':
 			
-			folder_to_process = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",self.folder_to_process))
+			folder_to_process = str(QFileDialog.getExistingDirectory(self, "Select Directory",self.folder_to_process))
 			
 			if folder_to_process !='':
 				self.folder_to_process = folder_to_process
@@ -133,16 +136,16 @@ class folderOutput(QtGui.QMainWindow):
 		if self.type == 'profile_load':
 			
 			
-			#filepath = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '/home')
-			filepath =  QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
+			#filepath = QFileDialog.getOpenFileName(self, 'Open file', '/home')
+			filepath =  QFileDialog.getOpenFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
 			if filepath != '':
 				opened_file = pickle.load(open(str(filepath),"rb"));
 				self.parent.fit_profile = opened_file;
 		if self.type == 'profile_save':
 			
 			
-			#filepath = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '/home')
-			filepath =  QtGui.QFileDialog.getSaveFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
+			#filepath = QFileDialog.getOpenFileName(self, 'Open file', '/home')
+			filepath =  QFileDialog.getSaveFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
 			if filepath != '':
 				self.filepath_save_profile = str(QtCore.QFileInfo(filepath).absolutePath())+'/'
 
@@ -155,10 +158,10 @@ class folderOutput(QtGui.QMainWindow):
 				
 
 
-class Form(QtGui.QMainWindow):
+class Form(QMainWindow):
 	def __init__(self, type,parent=None):
 		super(Form, self).__init__(parent)
-		self.setWindowTitle('PyQt & matplotlib demo: Data plotting')
+		self.setWindowTitle('FoCuS FCS fitting software.')
 		
 		#lines.
 		self.left = 0
@@ -168,7 +171,7 @@ class Form(QtGui.QMainWindow):
 		self.objStruct = {}
 		self.names = [];
 		self.setAutoScale =True
-		self.colors = ['blue','green','red','cyan','magenta','black']
+		self.colors = ['blue','green','red','orange','magenta','midnightblue','black']
 		self.objId_sel = None
 		self.root_name ={}
 		self.win_obj = parent
@@ -191,14 +194,14 @@ class Form(QtGui.QMainWindow):
 		self.series_list_model = QtGui.QStandardItemModel()
 		
 		
-		self.create_menu()
+		
 		self.create_main_frame()
 		
 		#self.update_ui()
 		self.on_show()
 	def load_file(self, filename=None):
 
-		load_fileInt = QtGui.QFileDialog()
+		load_fileInt = QFileDialog()
 		try:
 			f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'r')
 			self.loadpath =f.readline()
@@ -234,18 +237,15 @@ class Form(QtGui.QMainWindow):
 					
 				else:
 					self.image_status_text.showMessage("File format not recognised please request via github page.")
-				#except:
-				#	self.image_status_text.showMessage("File format not recognised please request via github page.")
-				#	break;
-
-				#self.corrObj.objId.param = self.def_param
+					self.image_status_text.setStyleSheet("color : red")
+					return
 				#Where we add the names.
 				counter = counter+1
 				self.image_status_text.showMessage("Applying to carpet: "+str(counter+1)+' of '+str(files_to_load.__len__()+1)+' selected.')
 				self.app.processEvents()
 				
 		self.image_status_text.showMessage("Files loaded")
-		self.image_status_text.setStyleSheet("QLabel {  color : green }")
+		self.image_status_text.setStyleSheet("color : green")
 		self.fill_series_list()
 				
 		
@@ -357,7 +357,7 @@ class Form(QtGui.QMainWindow):
 
 					
 					
-					self.axes.plot(self.scale, self.series, 'o',markersize=2, color="grey", label=objId,picker=4.0,alpha=alpha)
+					self.axes.plot(self.scale, self.series, 'o',markersize=2, color="grey", label=objId,picker=4.0,alpha=alpha, linewidth=1.0)
 					
 
 					self.axes.set_autoscale_on(False)
@@ -394,7 +394,7 @@ class Form(QtGui.QMainWindow):
 							self.mod_series = self.mod_series / np.average(self.mod_series[:5])
 						
 							#self.colors[row % len(self.colors)]
-						self.axes.plot(self.mod_scale, self.mod_series, '-', color="blue", label=objId,picker=4.0, alpha=alpha)       
+						self.axes.plot(self.mod_scale, self.mod_series, '-', color="blue", label=objId,picker=4.0, alpha=alpha, linewidth=1.0)       
 						
 						maxValue = np.max(objId.residualVar)
 						minValue = np.min(objId.residualVar)
@@ -403,7 +403,7 @@ class Form(QtGui.QMainWindow):
 						if minValue < scaleMin:
 							scaleMin = minValue
 						self.axes2.set_ylim([scaleMin,scaleMax])
-						self.axes2.plot(self.mod_scale,objId.residualVar, color="grey", label=objId.name,alpha=alpha)
+						self.axes2.plot(self.mod_scale,objId.residualVar, color="grey", label=objId.name,alpha=alpha, linewidth=1.0)
 						self.axes2.set_ylim([scaleMin,scaleMax])
 						
 				row +=1        
@@ -496,11 +496,11 @@ class Form(QtGui.QMainWindow):
 		
 
 	def on_about(self):
-		self.about_win = QtGui.QWidget()
+		self.about_win = QWidget()
 		self.about_win.setWindowTitle('QWebView Interactive Demo')
  
 		# And give it a layout
-		layout = QtGui.QVBoxLayout()
+		layout = QVBoxLayout()
 		self.about_win.setLayout(layout)
 		self.view = QtWebKit.QWebView()
 		self.view.setHtml('''
@@ -563,11 +563,11 @@ class Form(QtGui.QMainWindow):
 	def colour_entry(self,objId):
 		#Context sensitive colour highlighting
 		if objId.goodFit == False:
-			objId.series_list_id.setBackground(QtGui.QColor('red'))
+			objId.series_list_id.setBackground(QColor('red'))
 		elif objId.fitted == True:
-			objId.series_list_id.setBackground(QtGui.QColor('green'))
+			objId.series_list_id.setBackground(QColor('green'))
 		else:    
-			objId.series_list_id.setBackground(QtGui.QColor('white'))
+			objId.series_list_id.setBackground(QColor('white'))
 	def fill_series_list(self):
 		
 
@@ -619,7 +619,7 @@ class Form(QtGui.QMainWindow):
 				else:
 					c = c+1
 					self.root_name[c] = {}
-					self.root_name[c]['file_item'] = QtGui.QStandardItem(parent_name)
+					self.root_name[c]['file_item'] = QStandardItem(parent_name)
 					self.root_name[c]['file_item'].setCheckable(True)
 					self.root_name[c]['file_item'].setCheckState(QtCore.Qt.Unchecked)
 					
@@ -719,7 +719,7 @@ class Form(QtGui.QMainWindow):
 				if objId.toFit == True:
 					name = objId.name
 					#Creat an item.
-					item = QtGui.QStandardItem(name)
+					item = QStandardItem(name)
 					#Store the index
 					self.tree_hash_list[item] = bid
 					self.obj_hash_list[bid] = lid
@@ -752,7 +752,7 @@ class Form(QtGui.QMainWindow):
 					
 					objId.item_in_list = item
 					if objId.clicked == True:
-						item.setBackground(QtGui.QColor(0, 0, 255, 127))
+						item.setBackground(QColor(0, 0, 255, 127))
 						to_focus = self.series_list_model.rowCount()
 						to_focus_item = item
 					
@@ -788,9 +788,9 @@ class Form(QtGui.QMainWindow):
 			
 	def create_main_frame(self):
 		"""Creates the main layout of the fitting interface """
-		self.main_frame = QtGui.QWidget()
+		self.main_frame = QWidget()
 		
-		plot_frame = QtGui.QWidget()
+		plot_frame = QWidget()
 		
 		self.dpi = 72
 		self.fig = Figure((8.0, 16.0), )
@@ -800,8 +800,8 @@ class Form(QtGui.QMainWindow):
 		gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1]) 
 		self.axes = self.fig.add_subplot(gs[0])
 		self.axes2 = self.fig.add_subplot(gs[1])
-		self.axes.set_axis_bgcolor('#C6d3e0')
-		self.axes2.set_axis_bgcolor('#C6d3e0')
+		self.axes.set_facecolor('#C6d3e0')
+		self.axes2.set_facecolor('#C6d3e0')
 		self.fig.subplots_adjust(bottom = 0.1,top=0.95, right=0.95)
 
 
@@ -809,33 +809,33 @@ class Form(QtGui.QMainWindow):
 
 		self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
 		
-		log_label = QtGui.QLabel("Data Series Viewer:")
-		self.series_list_view = QtGui.QTreeView()
+		log_label = QLabel("Data Series Viewer:")
+		self.series_list_view = QTreeView()
 		self.series_list_view.setHeaderHidden(True)
 		
 
-		self.series_list_view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+		self.series_list_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
 	  
 		self.series_list_view.setModel(self.series_list_model)
-		self.to_spin = QtGui.QSpinBox()
+		self.to_spin = QSpinBox()
 
 		
 		
 		
 
-		self.series_list_view2 = QtGui.QListView()
+		self.series_list_view2 = QListView()
 
 		#############The left panel.
 		
-		self.load_box = QtGui.QHBoxLayout()
+		self.load_box = QHBoxLayout()
 		self.load_box.setSpacing(16)
-		loadCorrFile = QtGui.QPushButton("Load Correlated File")
+		loadCorrFile = QPushButton("Load Correlated File")
 		loadCorrFile.setToolTip('Open dialog for importing correlated files.')
 		loadCorrFile.clicked.connect(self.load_file)
 
 		self.load_box.addWidget(loadCorrFile)
 		
-		load_folder = QtGui.QPushButton('load Folder')
+		load_folder = QPushButton('load Folder')
 		self.load_folder_output = folderOutput(self)
 		self.load_folder_output.type = 'folder_to_process'
 		self.load_folder_output.setToolTip('Opens dialog for selecting a folder to import all correlated files from.')
@@ -843,7 +843,7 @@ class Form(QtGui.QMainWindow):
 		self.load_box.addWidget(load_folder)
 
 
-		on_about_btn = QtGui.QPushButton()
+		on_about_btn = QPushButton()
 		on_about_btn.setText("About Equation")
 		on_about_btn.setToolTip("Provides more information about the equations used for fitting the correlation functions.")
 		on_about_btn.clicked.connect(self.on_about)
@@ -852,7 +852,7 @@ class Form(QtGui.QMainWindow):
 		self.load_box.addStretch()
 		
 
-		self.model_layout = QtGui.QHBoxLayout()
+		self.model_layout = QHBoxLayout()
 		self.model_layout.setSpacing(16)
 		
 		#Drop down list of equations for diffusing species
@@ -869,13 +869,13 @@ class Form(QtGui.QMainWindow):
 
 
 		#Spin box for number of diffusing species
-		diffNumSpecies = QtGui.QHBoxLayout()
+		diffNumSpecies = QHBoxLayout()
 		diffNumSpecies.setSpacing(16)
-		diffNumSpecLabel = QtGui.QLabel('Num. of: diffusing species')
+		diffNumSpecLabel = QLabel('Num. of: diffusing species')
 		diffNumSpecLabel.setToolTip('Set the number of diffusing species to be included in the fitting.')
 
 
-		self.diffNumSpecSpin = QtGui.QSpinBox()
+		self.diffNumSpecSpin = QSpinBox()
 		self.diffNumSpecSpin.setRange(1,3);
 		self.diffNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
 		diffNumSpecies.addWidget(diffNumSpecLabel)
@@ -903,8 +903,8 @@ class Form(QtGui.QMainWindow):
 		
 		#Spin box for number of diffusing species
 		
-		tripNumSpecLabel = QtGui.QLabel('Triplet states')
-		self.tripNumSpecSpin = QtGui.QSpinBox()
+		tripNumSpecLabel = QLabel('Triplet states')
+		self.tripNumSpecSpin = QSpinBox()
 		self.tripNumSpecSpin.setRange(1,3);
 		self.tripNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
 		diffNumSpecies.addWidget(tripNumSpecLabel)
@@ -918,12 +918,12 @@ class Form(QtGui.QMainWindow):
 		self.modelFitSel = comboBoxSp2(self)
 		self.modelFitSel.type = 'Fit'
 
-		fit_layout = QtGui.QHBoxLayout()
+		fit_layout = QHBoxLayout()
 		fit_layout.setSpacing(16)
 		
 
 		
-		self.fit_btn_min_label = QtGui.QLabel("Fit from:")
+		self.fit_btn_min_label = QLabel("Fit from:")
 		self.fit_btn_min = spinBoxSp3(self)
 		self.fit_btn_min.setToolTip("Sets the position of the lower limit handle for the data fitting")
 		self.fit_btn_min.type ='min'
@@ -932,7 +932,7 @@ class Form(QtGui.QMainWindow):
 		self.fit_btn_min.valueChanged.connect(self.fit_btn_min.onEdit)
 		
 
-		self.fit_btn_max_label = QtGui.QLabel("to:")
+		self.fit_btn_max_label = QLabel("to:")
 		self.fit_btn_max = spinBoxSp3(self)
 		self.fit_btn_min.setToolTip("Sets the position of the upper limit handle for the data fitting")
 		self.fit_btn_max.type ='max'
@@ -942,24 +942,24 @@ class Form(QtGui.QMainWindow):
 
 
 		#Profile panel for different buttons.
-		default_profile_panel = QtGui.QHBoxLayout()
+		default_profile_panel = QHBoxLayout()
 		default_profile_panel.setSpacing(16)
 
-		text_default_profile = QtGui.QLabel('Profile:')
+		text_default_profile = QLabel('Profile:')
 
-		load_default_profile = QtGui.QPushButton('load')
+		load_default_profile = QPushButton('load')
 		load_default_profile.setToolTip('Will open a dialog to load a previously saved paramter fit profile')
 		self.load_default_profile_output = folderOutput(self)
 		self.load_default_profile_output.type = 'profile_load'
 		
-		save_default_profile = QtGui.QPushButton('save')
+		save_default_profile = QPushButton('save')
 		save_default_profile.setToolTip('Will open a dialog to save a parameter profile for the fitting')
 		self.save_default_profile_output = folderOutput(self)
 		self.save_default_profile_output.type = 'profile_save'
 
-		store_default_profile = QtGui.QPushButton('store')
+		store_default_profile = QPushButton('store')
 		store_default_profile.setToolTip('Allows you to temporary store a parameter fit profile')
-		apply_default_profile = QtGui.QPushButton('apply')
+		apply_default_profile = QPushButton('apply')
 		store_default_profile.setToolTip('Allows you to apply a parameter fit profile which has been previously loaded or stored')
 		
 		default_profile_panel.addWidget(text_default_profile)
@@ -983,7 +983,7 @@ class Form(QtGui.QMainWindow):
 
 		
 			#Table which has the fitting
-		self.fitTable = QtGui.QTableWidget()
+		self.fitTable = QTableWidget()
 
 
 		
@@ -996,22 +996,22 @@ class Form(QtGui.QMainWindow):
 		
 		
 		
-		self.fit_btn = QtGui.QPushButton("Current")
+		self.fit_btn = QPushButton("Current")
 		self.fit_btn.clicked.connect(self.fit_equation)
 		self.fit_btn.setToolTip('This will fit the data selected in the \"Display Model Parameters\" drop-down list.')
 
 
-		self.fitAll_btn = QtGui.QPushButton("All")
+		self.fitAll_btn = QPushButton("All")
 		self.fitAll_btn.setToolTip('This will fit all the data in the \"Data Series Viewer\" ')
 		self.fitAll_btn.clicked.connect(self.fitAll_equation)
 
 		#Horizontal Layout for fit_btns.
-		fit_btns = QtGui.QHBoxLayout()
+		fit_btns = QHBoxLayout()
 		fit_btns.setSpacing(16)
 		
 		#Fit components
-		self.fit_btn_txt = QtGui.QLabel("Fit with param: ")
-		self.fitSelected_btn = QtGui.QPushButton("Only highlighted")
+		self.fit_btn_txt = QLabel("Fit with param: ")
+		self.fitSelected_btn = QPushButton("Only highlighted")
 		self.fitSelected_btn.setToolTip("This will fit data which is highlighted in the \"Data Series Viewer\"")
 		self.fitSelected_btn.clicked.connect(self.fitSelected_equation)
 
@@ -1023,22 +1023,22 @@ class Form(QtGui.QMainWindow):
 		fit_btns.addStretch();
 
 		#bootstrap.
-		bootstrap_panel = QtGui.QHBoxLayout()
+		bootstrap_panel = QHBoxLayout()
 		bootstrap_panel.setSpacing(16)
 		bootstrap_panel.addSpacing(200)
 
 		self.bootstrap_enable_toggle = False
-		self.bootstrap_enable_btn = QtGui.QPushButton('OFF')
+		self.bootstrap_enable_btn = QPushButton('OFF')
 		self.bootstrap_enable_btn.setStyleSheet("color: red");
 		self.bootstrap_enable_btn.setFixedWidth(60)
 		self.bootstrap_enable_btn.clicked.connect(self.bootstrap_enable_toggle_fn)
 		self.bootstrap_enable_btn.setToolTip('This will enable bootstapping (see documentation formore details)')
-		self.bootstrap_samples = QtGui.QSpinBox()
+		self.bootstrap_samples = QSpinBox()
 		self.bootstrap_samples.setRange (1,400)
 		self.bootstrap_samples.setValue(100)
 		self.bootstrap_samples.setToolTip('This number represents the quantity of bootstrap samples to use.')
 
-		bootstrap_panel.addWidget(QtGui.QLabel('bootstrap:'))
+		bootstrap_panel.addWidget(QLabel('bootstrap:'))
 		bootstrap_panel.addWidget(self.bootstrap_enable_btn)
 		bootstrap_panel.addWidget(self.bootstrap_samples)
 		bootstrap_panel.addStretch()
@@ -1049,17 +1049,17 @@ class Form(QtGui.QMainWindow):
 
 		
 		
-		modelFitSel_box = QtGui.QHBoxLayout()
+		modelFitSel_box = QHBoxLayout()
 		modelFitSel_box.setSpacing(16)
-		self.modelFitSel_label = QtGui.QLabel('Display model parameters for data:')
+		self.modelFitSel_label = QLabel('Display model parameters for data:')
 		modelFitSel_box.addWidget(self.modelFitSel_label)
 		modelFitSel_box.addStretch()
 
 
 		#main left panel layout.
-		left_vboxTop = QtGui.QVBoxLayout()
-		left_vboxMid = QtGui.QVBoxLayout()
-		left_vboxBot = QtGui.QVBoxLayout()
+		left_vboxTop = QVBoxLayout()
+		left_vboxMid = QVBoxLayout()
+		left_vboxBot = QVBoxLayout()
 		
 		left_vboxTop.setContentsMargins(0,0,0,0)
 		left_vboxTop.setSpacing(2)
@@ -1106,15 +1106,15 @@ class Form(QtGui.QMainWindow):
 
 		
 		#Copy Fit parameters and the raw data inc. fit.
-		copy_text = QtGui.QLabel("Copy: ")
-		self.copy_output_btn = QtGui.QPushButton("parameters")
+		copy_text = QLabel("Copy: ")
+		self.copy_output_btn = QPushButton("parameters")
 		self.copy_output_btn.setToolTip("Copies the fit parameters to the clipboard.")
 		self.copy_output_btn.clicked.connect(self.copyOutputDataFn)
-		self.copy_model_btn = QtGui.QPushButton("plot data")
+		self.copy_model_btn = QPushButton("plot data")
 		self.copy_model_btn.setToolTip("Copies the raw data and fit data to the clipboard.");
 		self.copy_model_btn.clicked.connect(self.copyModelFile)
 
-		copy_layout = QtGui.QHBoxLayout()
+		copy_layout = QHBoxLayout()
 		copy_layout.setSpacing(16)
 		copy_layout.addWidget(copy_text)
 		copy_layout.addWidget(self.copy_output_btn)
@@ -1124,16 +1124,16 @@ class Form(QtGui.QMainWindow):
 		
 
 		#Save Fit parameters and the raw data inc. fit.
-		save_text = QtGui.QLabel("Save: ")
-		self.save_output_btn = QtGui.QPushButton("parameters")
+		save_text = QLabel("Save: ")
+		self.save_output_btn = QPushButton("parameters")
 		self.save_output_btn.setToolTip("Saves the learnt parameters to a file.")
 		self.save_output_btn.clicked.connect(self.saveOutputDataFn)
 		
-		self.save_model_btn = QtGui.QPushButton("plot data")
+		self.save_model_btn = QPushButton("plot data")
 		self.save_model_btn.setToolTip("Saves the raw data and fit data to a file.");
 		self.save_model_btn.clicked.connect(self.saveModelFile)
 
-		save_layout = QtGui.QHBoxLayout()
+		save_layout = QHBoxLayout()
 		save_layout.setSpacing(16)
 		save_layout.addWidget(save_text)
 		save_layout.addWidget(self.save_output_btn)
@@ -1141,12 +1141,12 @@ class Form(QtGui.QMainWindow):
 		save_layout.addStretch()
 
 
-		output_layout = QtGui.QHBoxLayout()
+		output_layout = QHBoxLayout()
 		output_layout.setSpacing(16)
-		self.fileNameText = QtGui.QLineEdit('outputFileName')
+		self.fileNameText = QLineEdit('outputFileName')
 		
 
-		self.folderSelect_btn = QtGui.QPushButton('Output Folder')
+		self.folderSelect_btn = QPushButton('Output Folder')
 		self.folderSelect_btn.setToolTip('Select the output folder for saving the files to.')
 		self.folderOutput = folderOutput(self)
 		self.folderOutput.type = 'output_dir'
@@ -1166,13 +1166,13 @@ class Form(QtGui.QMainWindow):
 		
 		left_vboxBot.addStretch()
 
-		left_vbox = QtGui.QVBoxLayout()
+		left_vbox = QVBoxLayout()
 		left_vbox.setContentsMargins(0,0,0,0)
 		left_vbox.setSpacing(16)
 
-		left_stretch = QtGui.QSplitter(QtCore.Qt.Vertical)
-		left_vboxTopWid = QtGui.QWidget()
-		left_vboxBotWid = QtGui.QWidget()
+		left_stretch = QSplitter(QtCore.Qt.Vertical)
+		left_vboxTopWid = QWidget()
+		left_vboxBotWid = QWidget()
 		
 		left_vboxTopWid.setLayout(left_vboxTop)
 		left_vboxBotWid.setLayout(left_vboxBot)
@@ -1181,24 +1181,24 @@ class Form(QtGui.QMainWindow):
 		left_stretch.addWidget(left_vboxBotWid)
 		left_vbox.addWidget(left_stretch)
 
-		center_vbox = QtGui.QVBoxLayout()
+		center_vbox = QVBoxLayout()
 		center_vbox.addWidget(self.canvas)
 		center_vbox.addWidget(self.mpl_toolbar)
-		resetScale = QtGui.QPushButton("Reset Scale")
+		resetScale = QPushButton("Reset Scale")
 		resetScale.setToolTip('Will reset the scale to be the bounds of the plot with the largest amplitude')
 		resetScale.clicked.connect(self.resetScaleFn)
 		
-		self.turnOffAutoScale = QtGui.QPushButton("Keep Scale")
+		self.turnOffAutoScale = QPushButton("Keep Scale")
 		self.turnOffAutoScale.setToolTip("Will stop the scale from dynamically changeing.")
 		self.turnOffAutoScale.setCheckable(True)
 		self.turnOffAutoScale.clicked.connect(self.autoScaleFn)
 
-		self.norm_to_one_btn = QtGui.QPushButton("Normalize Function")
+		self.norm_to_one_btn = QPushButton("Normalize Function")
 		self.norm_to_one_btn.setToolTip("Will ensure all curves scale between 1.0 and 0.0")
 		self.norm_to_one_btn.setCheckable(True)
 		self.norm_to_one_btn.clicked.connect(self.norm_to_one_fn)
 		
-		center_hbox = QtGui.QHBoxLayout()
+		center_hbox = QHBoxLayout()
 		center_hbox.setSpacing(16)
 		center_vbox.addLayout(center_hbox)
 		center_hbox.addWidget(resetScale)
@@ -1207,22 +1207,22 @@ class Form(QtGui.QMainWindow):
 		center_hbox.setAlignment(QtCore.Qt.AlignLeft)
 
 
-		right_vbox = QtGui.QVBoxLayout()
+		right_vbox = QVBoxLayout()
 		right_vbox.addWidget(log_label)
 		right_vbox.addWidget(self.series_list_view)
 		self.series_list_view.setMinimumWidth(260)
 		self.series_list_view.setMinimumHeight(260)
 		#right_vbox.addLayout(spins_hbox)
 
-		legend_box = QtGui.QHBoxLayout()
+		legend_box = QHBoxLayout()
 		legend_box.setSpacing(16)
-		#self.legend_cb = QtGui.QCheckBox("Show L&egend")
+		#self.legend_cb = QCheckBox("Show L&egend")
 		#self.legend_cb.setChecked(False)
 		#legend_box.addWidget(self.legend_cb)
 		
 
-		self.right_check_all_none = QtGui.QPushButton("check all")
-		self.show_button = QtGui.QPushButton("Plot Checked Data")
+		self.right_check_all_none = QPushButton("check all")
+		self.show_button = QPushButton("Plot Checked Data")
 		
 		self.switch_true_false = True
 
@@ -1232,29 +1232,29 @@ class Form(QtGui.QMainWindow):
 		legend_box.addWidget(self.right_check_all_none)
 		right_vbox.addLayout(legend_box)
 
-		right_ch_check = QtGui.QHBoxLayout()
+		right_ch_check = QHBoxLayout()
 		right_ch_check.setSpacing(16)
 		#Channel 0 auto-correlation
-		ch_check_ch0_label = QtGui.QLabel("ac: CH0")
-		self.ch_check_ch0 = QtGui.QCheckBox()
+		ch_check_ch0_label = QLabel("ac: CH0")
+		self.ch_check_ch0 = QCheckBox()
 		self.ch_check_ch0.setChecked(True)
 		self.ch_check_ch0.setToolTip("check to display CH0 auto-correlation data.")
 		self.ch_check_ch0.stateChanged.connect(self.fill_series_list)
 		#Channel 1 auto-correlation
-		ch_check_ch1_label = QtGui.QLabel("CH1")
-		self.ch_check_ch1 = QtGui.QCheckBox()
+		ch_check_ch1_label = QLabel("CH1")
+		self.ch_check_ch1 = QCheckBox()
 		self.ch_check_ch1.setChecked(True)
 		self.ch_check_ch1.setToolTip("check to display CH1 auto-correlation data.")
 		self.ch_check_ch1.stateChanged.connect(self.fill_series_list)
 		#Channel 01 cross-correlation
-		ch_check_ch01_label = QtGui.QLabel("cc: CH01")
-		self.ch_check_ch01 = QtGui.QCheckBox()
+		ch_check_ch01_label = QLabel("cc: CH01")
+		self.ch_check_ch01 = QCheckBox()
 		self.ch_check_ch01.setChecked(True)
 		self.ch_check_ch01.setToolTip("check to display CH01 cross-correlation data.")
 		self.ch_check_ch01.stateChanged.connect(self.fill_series_list)
 		#Channel 10 cross-correlation
-		ch_check_ch10_label = QtGui.QLabel("CH10")
-		self.ch_check_ch10 = QtGui.QCheckBox()
+		ch_check_ch10_label = QLabel("CH10")
+		self.ch_check_ch10 = QCheckBox()
 		self.ch_check_ch10.setChecked(False)
 		self.ch_check_ch10.setToolTip("check to display CH10 cross-correlation data.")
 		self.ch_check_ch10.stateChanged.connect(self.fill_series_list)
@@ -1276,8 +1276,8 @@ class Form(QtGui.QMainWindow):
 
 		right_vbox.addWidget(self.right_check_all_none)
 		
-		self.chi_limit_label = QtGui.QLabel('chi^2 cut-off value')
-		self.chi_limit = QtGui.QDoubleSpinBox()
+		self.chi_limit_label = QLabel('chi^2 cut-off value')
+		self.chi_limit = QDoubleSpinBox()
 		self.chi_limit.setToolTip('The Data Series Viewer cut-off. Fits with chi^2 above this value will be red, lower geen.')
 		self.chi_limit.setMinimum(0)
 		self.chi_limit.setDecimals(3)
@@ -1285,26 +1285,26 @@ class Form(QtGui.QMainWindow):
 		self.chi_limit.setSingleStep(0.001)
 		self.chi_limit.setValue(self.chisqr)
 		self.chi_limit.valueChanged.connect(self.chi_limit_update)
-		chi_limit_box = QtGui.QHBoxLayout()
+		chi_limit_box = QHBoxLayout()
 		chi_limit_box.addStretch()
 		chi_limit_box.addWidget(self.chi_limit_label)
 		chi_limit_box.addWidget(self.chi_limit)
 
-		self.remove_btn = QtGui.QPushButton("Remove Highlighted Data")
+		self.remove_btn = QPushButton("Remove Highlighted Data")
 		self.remove_btn.setToolTip('Remove highlighted data from \"Data Series Viewer\" ')
 		self.remove_btn.clicked.connect(self.removeDataFn)
-		self.create_average_btn = QtGui.QPushButton("Create average of Highlighted")
+		self.create_average_btn = QPushButton("Create average of Highlighted")
 		self.create_average_btn.setToolTip('Creates a new average plot from any plots highlighted in the \"Data Series Viewer\" ')
 		self.create_average_btn.clicked.connect(self.create_average_fn)
-		self.clearFits_btn = QtGui.QPushButton("Clear Fit Data All/Highlighted")
+		self.clearFits_btn = QPushButton("Clear Fit Data All/Highlighted")
 		self.clearFits_btn.setToolTip('Clears the fit parameters only from any data-files highlighted in the \"Data Series Viewer\" ')
 		self.clearFits_btn.clicked.connect(self.clearFits)
 		self.visual_histo = visualHisto(self)
-		visual_histo_btn = QtGui.QPushButton("Generate Histogram");
+		visual_histo_btn = QPushButton("Generate Histogram");
 		visual_histo_btn.setToolTip('Opens the Generate Histogram plot dialog')
 		visual_histo_btn.clicked.connect(self.visual_histo.create_main_frame)
 		self.visual_scatter = visualScatter(self)
-		visual_scatter_btn = QtGui.QPushButton("Generate Scatter");
+		visual_scatter_btn = QPushButton("Generate Scatter");
 		visual_histo_btn.setToolTip('Opens the Generate Scatter plot dialog')
 		visual_scatter_btn.clicked.connect(self.visual_scatter.create_main_frame)
 
@@ -1316,7 +1316,7 @@ class Form(QtGui.QMainWindow):
 		right_vbox.addWidget(visual_scatter_btn)
 		right_vbox.addStretch(1)
 
-		filter_box = QtGui.QHBoxLayout()
+		filter_box = QHBoxLayout()
 		right_vbox.addLayout(filter_box)
 
 
@@ -1324,8 +1324,8 @@ class Form(QtGui.QMainWindow):
 
 
 		filter_box.addWidget(self.tfb)
-		self.filter_add_panel = QtGui.QHBoxLayout()
-		self.filter_select = QtGui.QComboBox()
+		self.filter_add_panel = QHBoxLayout()
+		self.filter_select = QComboBox()
 		self.filter_select.setMaximumWidth(100)
 		self.filter_select.setToolTip('Specifies parameter of fit to filter')
 		
@@ -1333,15 +1333,15 @@ class Form(QtGui.QMainWindow):
 		for item in self.def_param:
 			self.filter_select.addItem(item)
 
-		self.filter_lessthan = QtGui.QComboBox()
+		self.filter_lessthan = QComboBox()
 		self.filter_lessthan.addItem('<')
 		self.filter_lessthan.addItem('>')
 		self.filter_lessthan.setToolTip("Species direction of filter")
 		self.filter_lessthan.setMaximumWidth(50)
-		self.filter_value = QtGui.QLineEdit('10.0')
+		self.filter_value = QLineEdit('10.0')
 		self.filter_value.setMaximumWidth(50)
 		self.filter_value.setMinimumWidth(50)
-		self.filter_add = QtGui.QPushButton('add')
+		self.filter_add = QPushButton('add')
 		self.filter_add.setToolTip('Will add a filter which processes the data in the \"Data Series Viewer\"')
 		self.filter_add_panel.addWidget(self.filter_select)
 		self.filter_add_panel.addWidget(self.filter_lessthan)
@@ -1351,14 +1351,14 @@ class Form(QtGui.QMainWindow):
 		
 
 		self.filter_add.clicked.connect(self.tfb.filter_add_fn)
-		hbox = QtGui.QHBoxLayout()
-		splitter = QtGui.QSplitter();
+		hbox = QHBoxLayout()
+		splitter = QSplitter();
 		
-		hbox1 =QtGui.QWidget()
+		hbox1 =QWidget()
 		hbox1.setLayout(left_vbox)
-		hbox2 =QtGui.QWidget()
+		hbox2 =QWidget()
 		hbox2.setLayout(center_vbox)
-		hbox3 = QtGui.QWidget()
+		hbox3 = QWidget()
 		hbox3.setLayout(right_vbox)
 		#hbox.addLayout(right_vbox)
 		splitter.addWidget(hbox1)
@@ -1366,9 +1366,9 @@ class Form(QtGui.QMainWindow):
 		splitter.addWidget(hbox3)
 		#Splitter instance. Can't have 
 		
-		container = QtGui.QWidget()
+		container = QWidget()
 
-		self.image_status_text = QtGui.QStatusBar()
+		self.image_status_text = QStatusBar()
 		
 		self.image_status_text.showMessage("Please load a data file. ")
 		self.image_status_text.setStyleSheet("QLabel {  color : green }")
@@ -1473,12 +1473,6 @@ class Form(QtGui.QMainWindow):
 		
 
 	def check_all_none(self):
-		
-		#for Id, objId in enumerate(self.objIdArr):
-		#	if objId.toFit == True:
-		#		objId.checked = self.switch_true_false
-
-
 		
 
 		if self.switch_true_false == True:
@@ -1600,11 +1594,7 @@ class Form(QtGui.QMainWindow):
 								indList.append(self.obj_hash_list[self.tree_hash_list[objId.series_list_id]])
 
 							
-					#Order the list.
-					#indList.sort(reverse=True)
-					#for indL in indList:
-						#Looks through the objects in objIdArr and deletes them if they match.
-					#	del self.objIdArr[indL]
+					
 			return indList			
 			
 
@@ -1947,10 +1937,10 @@ class Form(QtGui.QMainWindow):
 
 	def paramFactory(self,paraTxt,setDec,paraMin,paraMax,setSingStep,row,param):
 				"""UI factory function"""
-				#exec("self."+paraTxt+"_label = QtGui.QLabel()");
+				#exec("self."+paraTxt+"_label = QLabel()");
 				
 				
-				exec("self."+paraTxt+"_value = QtGui.QDoubleSpinBox()");
+				exec("self."+paraTxt+"_value = QDoubleSpinBox()");
 				exec("self."+paraTxt+"_value.setDecimals("+str(setDec)+")");
 				exec("self."+paraTxt+"_value.setSingleStep("+str(setSingStep)+")");
 				exec("self."+paraTxt+"_value.setRange("+str(paraMin)+","+str(paraMax)+")");
@@ -1961,13 +1951,13 @@ class Form(QtGui.QMainWindow):
 					
 					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\']['value']))");
 				
-				exec("self."+paraTxt+"_vary = QtGui.QCheckBox()");
-				checkCont = QtGui.QHBoxLayout()
+				exec("self."+paraTxt+"_vary = QCheckBox()");
+				checkCont = QHBoxLayout()
 				try:
 					exec("self."+paraTxt+"_vary.setChecked(param[\'"+paraTxt+"\']['vary'])");
 				except:
 					exec("self."+paraTxt+"_vary.setChecked(self.def_param[\'"+paraTxt+"\']['vary'])");
-				exec("self."+paraTxt+"_min = QtGui.QDoubleSpinBox()");
+				exec("self."+paraTxt+"_min = QDoubleSpinBox()");
 				exec("self."+paraTxt+"_min.setDecimals("+str(setDec)+")");
 				exec("self."+paraTxt+"_min.setSingleStep("+str(setSingStep)+")");
 				exec("self."+paraTxt+"_min.setRange("+str(paraMin)+","+str(paraMax)+")");
@@ -1976,11 +1966,11 @@ class Form(QtGui.QMainWindow):
 					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\']['minv']))");
 				except:
 					exec("self."+paraTxt+"_min.setValue(float(self.def_param[\'"+paraTxt+"\']['minv']))");
-				exec("self."+paraTxt+"_max = QtGui.QDoubleSpinBox()");
+				exec("self."+paraTxt+"_max = QDoubleSpinBox()");
 				exec("self."+paraTxt+"_max.setDecimals("+str(setDec)+")");
 				exec("self."+paraTxt+"_max.setSingleStep("+str(setSingStep)+")");
 				exec("self."+paraTxt+"_max.setRange("+str(paraMin)+","+str(paraMax)+")");
-				exec("self."+paraTxt+"_label = QtGui.QLabel()");
+				exec("self."+paraTxt+"_label = QLabel()");
 				try:
 					exec("self."+paraTxt+"_max.setValue(float(param[\'"+paraTxt+"\']['maxv']))");
 				except:
@@ -2048,12 +2038,12 @@ class Form(QtGui.QMainWindow):
 					self.filter_select.addItem(item)
 
 					if param[item]['calc'] == False:
-						self.paramFactory(paraTxt=item,setDec=6,paraMin=-1.0,paraMax=100000,setSingStep=0.01,row=row, param=param)
+						self.paramFactory(paraTxt=item, setDec=6 ,paraMin=-1.0, paraMax=100000, setSingStep=0.01, row=row, param=param)
 						self.labelArray.append(' '+param[item]['alias'])
 						row +=1
 					else:
 						if col == 0:
-							label = QtGui.QLabel(' '+str(np.round(param[item]['value'],3)))
+							label = QLabel(' '+str(np.round(param[item]['value'],3)))
 							
 							self.fitTable.setCellWidget(row, 0, label)
 							self.labelArray.append(' '+param[item]['alias'])
@@ -2063,11 +2053,11 @@ class Form(QtGui.QMainWindow):
 							row +=1
 							continue;
 						if col ==2:
-							label = QtGui.QLabel(' '+str(np.round(param[item]['value'],3)))
+							label = QLabel(' '+str(np.round(param[item]['value'],3)))
 							#label.setToolTip('test'+str(item))
 							#self.fitTable.horizontalHeader().Item[0].setToolTip("header 0")
 
-							label_2 = QtGui.QLabel(str(' '+param[item]['alias']))
+							label_2 = QLabel(str(' '+param[item]['alias']))
 							self.fitTable.setCellWidget(row-1, 3, label)
 							self.fitTable.setCellWidget(row-1, 2,label_2)
 							#self.fitTable.verticalHeaderItem(row-1).setToolTip("Column 1 ")
@@ -2077,23 +2067,7 @@ class Form(QtGui.QMainWindow):
 			self.fitTable.setVerticalHeaderLabels(self.labelArray)
 			self.fitTable.setRowCount(row)
 
-	def create_menu(self):        
-		self.file_menu = self.menuBar().addMenu("&File")
-		
-		load_action = self.create_action("&Load file",
-			shortcut="Ctrl+L", slot=self.load_file, tip="Load a file")
-		quit_action = self.create_action("&Quit", slot=self.close, 
-			shortcut="Ctrl+Q", tip="Close the application")
-		
-		self.add_actions(self.file_menu, 
-			(load_action, None, quit_action))
-			
-		self.help_menu = self.menuBar().addMenu("&Help")
-		about_action = self.create_action("&About", 
-			shortcut='F1', slot=self.on_about, 
-			tip='About the demo')
-		
-		self.add_actions(self.help_menu, (about_action,))
+	
 
 	def add_actions(self, target, actions):
 		for action in actions:
@@ -2102,22 +2076,7 @@ class Form(QtGui.QMainWindow):
 			else:
 				target.addAction(action)
 
-	def create_action(  self, text, slot=None, shortcut=None, 
-						icon=None, tip=None, checkable=False, 
-						signal="triggered()"):
-		action = QtGui.QAction(text, self)
-		if icon is not None:
-			action.setIcon(QIcon(":/%s.png" % icon))
-		if shortcut is not None:
-			action.setShortcut(shortcut)
-		if tip is not None:
-			action.setToolTip(tip)
-			action.setStatusTip(tip)
-		if slot is not None:
-			self.connect(action, QtCore.SIGNAL(signal), slot)
-		if checkable:
-			action.setCheckable(True)
-		return action
+	
 
 	
 				
@@ -2282,11 +2241,11 @@ class draggableLine:
 		self.line.figure.canvas.mpl_disconnect(self.cidpress)
 		self.line.figure.canvas.mpl_disconnect(self.cidrelease)
 		self.line.figure.canvas.mpl_disconnect(self.cidmotion)
-class comboBoxSp2(QtGui.QComboBox):
+class comboBoxSp2(QComboBox):
 	"""class which is used for multiple dynamic drop-down lists.
 	including the model parameter selection."""
 	def __init__(self, parent=None):
-		QtGui.QComboBox.__init__(self, parent)
+		QComboBox.__init__(self, parent)
 		self.activated[str].connect(self.__activated) 
 		self.obj = []
 		self.TGid =[]
@@ -2329,9 +2288,9 @@ class comboBoxSp2(QtGui.QComboBox):
 			SE.decide_which_to_show(self.parent)
 		self.parent.defineTable()
 		
-class spinBoxSp3(QtGui.QDoubleSpinBox):
+class spinBoxSp3(QDoubleSpinBox):
 	def __init__(self,parent):
-		QtGui.QDoubleSpinBox.__init__(self,parent)
+		QDoubleSpinBox.__init__(self,parent)
 		self.setDecimals(5)
 		self.setMaximum(10000)
 		self.start =[]
@@ -2354,7 +2313,7 @@ class spinBoxSp3(QtGui.QDoubleSpinBox):
 				self.parent.dr1.xpos = self.array[self.index]
 				self.parent.dr1.just_update()
 	def stepEnabled(self):  
-		return QtGui.QAbstractSpinBox.StepUpEnabled | QtGui.QAbstractSpinBox.StepDownEnabled 
+		return QAbstractSpinBox.StepUpEnabled | QAbstractSpinBox.StepDownEnabled 
 	def onEdit(self):
 		"""Called when user manually changes test"""
 		if self.type == 'min':
@@ -2371,31 +2330,8 @@ class spinBoxSp3(QtGui.QDoubleSpinBox):
 				pass
 
 
-
-
-
-
-			
-
-
-def pyqt_set_trace():
-	'''Set a tracepoint in the Python debugger that works with Qt'''
-	from PyQt4.QtCore import pyqtRemoveInputHook
-	import pdb
-	import sys
-	pyqtRemoveInputHook()
-	# set up the debugger
-	debugger = pdb.Pdb()
-	debugger.reset()
-	# custom next to get outside of function scope
-	debugger.do_next(None) # run the next command
-	users_frame = sys._getframe().f_back # frame where the user invoked `pyqt_set_trace()`
-	debugger.interaction(users_frame, None)
-
-
-
 if __name__ == "__main__":
-	app = QtGui.QApplication(sys.argv)
+	app = QApplication(sys.argv)
 	form = Form()
 	form.show()
 	app.exec_()
