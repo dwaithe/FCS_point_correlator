@@ -1,5 +1,7 @@
 from PyQt4 import QtGui
-from PyQt4.QtGui import QTableWidget,QPushButton,QMainWindow
+from PyQt4.QtGui import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
+from PyQt4.QtGui import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QIcon,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
+from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np

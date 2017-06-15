@@ -1,9 +1,10 @@
 import sys, os, csv
 from PyQt4 import QtCore
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtWebKit
 from PyQt4.QtGui import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt4.QtGui import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QIcon,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
 from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog
+
 from scipy.special import _ufuncs_cxx
 
 import matplotlib
@@ -829,26 +830,26 @@ class Form(QMainWindow):
 		
 		self.load_box = QHBoxLayout()
 		self.load_box.setSpacing(16)
-		loadCorrFile = QPushButton("Load Correlated File")
-		loadCorrFile.setToolTip('Open dialog for importing correlated files.')
-		loadCorrFile.clicked.connect(self.load_file)
+		self.load_corr_file_btn = QPushButton("Load Correlated File")
+		self.load_corr_file_btn.setToolTip('Open dialog for importing correlated files.')
+		self.load_corr_file_btn.clicked.connect(self.load_file)
 
-		self.load_box.addWidget(loadCorrFile)
+		self.load_box.addWidget(self.load_corr_file_btn)
 		
-		load_folder = QPushButton('load Folder')
+		self.load_folder_btn = QPushButton('load Folder')
 		self.load_folder_output = folderOutput(self)
 		self.load_folder_output.type = 'folder_to_process'
 		self.load_folder_output.setToolTip('Opens dialog for selecting a folder to import all correlated files from.')
-		load_folder.clicked.connect(self.load_folder_fn)
-		self.load_box.addWidget(load_folder)
+		self.load_folder_btn.clicked.connect(self.load_folder_fn)
+		self.load_box.addWidget(self.load_folder_btn)
 
 
-		on_about_btn = QPushButton()
-		on_about_btn.setText("About Equation")
-		on_about_btn.setToolTip("Provides more information about the equations used for fitting the correlation functions.")
-		on_about_btn.clicked.connect(self.on_about)
+		self.on_about_btn = QPushButton()
+		self.on_about_btn.setText("About Equation")
+		self.on_about_btn.setToolTip("Provides more information about the equations used for fitting the correlation functions.")
+		self.on_about_btn.clicked.connect(self.on_about)
 		
-		self.load_box.addWidget(on_about_btn)
+		self.load_box.addWidget(self.on_about_btn)
 		self.load_box.addStretch()
 		
 
@@ -1503,15 +1504,13 @@ class Form(QMainWindow):
 		self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
 		
 		self.defineTable()
-		
-		
 		self.updateParamFirst()
 	def load_folder_fn(self):
 		self.load_folder_output.showDialog()
 	def save_default_profile_fn(self):
 		
 		self.fit_profile = {}
-		
+		self.updateParamFirst()
 		self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
 		self.fit_profile['def_options'] = self.def_options
 		
@@ -1519,13 +1518,15 @@ class Form(QMainWindow):
 	def store_default_profile_fn(self):
 		
 		self.fit_profile = {}
-		
+		self.updateParamFirst()
 		self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
-		self.fit_profile['def_options'] = self.def_options
+		self.fit_profile['def_options'] = copy.deepcopy(self.def_options)
 		self.image_status_text.showMessage('Profile stored, use the \'Apply\' button to apply.')
 		
 	def apply_default_profile_fn(self):
-		self.def_options = self.fit_profile['def_options']
+		
+		self.def_options = copy.deepcopy(self.fit_profile['def_options'])
+
 		self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
 		self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
 		self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
@@ -1536,8 +1537,6 @@ class Form(QMainWindow):
 		self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
 		
 		self.defineTable()
-		
-		
 		self.updateParamFirst()
 		self.image_status_text.showMessage('Profile Applied.')
 

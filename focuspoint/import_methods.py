@@ -24,6 +24,82 @@ import csv
 import struct
 import string
 
+def spc_file_import(file_path):
+    f = open(file_path, 'rb')
+    macro_time =  float(int(bin(ord(f.read(1)))[2:].rjust(2, '0'),2))*0.1
+    
+    int(bin(ord(f.read(1)))[2:].rjust(2, '0'),2)
+    int(bin(ord(f.read(1)))[2:].rjust(2, '0'),2)
+    bin(ord(f.read(1)))[2:].rjust(2, '0')
+
+
+
+    overflow = 0
+    count1 = 0
+    count0 = 0
+    chan_arr = []
+    true_time_arr = []
+    dtime_arr = []
+    while True:
+        byte = f.read(1)
+        if  byte.__len__() ==0 : break
+        byte0 = bin(ord(byte))[2:].rjust(8, '0')
+        byte1 = bin(ord(f.read(1)))[2:].rjust(8, '0')
+        byte2 = bin(ord(f.read(1)))[2:].rjust(8, '0')
+        byte3 = bin(ord(f.read(1)))[2:].rjust(8, '0')
+
+        INVALID =  int(byte3[0])
+        MTOV = int(byte3[1])
+        GAP = int(byte3[2])
+        if MTOV == 1: 
+            count0 +=1
+            overflow += 4096
+        if INVALID == 1:
+            count1 +=1
+        elif int(byte1[0:4],2) == 0:
+            chan_arr.append(int(byte1[0:4],2))
+            true_time_arr.append(int(byte1[4:8]+byte0,2)+overflow)
+            dtime_arr.append(4095 - int(byte3[4:8]+byte2,2))
+            
+            #file_out.write(str(int(byte1[4:8]+byte0,2)+overflow)+'\t'+str(4095 - int(byte3[4:8]+byte2,2))+'\t'+str(int(byte1[0:4],2))+'\t'+str(byte3[0:4])+'\n')
+    
+    return  np.array(chan_arr), np.array(true_time_arr)*(macro_time), np.array(dtime_arr), None
+
+
+def asc_file_import(file_path):
+    f = open(file_path, 'rb')
+    count = 0
+
+    out = []
+    count = 0
+    chan_arr = []
+    true_time_arr = []
+    dtime_arr = []
+    read_header = True
+    for line in iter(f.readline, b''):
+        count += 1
+        if read_header == True:
+            if line[0:5] == 'Macro':
+                macro_time =  float(line.split(':')[1].split(',')[0])
+            if line[0:5] == 'Micro':
+                micro_time =  float(line.split(':')[1])
+            #print line
+            count +=1
+            if line[0:18] == 'End of info header':
+                read_header = False
+                f.readline()#Skips blank line.
+                continue
+        if read_header == False:
+            #Main file reading loop.
+            var = line.split(" ")
+            
+            true_time_arr.append(int(var[0]))
+            dtime_arr.append(int(var[1]))
+            chan_arr.append(int(var[3]))
+        
+    
+    return  np.array(chan_arr), np.array(true_time_arr)*(macro_time), np.array(dtime_arr), micro_time
+
 def ptuimport(filepath):
 
     

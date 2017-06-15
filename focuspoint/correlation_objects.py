@@ -71,7 +71,11 @@ class picoObject():
 		self.photonCountBin = self.par_obj.photonCountBin
 		
 		#File import
-		
+		if self.ext == 'spc':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
+		if self.ext == 'asc':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
+
 		if self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
 		if self.ext == 'ptu':
@@ -103,8 +107,10 @@ class picoObject():
 		#How many channels there are in the files.
 		
 		self.ch_present = np.unique(np.array(self.subChanArr))
-		self.numOfCH =  self.ch_present.__len__()-1 #Minus 1 because not interested in channel 15.
-		
+		if self.ext == 'pt3' or self.ext == 'ptu':
+			self.numOfCH =  self.ch_present.__len__()-1 #Minus 1 because not interested in channel 15.
+		else:
+			self.numOfCH =  self.ch_present.__len__()
 		
 		#Finds the numbers which address the channels.
 		
@@ -116,7 +122,7 @@ class picoObject():
 
 		#Time series of photon counts. For visualisation.
 		self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
-		
+	
 		
 		unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
 		
@@ -147,6 +153,7 @@ class picoObject():
 				self.numberNandBCH1 =0
 			else:
 				self.numberNandBCH1 = (raw_count**2/(var_count-raw_count))
+			CV = calc_coincidence_value(self)
 
 
 		
@@ -176,6 +183,7 @@ class picoObject():
 			
 			
 			if self.numOfCH ==  2:
+				self.objId1.CV = CV
 				if self.objId3 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId3 = corrObj.objId
@@ -194,7 +202,7 @@ class picoObject():
 				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId3.max = np.max(self.objId3.autoNorm)
 				self.objId3.min = np.min(self.objId3.autoNorm)
-				
+				self.objId3.CV = CV
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId2 = corrObj.objId
@@ -212,7 +220,7 @@ class picoObject():
 				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId2.max = np.max(self.objId2.autoNorm)
 				self.objId2.min = np.min(self.objId2.autoNorm)
-				
+				self.objId2.CV =CV
 
 				if self.objId4 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
@@ -231,7 +239,7 @@ class picoObject():
 				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId4.max = np.max(self.objId4.autoNorm)
 				self.objId4.min = np.min(self.objId4.autoNorm)
-				
+				self.objId4.CV = CV
 			self.fit_obj.fill_series_list()
 		self.dTimeMin = 0
 		self.dTimeMax = np.max(self.dTimeArr)
@@ -342,12 +350,10 @@ class subPicoObject():
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
 		if self.ext == 'csv':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
-			#If the file is empty.
-			#if self.subChanArr == None:
-				#Undoes any preparation of resource.
-			#    self.par_obj.subObjectRef.pop(-1)
-				#self.exit = True
-			#    return
+		if self.ext == 'spc':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
+		if self.ext == 'asc':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
 
 
 		self.subArrayGeneration(self.xmin,self.xmax)
@@ -367,6 +373,10 @@ class subPicoObject():
 			self.timeSeries2,self.timeSeriesScale2 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[1],self.photonCountBin)
 			unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
 			self.kcount_CH2 = np.average(self.timeSeries2)
+
+			CV = calc_coincidence_value(self)
+
+			
 		
 
 		
@@ -390,6 +400,7 @@ class subPicoObject():
 		
 		
 		if self.numOfCH == 2:
+			self.objId1.CV = CV
 			if self.objId3 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId3 = corrObj.objId
@@ -403,9 +414,11 @@ class subPicoObject():
 				self.objId3.prepare_for_fit()
 				self.objId3.kcount = self.kcount_CH2
 				
+				
 			self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 			self.objId3.autotime = np.array(self.autotime).reshape(-1)
 			self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
+			self.objId3.CV = CV
 			if self.objId2 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId2 = corrObj.objId
@@ -417,10 +430,12 @@ class subPicoObject():
 				self.objId2.ch_type = 2 #channel 01 Cross
 				self.objId2.siblings = None
 				self.objId2.prepare_for_fit()
+
 				
 			self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 			self.objId2.autotime = np.array(self.autotime).reshape(-1)
 			self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
+			self.objId2.CV = CV
 			if self.objId4 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId4 = corrObj.objId
@@ -436,6 +451,7 @@ class subPicoObject():
 				
 			self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
 			self.objId4.autotime = np.array(self.autotime).reshape(-1)
+			self.objId4.CV = CV
 			
 			
 		
@@ -487,7 +503,20 @@ class subPicoObject():
 			self.autoNorm[:,0,1] = ((auto[:,0,1]*maxY)/(self.count0*self.count1))-1
 
 		return 
-
+def calc_coincidence_value(self):
+	N1 = np.bincount((np.array(self.timeSeries1)).astype(np.int64))
+	N2 = np.bincount((np.array(self.timeSeries2)).astype(np.int64))
+	
+	n = max(N1.shape[0],N2.shape[0])
+	NN1 = np.zeros(n)
+	NN2 = np.zeros(n)
+	NN1[:N1.shape[0]] = N1 
+	NN2[:N2.shape[0]] = N2 
+	N1 = NN1
+	N2 = NN2
+	
+	CV = (np.sum(N1*N2)/(np.sum(N1)*np.sum(N2)))*n
+	return CV
 class corrObject():
 	def __init__(self,filepath,parentFn):
 		#the container for the object.
@@ -605,8 +634,8 @@ class corrObject():
 						
 				
 			for art in self.param:
-				 	
-				 		
+					
+						
 
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 						self.param[art]['value'] = np.average(aver_data[art])

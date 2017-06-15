@@ -203,7 +203,7 @@ class FileDialog(QtGui.QMainWindow):
         #Create loop which opens dialog box and allows selection of files.
 
         self.win_obj.update_correlation_parameters()
-        file_imports = fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);All Files (*.*)')
+        file_imports = fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);asc files (*.asc);spc files (*.spc);All Files (*.*)')
         bt = QtGui.QPushButton("cancel")
         
         for c,filename in enumerate(file_imports):
@@ -701,7 +701,10 @@ class Window(QtGui.QWidget):
             if object.numOfCH ==  2:
                 self.plt5.plot(decayScale2, photonDecayCh2,object.color,linestyle='dashed')
             self.figure5.subplots_adjust(left=0.1,right=0.95, bottom=0.20,top=0.90)
-            self.plt5.set_xlabel('Time channels (1 ='+str(np.round(object.resolution,4))+' ns)', fontsize=12)
+            if object.resolution != None:
+                self.plt5.set_xlabel('Time channels (1 ='+str(np.round(object.resolution,4))+' ns)', fontsize=12)
+            else:
+                self.plt5.set_xlabel('Time channels (No micro time in file))', fontsize=12)
             self.plt5.set_ylabel(axisText, fontsize=12)
             self.plt5.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
             self.plt5.xaxis.grid(True,'minor')
@@ -748,6 +751,7 @@ class Window(QtGui.QWidget):
             f.write('kcount,'+str(objId.kcount_CH1)+','+str(objId.kcount_CH2)+'\n')
             f.write('numberNandB,'+str(objId.numberNandBCH0)+','+str(objId.numberNandBCH1)+'\n')
             f.write('brightnessNandB,'+str(objId.brightnessNandBCH0)+','+str(objId.brightnessNandBCH1)+'\n')
+            f.write('CV,'+str(objId.CV)+','+str(objId.CV)+','+str(objId.CV)+'\n')
             f.write('carpet pos, 0 \n')
             
             f.write('pc, 0\n');
@@ -823,6 +827,10 @@ class lineEditSp(QtGui.QLineEdit):
             self.win_obj.plt5.a.redraw()
         if(self.type == 'name' ):
             self.obj.name = str(self.text())
+        if(self.type == 'ncasc' or self.type =='ncascEnd' or self.type =='nsub'):
+            self.win_obj.update_correlation_parameters()
+
+
 
            
             
