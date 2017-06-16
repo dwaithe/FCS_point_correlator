@@ -197,10 +197,10 @@ def sin_import_method(fit_obj,file_path):
 					
 					
 		corrObj1.ch_type = 0;
-		#Average counts per bin. For it to be seconds (Hz), must divide by duration.
+		#Average counts per bin. Apparently they are normalised to time.
 		unit = int_tscale[-1]/(int_tscale.__len__()-1)
 		#And to be in kHz we divide by 1000.
-		corrObj1.kcount = np.average(np.array(int_tdata)/unit)/1000
+		corrObj1.kcount = np.average(np.array(int_tdata))/1000
 		corrObj1.param = copy.deepcopy(fit_obj.def_param)
 		corrObj1.calculate_suitability()
 
@@ -225,7 +225,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj2.ch_type = 1;
 	
 			#And to be in kHz we divide by 1000.
-			corrObj2.kcount = np.average(np.array(int_tdata2)/unit)/1000
+			corrObj2.kcount = np.average(np.array(int_tdata2))/1000
 			corrObj2.param = copy.deepcopy(fit_obj.def_param)
 
 			corrObj1.siblings = [corrObj2]

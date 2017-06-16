@@ -227,16 +227,18 @@ class Form(QMainWindow):
 		for file_path in  files_to_load:
 				self.nameAndExt = os.path.basename(str(file_path)).split('.')
 				self.name = self.nameAndExt[0]
-				self.ext = self.nameAndExt[-1]
+				self.ext = str(self.nameAndExt[-1])
+				
 				#try:
 				if self.ext == 'SIN' or self.ext == 'sin':
 					sin_import_method(self,file_path)
-				if self.ext == 'fcs':
+				elif self.ext == 'fcs':
 					fcs_import_method(self,file_path)
 				elif self.ext == 'CSV' or self.ext == 'csv' :
 					csv_import_method(self,file_path)
 					
 				else:
+					
 					self.image_status_text.showMessage("File format not recognised please request via github page.")
 					self.image_status_text.setStyleSheet("color : red")
 					return

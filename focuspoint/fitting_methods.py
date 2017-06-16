@@ -61,9 +61,9 @@ def initialise_fcs(int_obj):
 		alpha2 = {'alias':'alpha2','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':True,'calc':False}
 		alpha3 = {'alias':'alpha3','value':1.0,'minv':0.0,'maxv':2.0,'vary':True,'to_show':True,'calc':False}
 		
-		tz1 = {'alias':'tz1','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':True,'calc':False}
-		tz2 = {'alias':'tz2','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':True,'calc':False}
-		tz3 = {'alias':'tz3','value':1.0,'minv':0.0,'maxv':1.0,'vary':True,'to_show':True,'calc':False}
+		tz1 = {'alias':'tz1','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':True,'calc':False}
+		tz2 = {'alias':'tz2','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':True,'calc':False}
+		tz3 = {'alias':'tz3','value':1.0,'minv':0.0,'maxv':1000.0,'vary':True,'to_show':True,'calc':False}
 
 		#Axial ratio coefficient
 		
