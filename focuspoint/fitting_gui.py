@@ -2293,7 +2293,7 @@ class spinBoxSp3(QDoubleSpinBox):
 	def __init__(self,parent):
 		QDoubleSpinBox.__init__(self,parent)
 		self.setDecimals(5)
-		self.setMaximum(10000)
+		self.setMaximum(90000)
 		self.start =[]
 		self.array =[9,3,2,65,34]
 		self.index = 3
