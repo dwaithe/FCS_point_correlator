@@ -3,7 +3,7 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui, QtWebKit
 from PyQt4.QtGui import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt4.QtGui import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QIcon,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
-from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog
+from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog, qApp
 
 from scipy.special import _ufuncs_cxx
 

@@ -1,7 +1,7 @@
 from PyQt4 import QtGui
 from PyQt4.QtGui import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt4.QtGui import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QIcon,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
-from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog
+from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog,qApp, QStyle
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
@@ -50,7 +50,7 @@ class TableFilterBox(QTableWidget):
 		self.filter_generate_list()
 
 	def filter_generate_list(self):
-		print 'how often'
+		
 		self.setRowCount(1)
 		self.reset()
 		for ind, filt in enumerate(self.filter_list):
