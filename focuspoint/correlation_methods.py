@@ -24,10 +24,44 @@ import thread
 
 
 def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
+    
     """autocorr, autotime = tttr2xfcs(y,num,10,20)
      Translation into python of:
      Fast calculation of fluorescence correlation data with asynchronous time-correlated single-photon counting.
      Michael Wahl, Ingo Gregor, Matthias Patting, Jorg Enderlein
+
+     This algorithm is most appropriate to use with time-tag data, whereby the photons are recorded individually as they arrive.
+     The arrival times are correlated rather than binned intensities (though some binning is performed at later cycles).
+
+     for intensity data which is recorded at regular intervals use a high-peforming correlation such as multipletau:
+     (https://github.com/FCS-analysis/multipletau_)
+
+     or a basic numpy version which can be found amongst others here:
+     https://github.com/dwaithe/generalMacros/blob/master/diffusion%20simulations%20/Correlate%20Comparison.ipynb
+
+    
+    --- inputs --- 
+    
+    y:      An array of the photon arrival times for both channels.
+    num:    This a 2D boolean array of the photons in each channel. 
+            A '1' represents a photon at each corresponding time (row) in y in each channel (col)
+    
+    Ncasc in general refers to the number of logarithmic ranges to calculate the correaltion function.
+    NcascStart: This is a feature I added whereby you can start the correlation at a later stage.
+    NcasEnd:    This is the last level of correlation
+    
+    Nsub:   This is the number of sub-levels correlated at each casc level.
+            You can think of this as the level of detail. The higher the value the more noisey
+
+    --- outputs ---
+    auto:       This is the un-normalised  auto and cross-correlation function output.
+                auto[:,0,0] = autocorrelation channel 0
+                auto[:,1,1] = autocorrelation channel 1
+                auto[:,1,0] = crosscorrelation channel 10
+                auto[:,0,1] = crosscorrelation channel 01
+    autotime: This is the associated tau time range.  
+
+
      """
  
     dt = np.max(y)-np.min(y)
