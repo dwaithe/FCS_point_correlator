@@ -123,16 +123,19 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
                 i1,i2 = fib4.dividAndConquer(y, y+lag,y.shape[0]+1)
 
                 #If the weights (num) are one as in the first Ncasc round, then the correlation is equal to np.sum(i1)
-                i1 = i1.astype(np.bool);
-                i2 = i2.astype(np.bool);
+                
+                i1 = np.where(i1.astype(np.bool))[0]
+                i2 = np.where(i2.astype(np.bool))[0]
 
                 #Now we want to weight each photon corectly.
                 #Faster dot product method, faster than converting to matrix.
-                jin = np.dot((num[i1,:]).T,num[i2,:])/delta
-                   
-                auto[(k+(j)*Nsub),:,:] = jin
+                
+                if i1.size and i2.size:
+                    jin = np.dot((num[i1,:]).T,num[i2,:])/delta
+                       
+                    auto[(k+(j)*Nsub),:,:] = jin
             
-            autotime[k+(j)*Nsub] =shift;
+            autotime[k+(j)*Nsub] =shift
         
         #Equivalent to matlab round when numbers are %.5
         y = np.ceil(np.array(0.5*y))
@@ -144,8 +147,9 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
 
 
     #Removes the trailing zeros.
-    auto = auto[autotime.reshape(-1) != 0,:,:]
-    autotime = autotime[autotime != 0]
+    idauto = np.where(autotime != 0)[0]
+    autotime = autotime[idauto]
+    auto = auto[idauto,:,:]
     
     return auto, autotime
 
