@@ -29,8 +29,8 @@ pt3file = picoObject("TopFluo488-PE_8_0_7_1_1_2.pt3", par_obj, None)
 plt.figure()
 plt.semilogx(pt3file.autotime, pt3file.autoNorm[:,0,0])
 plt.show()
-#print 'tau: ', pt3file.autotime
-#print 'normalised correlation', pt3file.autoNorm 
+print 'tau: ', pt3file.autotime
+print 'normalised correlation', pt3file.autoNorm 
 
 
 

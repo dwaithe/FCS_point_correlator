@@ -160,6 +160,9 @@ def delayTime2bin(dTimeArr, chanArr, chanNum, winInt):
     #This is the point and which each channel is identified.
     decayTimeCh =decayTime[chanArr == chanNum] 
     
+
+    print 'decayTime',decayTime
+    
     #Find the first and last entry
     firstDecayTime = 0;#np.min(decayTimeCh).astype(np.int32)
     tempLastDecayTime = np.max(decayTimeCh).astype(np.int32)

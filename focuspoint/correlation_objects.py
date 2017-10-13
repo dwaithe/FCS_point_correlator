@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
-from correlation_methods import *
-from import_methods import *
+from correlation_methods.correlation_methods import *
+from import_methods.import_methods import *
 import time
 import fitting_methods as SE
 import fitting_methods_GS as GS
@@ -75,7 +75,8 @@ class picoObject():
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
 		if self.ext == 'asc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
-
+		if self.ext == 'pt2':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt2import(self.filepath)
 		if self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
 		if self.ext == 'ptu':
@@ -106,8 +107,8 @@ class picoObject():
 
 		#How many channels there are in the files.
 		
-		self.ch_present = np.unique(np.array(self.subChanArr))
-		if self.ext == 'pt3' or self.ext == 'ptu':
+		self.ch_present = np.sort(np.unique(np.array(self.subChanArr)))
+		if self.ext == 'pt3' or self.ext == 'ptu'or self.ext == 'pt2':
 			self.numOfCH =  self.ch_present.__len__()-1 #Minus 1 because not interested in channel 15.
 		else:
 			self.numOfCH =  self.ch_present.__len__()
@@ -121,6 +122,8 @@ class picoObject():
 			self.photonDecayCh2,self.decayScale2 = delayTime2bin(np.array(self.dTimeArr),np.array(self.subChanArr),self.ch_present[1],self.winInt)
 
 		#Time series of photon counts. For visualisation.
+		
+
 		self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
 	
 		
@@ -284,13 +287,20 @@ class picoObject():
 			
 
 		#Normalisaation of the decay functions.
-		self.photonDecayCh1Min = self.photonDecayCh1-np.min(self.photonDecayCh1)
-		self.photonDecayCh1Norm = self.photonDecayCh1Min/np.max(self.photonDecayCh1Min)
-		
-		
-		if self.numOfCH ==  2:
-			self.photonDecayCh2Min = self.photonDecayCh2-np.min(self.photonDecayCh2)
-			self.photonDecayCh2Norm = self.photonDecayCh2Min/np.max(self.photonDecayCh2Min)
+		if np.sum(self.photonDecayCh1) > 0:
+			self.photonDecayCh1Min = self.photonDecayCh1-np.min(self.photonDecayCh1)
+			self.photonDecayCh1Norm = self.photonDecayCh1Min/np.max(self.photonDecayCh1Min)
+			
+			
+			if self.numOfCH ==  2:
+				self.photonDecayCh2Min = self.photonDecayCh2-np.min(self.photonDecayCh2)
+				self.photonDecayCh2Norm = self.photonDecayCh2Min/np.max(self.photonDecayCh2Min)
+		else:
+			self.photonDecayCh1Min = 0
+			self.photonDecayCh1Norm = 0
+			self.photonDecayCh2Min = 0
+			self.photonDecayCh2Norm = 0
+
 		
 		return 
    
@@ -346,6 +356,8 @@ class subPicoObject():
 		
 		
 		#self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
+		if self.ext == 'pt2':
+			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt2import(self.filepath)
 		if self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
 		if self.ext == 'csv':
