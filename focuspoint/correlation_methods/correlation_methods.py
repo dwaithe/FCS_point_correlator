@@ -161,7 +161,7 @@ def delayTime2bin(dTimeArr, chanArr, chanNum, winInt):
     decayTimeCh =decayTime[chanArr == chanNum] 
     
 
-    print 'decayTime',decayTime
+    
     
     #Find the first and last entry
     firstDecayTime = 0;#np.min(decayTimeCh).astype(np.int32)

@@ -744,7 +744,7 @@ class Window(QtGui.QWidget):
             f.write('pc, 0\n');
             f.write('Time (ns), CH0 Auto-Correlation\n')
             for x in range(0,objId.autotime.shape[0]):
-                f.write(str(objId.autotime[x])+','+str(objId.autoNorm[x,0,0])+ '\n')
+                f.write(str(objId.autotime[x][0])+','+str(objId.autoNorm[x,0,0])+ '\n')
             f.write('end\n')
         if objId.numOfCH == 2:
             f.write('ch_type, 0 ,1, 2\n')
@@ -757,7 +757,7 @@ class Window(QtGui.QWidget):
             f.write('pc, 0\n');
             f.write('Time (ns), CH0 Auto-Correlation, CH1 Auto-Correlation, CH01 Cross-Correlation\n')
             for x in range(0,objId.autotime.shape[0]):
-                f.write(str(objId.autotime[x])+','+str(objId.autoNorm[x,0,0])+','+str(objId.autoNorm[x,1,1])+','+str(objId.autoNorm[x,0,1])+'\n')
+                f.write(str(objId.autotime[x][0])+','+str(objId.autoNorm[x,0,0])+','+str(objId.autoNorm[x,1,1])+','+str(objId.autoNorm[x,0,1])+'\n')
             f.write('end\n')
                 
 

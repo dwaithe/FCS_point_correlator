@@ -156,7 +156,8 @@ class picoObject():
 				self.numberNandBCH1 =0
 			else:
 				self.numberNandBCH1 = (raw_count**2/(var_count-raw_count))
-			CV = calc_coincidence_value(self)
+			self.CV = calc_coincidence_value(self)
+			
 
 
 		
@@ -186,7 +187,9 @@ class picoObject():
 			
 			
 			if self.numOfCH ==  2:
-				self.objId1.CV = CV
+				self.objId1.CV = self.CV
+				
+
 				if self.objId3 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId3 = corrObj.objId
@@ -205,7 +208,7 @@ class picoObject():
 				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId3.max = np.max(self.objId3.autoNorm)
 				self.objId3.min = np.min(self.objId3.autoNorm)
-				self.objId3.CV = CV
+				self.objId3.CV = self.CV
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
 					self.objId2 = corrObj.objId
@@ -223,7 +226,7 @@ class picoObject():
 				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId2.max = np.max(self.objId2.autoNorm)
 				self.objId2.min = np.min(self.objId2.autoNorm)
-				self.objId2.CV =CV
+				self.objId2.CV =self.CV
 
 				if self.objId4 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
@@ -242,7 +245,7 @@ class picoObject():
 				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId4.max = np.max(self.objId4.autoNorm)
 				self.objId4.min = np.min(self.objId4.autoNorm)
-				self.objId4.CV = CV
+				self.objId4.CV = self.CV
 			self.fit_obj.fill_series_list()
 		self.dTimeMin = 0
 		self.dTimeMax = np.max(self.dTimeArr)
@@ -386,7 +389,7 @@ class subPicoObject():
 			unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
 			self.kcount_CH2 = np.average(self.timeSeries2)
 
-			CV = calc_coincidence_value(self)
+			self.CV = calc_coincidence_value(self)
 
 			
 		
@@ -412,7 +415,7 @@ class subPicoObject():
 		
 		
 		if self.numOfCH == 2:
-			self.objId1.CV = CV
+			self.objId1.CV = self.CV
 			if self.objId3 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId3 = corrObj.objId
@@ -430,7 +433,7 @@ class subPicoObject():
 			self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 			self.objId3.autotime = np.array(self.autotime).reshape(-1)
 			self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
-			self.objId3.CV = CV
+			self.objId3.CV = self.CV
 			if self.objId2 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId2 = corrObj.objId
@@ -447,7 +450,7 @@ class subPicoObject():
 			self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 			self.objId2.autotime = np.array(self.autotime).reshape(-1)
 			self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
-			self.objId2.CV = CV
+			self.objId2.CV = self.CV
 			if self.objId4 == None:
 				corrObj= corrObject(self.filepath,self.fit_obj);
 				self.objId4 = corrObj.objId
@@ -463,7 +466,7 @@ class subPicoObject():
 				
 			self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
 			self.objId4.autotime = np.array(self.autotime).reshape(-1)
-			self.objId4.CV = CV
+			self.objId4.CV = self.CV
 			
 			
 		
