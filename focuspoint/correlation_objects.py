@@ -68,7 +68,7 @@ class picoObject():
 		self.NcascEnd = self.par_obj.NcascEnd
 		self.Nsub = self.par_obj.Nsub
 		self.winInt = self.par_obj.winInt
-		self.photonCountBin = self.par_obj.photonCountBin
+		self.photonCountBin = 25#self.par_obj.photonCountBin
 		
 		#File import
 		if self.ext == 'spc':
@@ -252,8 +252,8 @@ class picoObject():
 		self.subDTimeMin = self.dTimeMin
 		self.subDTimeMax = self.dTimeMax
 		self.exit = False
-		del self.subChanArr 
-		del self.trueTimeArr 
+		#del self.subChanArr 
+		#del self.trueTimeArr 
 		del self.dTimeArr
 	def crossAndAuto(self,trueTimeArr,subChanArr):
 		#For each channel we loop through and find only those in the correct time gate.
@@ -334,7 +334,7 @@ class subPicoObject():
 		self.color = self.parentId.color
 		self.numOfCH = self.parentId.numOfCH
 		self.ch_present = self.parentId.ch_present
-		self.photonCountBin = self.par_obj.photonCountBin
+		self.photonCountBin = 25#self.par_obj.photonCountBin
 
 		self.filepath = str(self.parentId.filepath)
 		self.xmin = xmin

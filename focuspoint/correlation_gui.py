@@ -19,6 +19,8 @@ import os.path
 from scipy.special import _ufuncs_cxx
 import cPickle as pickle
 from correlation_objects import *
+import tifffile as tif_fn
+import json
 
 """FCS Bulk Correlation Software
 
@@ -444,13 +446,21 @@ class Window(QtGui.QWidget):
         self.plotText =QtGui.QLabel()
         self.plotText.setText('Plot: ')
         self.left_panel_top_btns.addWidget(self.plotText)
+
+        self.left_panel_second_row_btns = QtGui.QHBoxLayout()
+
         self.photonCountText =QtGui.QLabel()
         self.photonCountText.setText('Bin Duration (ms): ')
         self.photonCountEdit = lineEditSp('25',self)
+        self.photonCountEdit.type ='int_bin'
         self.photonCountEdit.setMaxLength(5)
         self.photonCountEdit.setFixedWidth(40)
         self.photonCountEdit.parObj = self
         self.photonCountEdit.resize(40,50)
+        self.photonCountExport_label = QtGui.QLabel("Export Intensity Timeseries as: ")
+        self.photonIntensityTraceExportCSV = QtGui.QPushButton('.csv')
+        self.photonIntensityTraceExportTIF = QtGui.QPushButton('.tiff')
+
 
     
 
@@ -459,12 +469,26 @@ class Window(QtGui.QWidget):
         self.updateCombo()
 
         self.left_panel_top_btns.addWidget(self.cbx)
-        self.left_panel_top_btns.addWidget(self.photonCountText)
-        self.left_panel_top_btns.addWidget(self.photonCountEdit)
-        self.left_panel_top_btns.addWidget(self.reprocess_btn3)
         self.left_panel_top_btns.addStretch()
 
+        self.left_panel_export_fns = QtGui.QGroupBox('Export settings')
+        self.left_panel_second_row_btns.addWidget(self.photonCountText)
+        self.left_panel_second_row_btns.addWidget(self.photonCountEdit)
+        self.left_panel_second_row_btns.addWidget(self.photonCountExport_label)
+        self.left_panel_second_row_btns.addWidget(self.photonIntensityTraceExportCSV)
+        self.left_panel_second_row_btns.addWidget(self.photonIntensityTraceExportTIF)
+        self.left_panel_second_row_btns.addStretch()
+
+        self.photonIntensityTraceExportCSV.clicked.connect(self.reprocessPhotonBinFnCSV)
+        self.photonIntensityTraceExportTIF.clicked.connect(self.reprocessPhotonBinFnTIF)
+
         self.left_panel.addLayout(self.left_panel_top_btns)
+        self.left_panel_export_fns.setLayout(self.left_panel_second_row_btns)
+        
+
+        self.left_panel.addWidget(self.left_panel_export_fns)
+
+        
 
 
         #LEFT PANEL centre
@@ -596,6 +620,80 @@ class Window(QtGui.QWidget):
                 self.plot(self.par_obj.subObjectRef[y])
         self.plt5.ax = plt.gca()
         self.plt5.a.freshDraw()
+    def reprocessPhotonBinFnCSV(self):
+        self.reprocessPhotonBinFn('CSV')
+    def reprocessPhotonBinFnTIF(self):
+        self.reprocessPhotonBinFn('TIFF')
+
+    def reprocessPhotonBinFn(self,type_ex):
+        #Time series of photon counts. For visualisation.
+        print self.par_obj.photonCountBin, 'self.par_obj.photonCountBin'
+        objId = None
+        for i in range(0, self.par_obj.numOfLoaded):
+            if(self.label.objCheck[i].isChecked() == True):
+                objId = self.par_obj.objectRef[i]
+                objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
+                if self.par_obj.objectRef[i].numOfCH == 2:
+                    objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
+        
+        for i in range(0, self.par_obj.subNum):
+            if(self.label.objCheck[i].isChecked() == True):
+                objId = self.par_obj.subObjectRef[i]
+                objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
+                if self.par_obj.subObjectRef[i].numOfCH == 2:
+                    objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
+        
+        if type_ex == 'CSV':
+            f = open(self.folderOutput.filepath+'/'+objId.name+'_intensity.csv', 'w')
+            f.write('version,'+str(2)+'\n')
+            f.write('numOfCH,'+str(objId.numOfCH)+'\n')
+            f.write('time(ms), intensityCH0, intensityCH1\n')
+
+            if objId == None:
+                return
+
+            
+            if objId.numOfCH == 1:
+                
+                for x in range(0,objId.timeSeries1.__len__()):
+                    f.write(str(objId.timeSeriesScale1[x])+','+str(objId.timeSeries1[x])+ '\n')
+            if objId.numOfCH == 2:
+                for x in range(0,objId.timeSeries1.__len__()):
+                    f.write(str(objId.timeSeriesScale2[x])+','+str(objId.timeSeries1[x])+','+str(objId.timeSeries2[x])+ '\n')
+
+            
+        
+        if type_ex == 'TIFF':
+            height = objId.timeSeries1.__len__()
+            if objId.numOfCH ==1:
+                
+                    export_im =np.zeros((height,1))
+                    export_im[:,0] = np.array(objId.timeSeries1).astype(np.float32)
+                    metadata = dict(microscope='', shape=[height,1], dtype=export_im.dtype.str)
+                    metadata = json.dumps(metadata)
+                    tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_raw.tiff', export_im.astype(np.float32), description=metadata)
+       
+
+            if objId.numOfCH ==2:
+                
+                    export_im =np.zeros((height,1))
+                    export_im[:,0] =  np.array(objId.timeSeries1).astype(np.float32)
+                    metadata = dict(microscope='', shape=[height,1], dtype=export_im.dtype.str)
+                    metadata = json.dumps(metadata)
+                    tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_CH0_raw.tiff', export_im.astype(np.float32), description=metadata)
+                    export_im =np.zeros((height,1))
+                    export_im[:,0] =  np.array(objId.timeSeries2).astype(np.float32)
+                    tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_CH1_raw.tiff', export_im.astype(np.float32), description=metadata)
+       
+                    
+
+        
+        
+        
+    def save_raw_carpet_fn(self):
+        """Saves the carpet raw data to an image file"""
+        
+                     
     def reprocessDataFn(self):
 
         for i in range(0, self.par_obj.numOfLoaded):
@@ -811,6 +909,7 @@ class lineEditSp(QtGui.QLineEdit):
     def __init__(self, txt, win_obj):
         QtGui.QLineEdit.__init__(self, txt)
         self.editingFinished.connect(self.__handleEditingFinished)
+        self.textChanged.connect(self.__handleTextChanged)
         self.obj = []
         self.type = []
         self.TGid =[]
@@ -827,9 +926,11 @@ class lineEditSp(QtGui.QLineEdit):
             self.win_obj.plt5.a.redraw()
         if(self.type == 'name' ):
             self.obj.name = str(self.text())
-        if(self.type == 'ncasc' or self.type =='ncascEnd' or self.type =='nsub'):
+        if(self.type == 'ncasc' or self.type =='ncascEnd' or self.type =='nsub' or self.type =='int_bin'):
             self.win_obj.update_correlation_parameters()
-
+    def __handleTextChanged(self):
+        if self.type == 'int_bin':
+            self.win_obj.update_correlation_parameters()
 
 
            
@@ -989,7 +1090,7 @@ class scrollBox():
             self.win_obj.modelTab2.setCellWidget(i, 3, sb)
 
             b = baseList()
-            b.setText('<HTML><p style="margin-top:0">pt3 file :'+str(self.par_obj.data[i])+' </p></HTML>')
+            b.setText('<HTML><p style="margin-top:0">'+str(self.par_obj.objectRef[i].ext)+' file :'+str(self.par_obj.data[i])+' </p></HTML>')
             self.win_obj.modelTab2.setCellWidget(i, 4, b)
             
             
@@ -1027,7 +1128,7 @@ class scrollBox():
             self.win_obj.modelTab2.setCellWidget(i+j, 3, sb)
 
             b = baseList()
-            b.setText('<HTML><p style="margin-top:0">pt3 file :'+str(self.par_obj.subObjectRef[i].filepath)+' </p></HTML>')
+            b.setText('<HTML><p style="margin-top:0">'+str(self.par_obj.subObjectRef[i].ext)+' file :'+str(self.par_obj.subObjectRef[i].filepath)+' </p></HTML>')
             self.win_obj.modelTab2.setCellWidget(i+j, 4, b)
 
             #Adds the checkBox to a list.
