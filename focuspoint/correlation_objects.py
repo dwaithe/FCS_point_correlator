@@ -383,11 +383,28 @@ class subPicoObject():
 		
 		unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
 		self.kcount_CH1 = np.average(self.timeSeries1)
+
+		raw_count = np.average(self.timeSeries1) #This is the unnormalised intensity count for int_time duration (the first moment)
+		var_count = np.var(self.timeSeries1)
+
+		self.brightnessNandBCH0=(((var_count -raw_count)/(raw_count))/(float(unit)))
+		if (var_count-raw_count) == 0:
+			self.numberNandBCH0 =0
+		else:
+			self.numberNandBCH0 = (raw_count**2/(var_count-raw_count))
+
 		if self.numOfCH ==  2:
 
 			self.timeSeries2,self.timeSeriesScale2 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[1],self.photonCountBin)
 			unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
 			self.kcount_CH2 = np.average(self.timeSeries2)
+			raw_count = np.average(self.timeSeries2) #This is the unnormalised intensity count for int_time duration (the first moment)
+			var_count = np.var(self.timeSeries2)
+			self.brightnessNandBCH1= (((var_count -raw_count)/(raw_count))/(float(unit)))
+			if (var_count-raw_count) == 0:
+				self.numberNandBCH1 =0
+			else:
+				self.numberNandBCH1 = (raw_count**2/(var_count-raw_count))
 
 			self.CV = calc_coincidence_value(self)
 
