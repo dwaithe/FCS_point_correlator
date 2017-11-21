@@ -488,8 +488,8 @@ class subPicoObject():
 			
 		
 		self.fit_obj.fill_series_list()  
-		del self.subChanArr 
-		del self.trueTimeArr 
+		#del self.subChanArr 
+		#self.trueTimeArr 
 		del self.dTimeArr 
 	
 

@@ -319,7 +319,7 @@ class Window(QtGui.QWidget):
         self.replot_btn.clicked.connect(self.plotDataQueueFn)
         self.replot_btn2 = QtGui.QPushButton('Replot Data')
         self.replot_btn2.clicked.connect(self.plotDataQueueFn)
-        self.saveAll_btn = QtGui.QPushButton('Save All')
+        self.saveAll_btn = QtGui.QPushButton('Save all as corr. files (.csv)')
         self.saveAll_btn.clicked.connect(self.saveDataQueue)
 
         self.normPlot = QtGui.QCheckBox('Normalise')
@@ -411,14 +411,14 @@ class Window(QtGui.QWidget):
         self.modelTab2.setColumnWidth(0,80);
         self.modelTab2.setColumnWidth(1,140);
         self.modelTab2.setColumnWidth(2,30);
-        self.modelTab2.setColumnWidth(3,100);
+        self.modelTab2.setColumnWidth(3,150);
         self.modelTab2.setColumnWidth(4,100);
         self.modelTab2.setColumnWidth(5,100);
         self.modelTab2.horizontalHeader().setStretchLastSection(True)
         self.modelTab2.resize(800,400)
         
 
-        self.modelTab2.setHorizontalHeaderLabels(QtCore.QString(",data name,plot,,file name").split(","))
+        self.modelTab2.setHorizontalHeaderLabels(QtCore.QString(",data name,plot,save,file name").split(","))
 
         tableAndBtns =  QtGui.QVBoxLayout()
         correlationBtns =  QtGui.QHBoxLayout()
@@ -449,7 +449,7 @@ class Window(QtGui.QWidget):
 
         self.left_panel_second_row_btns = QtGui.QHBoxLayout()
 
-        self.photonCountText =QtGui.QLabel()
+        self.photonCountText = QtGui.QLabel()
         self.photonCountText.setText('Bin Duration (ms): ')
         self.photonCountEdit = lineEditSp('25',self)
         self.photonCountEdit.type ='int_bin'
@@ -457,11 +457,21 @@ class Window(QtGui.QWidget):
         self.photonCountEdit.setFixedWidth(40)
         self.photonCountEdit.parObj = self
         self.photonCountEdit.resize(40,50)
-        self.photonCountExport_label = QtGui.QLabel("Export Intensity Timeseries as: ")
+        self.photonCountExport_label = QtGui.QLabel("Export Individual Timeseries as: ")
         self.photonIntensityTraceExportCSV = QtGui.QPushButton('.csv')
         self.photonIntensityTraceExportTIF = QtGui.QPushButton('.tiff')
 
+        self.left_panel_third_row_btns = QtGui.QHBoxLayout()
+        self.save_int_timeSeries_csv = QtGui.QPushButton('Export all Timeseries as .csv')
+        self.save_int_timeSeries_tif = QtGui.QPushButton('Export all Timeseries as .tiff')
 
+
+        self.left_panel_third_row_btns.addWidget(self.save_int_timeSeries_csv)
+        self.left_panel_third_row_btns.addWidget(self.save_int_timeSeries_tif)
+        self.left_panel_third_row_btns.addStretch()
+
+        self.save_int_timeSeries_csv.clicked.connect(self.save_all_PhotonBinFnCSV)
+        self.save_int_timeSeries_tif.clicked.connect(self.save_all_PhotonBinFnTIF)
     
 
         self.cbx = comboBoxSp(self)
@@ -471,7 +481,7 @@ class Window(QtGui.QWidget):
         self.left_panel_top_btns.addWidget(self.cbx)
         self.left_panel_top_btns.addStretch()
 
-        self.left_panel_export_fns = QtGui.QGroupBox('Export settings')
+        self.left_panel_export_fns = QtGui.QGroupBox('Export Binned Intensities')
         self.left_panel_second_row_btns.addWidget(self.photonCountText)
         self.left_panel_second_row_btns.addWidget(self.photonCountEdit)
         self.left_panel_second_row_btns.addWidget(self.photonCountExport_label)
@@ -483,8 +493,15 @@ class Window(QtGui.QWidget):
         self.photonIntensityTraceExportTIF.clicked.connect(self.reprocessPhotonBinFnTIF)
 
         self.left_panel.addLayout(self.left_panel_top_btns)
-        self.left_panel_export_fns.setLayout(self.left_panel_second_row_btns)
         
+        self.left_panel_vertical_export = QtGui.QVBoxLayout()
+
+        self.left_panel_export_fns.setLayout(self.left_panel_vertical_export)
+        self.left_panel_vertical_export.addLayout(self.left_panel_second_row_btns)
+        self.left_panel_vertical_export.addLayout(self.left_panel_third_row_btns)
+        
+
+
 
         self.left_panel.addWidget(self.left_panel_export_fns)
 
@@ -620,28 +637,44 @@ class Window(QtGui.QWidget):
                 self.plot(self.par_obj.subObjectRef[y])
         self.plt5.ax = plt.gca()
         self.plt5.a.freshDraw()
-    def reprocessPhotonBinFnCSV(self):
-        self.reprocessPhotonBinFn('CSV')
-    def reprocessPhotonBinFnTIF(self):
-        self.reprocessPhotonBinFn('TIFF')
-
-    def reprocessPhotonBinFn(self,type_ex):
-        #Time series of photon counts. For visualisation.
-        print self.par_obj.photonCountBin, 'self.par_obj.photonCountBin'
-        objId = None
-        for i in range(0, self.par_obj.numOfLoaded):
-            if(self.label.objCheck[i].isChecked() == True):
-                objId = self.par_obj.objectRef[i]
-                objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
-                if self.par_obj.objectRef[i].numOfCH == 2:
-                    objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
+    def save_all_PhotonBinFnCSV(self):
+        """Reprocess all images and export .csv images."""
+        for x in range(0, self.par_obj.numOfLoaded):
+            self.reprocessPhotonBinFn('CSV',x)           
+        for y in range(0, self.par_obj.subNum):
+            self.reprocessPhotonBinFn('CSV',x+y+1)
         
-        for i in range(0, self.par_obj.subNum):
-            if(self.label.objCheck[i].isChecked() == True):
-                objId = self.par_obj.subObjectRef[i]
-                objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
-                if self.par_obj.subObjectRef[i].numOfCH == 2:
-                    objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
+    def save_all_PhotonBinFnTIF(self):
+        """Reprocess all images and export .tiff images."""
+        for x in range(0, self.par_obj.numOfLoaded):
+            self.reprocessPhotonBinFn('TIFF',x)           
+        for y in range(0, self.par_obj.subNum):
+            self.reprocessPhotonBinFn('TIFF',x+y+1)
+
+    def reprocessPhotonBinFnCSV(self):
+        self.reprocessPhotonBinFn('CSV',index)
+    def reprocessPhotonBinFnTIF(self):
+        self.reprocessPhotonBinFn('TIFF',index)
+
+    def reprocessPhotonBinFn(self,type_ex,index):
+        #Time series of photon counts. For visualisation.
+        
+        
+        objId = None
+
+
+        if index < self.par_obj.numOfLoaded:
+            objId = self.par_obj.objectRef[index]
+            objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
+            if objId.numOfCH == 2:
+                objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
+        else:
+            objId = self.par_obj.subObjectRef[index-self.par_obj.numOfLoaded]
+            objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
+            if objId.numOfCH == 2:
+                objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
+        
+        
         
         if type_ex == 'CSV':
             f = open(self.folderOutput.filepath+'/'+objId.name+'_intensity.csv', 'w')
@@ -703,15 +736,22 @@ class Window(QtGui.QWidget):
 
         self.plotDataQueueFn();
         self.plot_PhotonCount(self.par_obj.numOfLoaded-1)
+        self.updateCombo()
     def updateCombo(self):
         """Updates photon counting combox box"""
         self.cbx.clear()
         #Populates comboBox with datafiles to which to apply the time-gating.
         for b in range(0,self.par_obj.numOfLoaded):
                 self.cbx.addItem("Data: "+str(b), b)
+        for i in range(0, self.par_obj.subNum):
+                self.cbx.addItem("subData: "+str(b+i+1), b+i+1)
     def plot_PhotonCount(self,index):
         """Plots the photon counting"""
-        object = self.par_obj.objectRef[index]
+
+        if index < self.par_obj.numOfLoaded:
+            object = self.par_obj.objectRef[index]
+        else:
+            object = self.par_obj.subObjectRef[index-self.par_obj.numOfLoaded]
         self.plt4.clear()
         self.canvas4.draw()
         
@@ -1007,6 +1047,7 @@ class pushButtonSp(QtGui.QPushButton):
                 self.par_obj.subNum = self.par_obj.subNum+1
             self.win_obj.label.generateList()
             self.win_obj.plotDataQueueFn()
+            self.win_obj.updateCombo()
 class pushButtonSp2(QtGui.QPushButton):
     """Save button"""
     def __init__(self, txt, win_obj, par_obj):
@@ -1085,7 +1126,7 @@ class scrollBox():
 
             
             #Adds save button to the file.
-            sb = pushButtonSp2('save file', self.win_obj, self.par_obj)
+            sb = pushButtonSp2('save corr. file (.csv)', self.win_obj, self.par_obj)
             sb.corr_obj = self.par_obj.objectRef[i]
             self.win_obj.modelTab2.setCellWidget(i, 3, sb)
 
@@ -1094,7 +1135,7 @@ class scrollBox():
             self.win_obj.modelTab2.setCellWidget(i, 4, b)
             
             
-            self.win_obj.label.objCheck.append(cb)
+            self.objCheck.append(cb)
             j = i+1
         for i in range(0,self.par_obj.subNum):
             self.win_obj.modelTab2.setRowCount(j+i+1)
@@ -1122,7 +1163,7 @@ class scrollBox():
 
             
             #Adds save button to the file.
-            sb = pushButtonSp2('save file', self.win_obj, self.par_obj)
+            sb = pushButtonSp2('save corr. file (.csv)', self.win_obj, self.par_obj)
             sb.corr_obj = self.par_obj.subObjectRef[i]
             
             self.win_obj.modelTab2.setCellWidget(i+j, 3, sb)
