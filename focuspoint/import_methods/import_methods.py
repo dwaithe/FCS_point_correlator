@@ -56,7 +56,7 @@ def spc_file_import(file_path):
             overflow += 4096
         if INVALID == 1:
             count1 +=1
-        elif int(byte1[0:4],2) == 0:
+        else: #elif int(byte1[0:4],2) == 0:
             chan_arr.append(int(byte1[0:4],2))
             true_time_arr.append(int(byte1[4:8]+byte0,2)+overflow)
             dtime_arr.append(4095 - int(byte3[4:8]+byte2,2))
