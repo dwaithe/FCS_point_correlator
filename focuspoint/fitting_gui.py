@@ -1,16 +1,17 @@
 import sys, os, csv
-from PyQt4 import QtCore
-from PyQt4 import QtGui, QtWebKit
-from PyQt4.QtGui import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
-from PyQt4.QtGui import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QIcon,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
-from PyQt4.QtGui import QCheckBox, QStatusBar,QAbstractSpinBox, QStandardItem, QColor, QWidget, QFileDialog, qApp
+from PyQt5 import QtCore
+from PyQt5 import QtGui, QtWebKit
+from PyQt5.QtWidgets import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
+from PyQt5.QtWidgets import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
+from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFileDialog, qApp
+from PyQt5.QtGui import QStandardItem, QColor, QIcon
 
 from scipy.special import _ufuncs_cxx
 
 import matplotlib
 matplotlib.use('Agg')
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import matplotlib.gridspec as gridspec
@@ -23,7 +24,7 @@ import copy
 import os.path
 import subprocess
 import pyperclip
-import cPickle as pickle
+import pickle
 
 from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
 import fitting_methods as SE
@@ -214,7 +215,7 @@ class Form(QMainWindow):
 		self.load_series(files_to_load)
 		
 		try:
-			self.loadpath = str(QtCore.QFileInfo(files_to_load[0]).absolutePath())
+			self.loadpath = str(QtCore.QFileInfo(files_to_load[0][0]).absolutePath())
 			f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'w')
 			f.write(self.loadpath)
 			f.close()
@@ -724,7 +725,7 @@ class Form(QMainWindow):
 					#Creat an item.
 					item = QStandardItem(name)
 					#Store the index
-					self.tree_hash_list[item] = bid
+					self.tree_hash_list[id(item)] = bid
 					self.obj_hash_list[bid] = lid
 					#Iterate index for next.
 					bid = bid + 1
@@ -1272,7 +1273,8 @@ class Form(QMainWindow):
 		right_ch_check.addWidget(self.ch_check_ch10)
 		#Add to main layout.
 		self.right_check_all_none.clicked.connect(self.check_all_none)
-		self.connect(self.show_button, QtCore.SIGNAL('clicked()'), self.on_show)
+		self.show_button.clicked.connect(self.on_show)
+		#self.connect(self.show_button, QtCore.SIGNAL('clicked()'), self.on_show)
 		right_vbox.addLayout(right_ch_check)
 
 		
@@ -1990,7 +1992,7 @@ class Form(QMainWindow):
 			self.fitTable.setCurrentCell(0,0)
 			self.fitTable.setRowCount(30)
 			self.fitTable.setColumnCount(4)
-			self.fitTable.setHorizontalHeaderLabels(QtCore.QString("Init, Vary,Min,Max, , , ").split(","))
+			self.fitTable.setHorizontalHeaderLabels(["Init","Vary","Min","Max", "", "", ""])
 			
 			
 			self.fitTable.setColumnWidth(0,75);

@@ -144,10 +144,9 @@ elif os.name == 'posix' or platform.system() == 'Linux':
             setcb = gtkSetClipboard
         except:
             try:
-                import PyQt4.QtCore
-                import PyQt4.QtGui
-                app = QApplication([])
-                cb = PyQt4.QtGui.QApplication.clipboard()
+                import PyQt5.QtWidgets
+                app = PyQt5.QtWidgets.QApplication([])
+                cb = PyQt5.QtWidgets.QApplication.clipboard()
                 getcb = qtGetClipboard
                 setcb = qtSetClipboard
             except:
