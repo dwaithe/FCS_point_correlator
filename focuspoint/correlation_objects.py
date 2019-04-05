@@ -678,7 +678,7 @@ class corrObject():
 			
 			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 			#Repopulate the parameter object.
-			#print 'message',(fit_report(res))
+			#print('message',(fit_report(res)))
 
 			for art in self.param:
 				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
@@ -727,9 +727,9 @@ class corrObject():
 
 
 		output = fit_report(res.params)
-		print 'residual',res.chisqr
+		print('residual',res.chisqr)
 		if(res.chisqr>self.parentFn.chisqr):
-			print 'CAUTION DATA DID NOT FIT WELL CHI^2 >',self.parentFn.chisqr,' ',res.chisqr
+			print('CAUTION DATA DID NOT FIT WELL CHI^2 >',self.parentFn.chisqr,' ',res.chisqr)
 			self.goodFit = False
 		else:
 			self.goodFit = True

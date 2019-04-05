@@ -6,9 +6,9 @@ import sys
    
 if __name__ == '__main__':
     """ Initialises the gui. """
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     par_obj = ParameterClass()
-    win_tab = QtGui.QTabWidget()
+    win_tab = QtWidgets.QTabWidget()
     fit_obj = Form('point')
     #Ensures the the fit tab can refresh the display, for status updates.
     fit_obj.app = app

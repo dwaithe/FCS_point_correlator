@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import sys, csv, os
 
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 #import matplotlib
 #matplotlib.use('Agg')
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import random
@@ -17,7 +17,7 @@ import errno
 import os.path
 
 from scipy.special import _ufuncs_cxx
-import cPickle as pickle
+import pickle
 from correlation_objects import *
 import tifffile as tif_fn
 import json
@@ -40,7 +40,7 @@ import json
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
-class folderOutput(QtGui.QMainWindow):
+class folderOutput(QtWidgets.QMainWindow):
     
     def __init__(self,parent):
         super(folderOutput, self).__init__()
@@ -63,11 +63,11 @@ class folderOutput(QtGui.QMainWindow):
         
     def initUI(self):      
 
-        self.textEdit = QtGui.QTextEdit()
+        self.textEdit = QtWidgets.QTextEdit()
         self.setCentralWidget(self.textEdit)
         self.statusBar()
 
-        openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
+        openFile = QtWidgets.QAction(QtGui.QIcon('open.png'), 'Open', self)
         openFile.triggered.connect(self.showDialog)
 
         menubar = self.menuBar()
@@ -83,7 +83,7 @@ class folderOutput(QtGui.QMainWindow):
         if self.type == 'output_corr_dir':
             #folderSelect = QtGui.QFileDialog()
             #folderSelect.setDirectory(self.filepath);
-            tfilepath = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",self.filepath))
+            tfilepath = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",self.filepath))
             
             if tfilepath !='':
                 self.filepath = tfilepath
@@ -148,14 +148,14 @@ class Annotate():
             self.win_obj.canvas5.draw() 
 
     
-class baseList(QtGui.QLabel):
+class baseList(QtWidgets.QLabel):
     def __init__(self):
         super(baseList, self).__init__()
         self.listId=0
     def mousePressEvent(self,ev):
-        print self.listId
+        print(self.listId)
 
-class FileDialog(QtGui.QMainWindow):
+class FileDialog(QtWidgets.QMainWindow):
     
     def __init__(self, win_obj, par_obj, fit_obj):
         super(FileDialog, self).__init__()
@@ -170,11 +170,11 @@ class FileDialog(QtGui.QMainWindow):
         
     def initUI(self):      
 
-        self.textEdit = QtGui.QTextEdit()
+        self.textEdit = QtWidgets.QTextEdit()
         self.setCentralWidget(self.textEdit)
         self.statusBar()
 
-        openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
+        openFile = QtWidgets.QAction(QtGui.QIcon('open.png'), 'Open', self)
         openFile.setShortcut('Ctrl+O')
         openFile.setStatusTip('Open new File')
         openFile.triggered.connect(self.showDialog)
@@ -186,12 +186,12 @@ class FileDialog(QtGui.QMainWindow):
         self.setGeometry(300, 300, 350, 500)
         self.setWindowTitle('File dialog')
     def count(self):
-        print 'workes'
+        print('workes')
         #self.show()
         
     def showDialog(self):
         #Intialise Dialog.
-        fileInt = QtGui.QFileDialog()
+        fileInt = QtWidgets.QFileDialog()
         try:
             #Try and read the default location for a file.
             f = open(os.path.expanduser('~')+'/FCS_Analysis/configLoad', 'r')
@@ -206,9 +206,9 @@ class FileDialog(QtGui.QMainWindow):
 
         self.win_obj.update_correlation_parameters()
         file_imports = fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);asc files (*.asc);spc files (*.spc);All Files (*.*)')
-        bt = QtGui.QPushButton("cancel")
+        bt = QtWidgets.QPushButton("cancel")
         
-        for c,filename in enumerate(file_imports):
+        for c,filename in enumerate(file_imports[0]):
             self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:green;font-weight:regular;}")
             self.win_obj.image_status_text.showMessage("Processing file "+str(c+1)+" of "+str(file_imports.__len__()))
             self.fit_obj.app.processEvents()
@@ -236,7 +236,7 @@ class FileDialog(QtGui.QMainWindow):
             f.close()
             
         except:
-            print 'nofile'
+            print('nofile')
 
 
 
@@ -244,7 +244,7 @@ class FileDialog(QtGui.QMainWindow):
         #main.label.remakeList()
 
     
-class Window(QtGui.QWidget):
+class Window(QtWidgets.QWidget):
     def __init__(self, par_obj, fit_obj):
         super(Window, self).__init__()
         self.fit_obj = fit_obj
@@ -312,60 +312,60 @@ class Window(QtGui.QWidget):
         self.folderOutput.type = 'output_corr_dir'
 
         # Just some button connected to `plot` method
-        self.openFile = QtGui.QPushButton('Open File')
+        self.openFile = QtWidgets.QPushButton('Open File')
         self.openFile.setFixedWidth(120)
         self.openFile.clicked.connect(self.ex.showDialog)
-        self.replot_btn = QtGui.QPushButton('Replot Data')
+        self.replot_btn = QtWidgets.QPushButton('Replot Data')
         self.replot_btn.clicked.connect(self.plotDataQueueFn)
-        self.replot_btn2 = QtGui.QPushButton('Replot Data')
+        self.replot_btn2 = QtWidgets.QPushButton('Replot Data')
         self.replot_btn2.clicked.connect(self.plotDataQueueFn)
-        self.saveAll_btn = QtGui.QPushButton('Save all as corr. files (.csv)')
+        self.saveAll_btn = QtWidgets.QPushButton('Save all as corr. files (.csv)')
         self.saveAll_btn.clicked.connect(self.saveDataQueue)
 
-        self.normPlot = QtGui.QCheckBox('Normalise')
+        self.normPlot = QtWidgets.QCheckBox('Normalise')
         self.normPlot.setChecked(False)
         #self.figure.canvas.mpl_connect('button_press_event', self.on_press)
         #self.figure.canvas.mpl_connect('button_release_event', self.on_release)
         # set the layout
-        self.spacer = QtGui.QLabel()
-        main_layout = QtGui.QHBoxLayout()
-        self.globalText = QtGui.QLabel()
+        self.spacer = QtWidgets.QLabel()
+        main_layout = QtWidgets.QHBoxLayout()
+        self.globalText = QtWidgets.QLabel()
         self.globalText.setText('Correlation Para:')
-        self.reprocess_btn = QtGui.QPushButton('reprocess data')
+        self.reprocess_btn = QtWidgets.QPushButton('reprocess data')
         self.reprocess_btn.clicked.connect(self.reprocessDataFn)
         self.reprocess_btn.setFixedWidth(120)
-        self.reprocess_btn2 = QtGui.QPushButton('reprocess data')
+        self.reprocess_btn2 = QtWidgets.QPushButton('reprocess data')
         self.reprocess_btn2.clicked.connect(self.reprocessDataFn)
         self.reprocess_btn2.setFixedWidth(120)
-        self.reprocess_btn3 = QtGui.QPushButton('reprocess data')
+        self.reprocess_btn3 = QtWidgets.QPushButton('reprocess data')
         self.reprocess_btn3.clicked.connect(self.reprocessDataFn)
         self.reprocess_btn3.setFixedWidth(120)
-        self.NsubText = QtGui.QLabel('Nsub:')
+        self.NsubText = QtWidgets.QLabel('Nsub:')
         self.NsubText.resize(50,40)
         
         self.NsubEdit =lineEditSp('6',self)
         self.NsubEdit.setFixedWidth(60)
         self.NsubEdit.type ='nsub'
         
-        self.NcascStartText = QtGui.QLabel('Ncasc Start:')
+        self.NcascStartText = QtWidgets.QLabel('Ncasc Start:')
         self.NcascStartEdit = lineEditSp('0',self)
         self.NcascStartEdit.setFixedWidth(60)
         self.NcascStartEdit.parentId = self
         self.NcascStartEdit.type = 'ncasc'
-        self.NcascEndText = QtGui.QLabel('Ncasc End:')
+        self.NcascEndText = QtWidgets.QLabel('Ncasc End:')
         self.NcascEndEdit = lineEditSp('25',self)
         self.NcascEndEdit.setFixedWidth(60)
         self.NcascEndEdit.type = 'ncascEnd'
         self.NcascEndEdit.parentId = self
         
-        self.winIntText = QtGui.QLabel('Bin Size (CH):')
+        self.winIntText = QtWidgets.QLabel('Bin Size (CH):')
 
         self.winIntEdit = lineEditSp('10',self)
         self.winIntEdit.setMaxLength(5)
         self.winIntEdit.setFixedWidth(40)
         self.winIntEdit.type = 'winInt'
         self.winIntEdit.parObj = self
-        self.folderSelect_btn = QtGui.QPushButton('Output Folder')
+        self.folderSelect_btn = QtWidgets.QPushButton('Output Folder')
         self.folderSelect_btn.clicked.connect(self.folderOutput.showDialog)
 
         
@@ -386,7 +386,7 @@ class Window(QtGui.QWidget):
         self.TGScrollBoxObj =TGscrollBox(self,self.par_obj)
 
         #The table which shows the details of the time-gating.
-        self.modelTab = QtGui.QTableWidget(self)
+        self.modelTab = QtWidgets.QTableWidget(self)
         self.modelTab.setRowCount(0)
         self.modelTab.setColumnCount(7)
         
@@ -402,10 +402,10 @@ class Window(QtGui.QWidget):
         self.modelTab.resize(350,200)
         self.modelTab.setMinimumSize(310,200)
         self.modelTab.setMaximumSize(310,200)
-        self.modelTab.setHorizontalHeaderLabels(QtCore.QString(",From: , ,To: ,Apply to:, , , , ").split(","))
+        self.modelTab.setHorizontalHeaderLabels(["","From:","","To:","Apply to:", "", "", "", ""])
 
         #The table which shows the details of each correlated file. 
-        self.modelTab2 = QtGui.QTableWidget(self)
+        self.modelTab2 = QtWidgets.QTableWidget(self)
         self.modelTab2.setRowCount(0)
         self.modelTab2.setColumnCount(5)
         self.modelTab2.setColumnWidth(0,80);
@@ -418,38 +418,38 @@ class Window(QtGui.QWidget):
         self.modelTab2.resize(800,400)
         
 
-        self.modelTab2.setHorizontalHeaderLabels(QtCore.QString(",data name,plot,save,file name").split(","))
+        self.modelTab2.setHorizontalHeaderLabels(["","data name","plot","save","file name"])
 
-        tableAndBtns =  QtGui.QVBoxLayout()
-        correlationBtns =  QtGui.QHBoxLayout()
+        tableAndBtns =  QtWidgets.QVBoxLayout()
+        correlationBtns =  QtWidgets.QHBoxLayout()
         #self.label.setText('<HTML><H3>DATA file: </H3><P>'+str(6)+' Click here to load in this sample and what happens if I make it too long.</P></HTML>')
         #self.label.listId = 6
-        self.fileDialog = QtGui.QFileDialog()
-        self.centre_panel = QtGui.QVBoxLayout()
+        self.fileDialog = QtWidgets.QFileDialog()
+        self.centre_panel = QtWidgets.QVBoxLayout()
         
         
         
     
-        self.right_panel = QtGui.QVBoxLayout()
+        self.right_panel = QtWidgets.QVBoxLayout()
         #Adds the main graph components to the top panel
        
 
         #LEFT PANEL
-        self.left_panel = QtGui.QVBoxLayout()
-        self.left_panel_top = QtGui.QHBoxLayout()
+        self.left_panel = QtWidgets.QVBoxLayout()
+        self.left_panel_top = QtWidgets.QHBoxLayout()
         self.left_panel.addLayout(self.left_panel_top)
         self.left_panel_top.addWidget(self.canvas4)
         self.left_panel_top.addStretch()
         
         #LEFT PANEL TOP
-        self.left_panel_top_btns= QtGui.QHBoxLayout()
-        self.plotText =QtGui.QLabel()
+        self.left_panel_top_btns= QtWidgets.QHBoxLayout()
+        self.plotText =QtWidgets.QLabel()
         self.plotText.setText('Plot: ')
         self.left_panel_top_btns.addWidget(self.plotText)
 
-        self.left_panel_second_row_btns = QtGui.QHBoxLayout()
+        self.left_panel_second_row_btns = QtWidgets.QHBoxLayout()
 
-        self.photonCountText = QtGui.QLabel()
+        self.photonCountText = QtWidgets.QLabel()
         self.photonCountText.setText('Bin Duration (ms): ')
         self.photonCountEdit = lineEditSp('25',self)
         self.photonCountEdit.type ='int_bin'
@@ -457,13 +457,13 @@ class Window(QtGui.QWidget):
         self.photonCountEdit.setFixedWidth(40)
         self.photonCountEdit.parObj = self
         self.photonCountEdit.resize(40,50)
-        self.photonCountExport_label = QtGui.QLabel("Export Individual Timeseries as: ")
-        self.photonIntensityTraceExportCSV = QtGui.QPushButton('.csv')
-        self.photonIntensityTraceExportTIF = QtGui.QPushButton('.tiff')
+        self.photonCountExport_label = QtWidgets.QLabel("Export Individual Timeseries as: ")
+        self.photonIntensityTraceExportCSV = QtWidgets.QPushButton('.csv')
+        self.photonIntensityTraceExportTIF = QtWidgets.QPushButton('.tiff')
 
-        self.left_panel_third_row_btns = QtGui.QHBoxLayout()
-        self.save_int_timeSeries_csv = QtGui.QPushButton('Export all Timeseries as .csv')
-        self.save_int_timeSeries_tif = QtGui.QPushButton('Export all Timeseries as .tiff')
+        self.left_panel_third_row_btns = QtWidgets.QHBoxLayout()
+        self.save_int_timeSeries_csv = QtWidgets.QPushButton('Export all Timeseries as .csv')
+        self.save_int_timeSeries_tif = QtWidgets.QPushButton('Export all Timeseries as .tiff')
 
 
         self.left_panel_third_row_btns.addWidget(self.save_int_timeSeries_csv)
@@ -481,7 +481,7 @@ class Window(QtGui.QWidget):
         self.left_panel_top_btns.addWidget(self.cbx)
         self.left_panel_top_btns.addStretch()
 
-        self.left_panel_export_fns = QtGui.QGroupBox('Export Binned Intensities')
+        self.left_panel_export_fns = QtWidgets.QGroupBox('Export Binned Intensities')
         self.left_panel_second_row_btns.addWidget(self.photonCountText)
         self.left_panel_second_row_btns.addWidget(self.photonCountEdit)
         self.left_panel_second_row_btns.addWidget(self.photonCountExport_label)
@@ -494,7 +494,7 @@ class Window(QtGui.QWidget):
 
         self.left_panel.addLayout(self.left_panel_top_btns)
         
-        self.left_panel_vertical_export = QtGui.QVBoxLayout()
+        self.left_panel_vertical_export = QtWidgets.QVBoxLayout()
 
         self.left_panel_export_fns.setLayout(self.left_panel_vertical_export)
         self.left_panel_vertical_export.addLayout(self.left_panel_second_row_btns)
@@ -509,10 +509,10 @@ class Window(QtGui.QWidget):
 
 
         #LEFT PANEL centre
-        self.left_panel_centre = QtGui.QHBoxLayout()
+        self.left_panel_centre = QtWidgets.QHBoxLayout()
 
         #LEFT PANEL centre right
-        self.left_panel_centre_right = QtGui.QVBoxLayout()
+        self.left_panel_centre_right = QtWidgets.QVBoxLayout()
         
         self.left_panel.addLayout(self.left_panel_centre)
         
@@ -521,15 +521,15 @@ class Window(QtGui.QWidget):
         self.left_panel_centre.addStretch()
         
         #LEFT PANEL bottom
-        self.left_panel_bottom = QtGui.QVBoxLayout()
-        self.left_panel_bottom_fig = QtGui.QHBoxLayout()
+        self.left_panel_bottom = QtWidgets.QVBoxLayout()
+        self.left_panel_bottom_fig = QtWidgets.QHBoxLayout()
         self.left_panel_bottom.addLayout(self.left_panel_bottom_fig)
         self.left_panel_bottom_fig.addWidget(self.canvas5)
         self.left_panel_bottom_fig.addStretch()
         
         self.left_panel.addLayout(self.left_panel_bottom)
         #LEFT PANEL bottom buttons
-        self.left_panel_bottom_btns = QtGui.QHBoxLayout()
+        self.left_panel_bottom_btns = QtWidgets.QHBoxLayout()
         self.left_panel_bottom.addLayout(self.left_panel_bottom_btns)
         self.left_panel_bottom_btns.addWidget(self.normPlot)
         self.left_panel_bottom_btns.addWidget(self.replot_btn2)
@@ -555,8 +555,8 @@ class Window(QtGui.QWidget):
         self.left_panel_centre_right.addWidget(self.NcascEndEdit)
         self.left_panel_centre_right.addWidget(self.reprocess_btn)
 
-        self.left_panel_bottom_bottom = QtGui.QHBoxLayout()
-        self.image_status_text = QtGui.QStatusBar()
+        self.left_panel_bottom_bottom = QtWidgets.QHBoxLayout()
+        self.image_status_text = QtWidgets.QStatusBar()
         self.left_panel_bottom_bottom.addWidget(self.image_status_text)
         self.left_panel.addLayout(self.left_panel_bottom_bottom)
 
@@ -909,18 +909,18 @@ class Window(QtGui.QWidget):
         
 
         
-class checkBoxSp(QtGui.QCheckBox):
+class checkBoxSp(QtWidgets.QCheckBox):
     def __init__(self):
-        QtGui.QCheckBox.__init__(self)
+        QtWidgets.QCheckBox.__init__(self)
         self.obj = []
         self.type = []
         self.name =[]
     def updateChecked(self):
             
                 self.obj.plotOn = self.isChecked()
-class checkBoxSp2(QtGui.QCheckBox):
+class checkBoxSp2(QtWidgets.QCheckBox):
     def __init__(self, win_obj, par_obj):
-        QtGui.QCheckBox.__init__(self, parent)
+        QtWidgets.QCheckBox.__init__(self, parent)
         self.obj = []
         self.type = []
         self.name =[]
@@ -945,9 +945,9 @@ class checkBoxSp2(QtGui.QCheckBox):
 
 
             #plotDataQueueFn()
-class lineEditSp(QtGui.QLineEdit):
+class lineEditSp(QtWidgets.QLineEdit):
     def __init__(self, txt, win_obj):
-        QtGui.QLineEdit.__init__(self, txt)
+        QtWidgets.QLineEdit.__init__(self, txt)
         self.editingFinished.connect(self.__handleEditingFinished)
         self.textChanged.connect(self.__handleTextChanged)
         self.obj = []
@@ -979,9 +979,9 @@ class lineEditSp(QtGui.QLineEdit):
 
 
             
-class comboBoxSp(QtGui.QComboBox):
+class comboBoxSp(QtWidgets.QComboBox):
     def __init__(self,win_obj):
-        QtGui.QComboBox.__init__(self,parent=None)
+        QtWidgets.QComboBox.__init__(self,parent=None)
         self.activated[str].connect(self.__activated) 
         self.obj = []
         self.TGid =[]
@@ -1007,9 +1007,9 @@ class comboBoxSp(QtGui.QComboBox):
         if self.type == 'PhotonCount':
             self.win_obj.plot_PhotonCount(self.currentIndex());
 
-class pushButtonSp(QtGui.QPushButton):
+class pushButtonSp(QtWidgets.QPushButton):
     def __init__(self, win_obj, par_obj):
-        QtGui.QPushButton.__init__(self)
+        QtWidgets.QPushButton.__init__(self)
         self.clicked.connect(self.__activated)
         self.par_obj = par_obj;
         self.win_obj = win_obj;
@@ -1048,10 +1048,10 @@ class pushButtonSp(QtGui.QPushButton):
             self.win_obj.label.generateList()
             self.win_obj.plotDataQueueFn()
             self.win_obj.updateCombo()
-class pushButtonSp2(QtGui.QPushButton):
+class pushButtonSp2(QtWidgets.QPushButton):
     """Save button"""
     def __init__(self, txt, win_obj, par_obj):
-        QtGui.QPushButton.__init__(self,txt)
+        QtWidgets.QPushButton.__init__(self,txt)
         self.clicked.connect(self.__clicked)
         self.win_obj = win_obj;
         self.par_obj = par_obj;
@@ -1080,7 +1080,7 @@ class scrollBox():
         for i in range(0, self.par_obj.numOfLoaded):
             self.win_obj.modelTab2.setRowCount(i+1)
             #Represents each y
-            self._l=QtGui.QHBoxLayout()
+            self._l=QtWidgets.QHBoxLayout()
             self.obj.append(self._l)
 
             
@@ -1195,7 +1195,7 @@ class TGscrollBox():
             self.win_obj.modelTab.setRowCount(i+1)
             
             
-            txt2 = QtGui.QLabel()
+            txt2 = QtWidgets.QLabel()
             txt2.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">tg1:</p></HTML>')
             self.win_obj.modelTab.setCellWidget(i, 0, txt2)
 
@@ -1208,7 +1208,7 @@ class TGscrollBox():
             lb1.TGid = i
             self.win_obj.modelTab.setCellWidget(i, 1, lb1)
 
-            txt3 = QtGui.QLabel()
+            txt3 = QtWidgets.QLabel()
             txt3.setText('<HTML><p style="color:'+str(self.par_obj.colors[i % len(self.par_obj.colors)])+';margin-top:0">tg2:</p></HTML>')
             self.win_obj.modelTab.setCellWidget(i, 2, txt3)
             
