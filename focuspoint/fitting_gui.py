@@ -1,6 +1,8 @@
 import sys, os, csv
 from PyQt5 import QtCore
-from PyQt5 import QtGui, QtWebKit
+from PyQt5 import QtGui
+#from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView,QWebEnginePage as QWebPage
+ 
 from PyQt5.QtWidgets import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt5.QtWidgets import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
 from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFileDialog, qApp
@@ -119,7 +121,7 @@ class folderOutput(QMainWindow):
 				self.filepath = tfilepath
 			#Save to the config file.
 				self.parent.config['output_filepath'] = str(tfilepath)
-				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "wb" ))
 		if self.type == 'folder_to_process':
 			
 			folder_to_process = str(QFileDialog.getExistingDirectory(self, "Select Directory",self.folder_to_process))
@@ -127,7 +129,7 @@ class folderOutput(QMainWindow):
 			if folder_to_process !='':
 				self.folder_to_process = folder_to_process
 				self.parent.config['folder_to_process'] = str(folder_to_process)
-				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "wb" ))
 				
 				paths_to_load = []
 				files_to_load = [ f for f in os.listdir(folder_to_process) if os.path.isfile(os.path.join(folder_to_process,f)) ]
@@ -153,7 +155,7 @@ class folderOutput(QMainWindow):
 
 				self.parent.config['filepath_save_profile']  = self.filepath_save_profile
 				#Save the files to the 
-				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "wb" ))
 				#Save the 
 				pickle.dump(self.parent.fit_profile, open(str(filepath),"w"));
 
@@ -506,7 +508,7 @@ class Form(QMainWindow):
 		# And give it a layout
 		layout = QVBoxLayout()
 		self.about_win.setLayout(layout)
-		self.view = QtWebKit.QWebView()
+		self.view = QWebView()
 		self.view.setHtml('''
 		  <html>
 			
@@ -784,7 +786,7 @@ class Form(QMainWindow):
 			pass
 		else:
 			#Returns actual value.
-			to_select = self.tree_hash_list[item]
+			to_select = self.tree_hash_list[id(item)]
 			#updates selected.
 			self.modelFitSel.setCurrentIndex(to_select)
 			#updates the whole list (not necessary but makes sure all is correct)
@@ -1415,7 +1417,7 @@ class Form(QMainWindow):
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
+				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
 
 		
 		#Removes duplicates
@@ -1555,7 +1557,7 @@ class Form(QMainWindow):
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
+				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
 
 		
 		#Removes duplicates
@@ -1614,9 +1616,9 @@ class Form(QMainWindow):
 		for v_ind in listToFit:
 			item = self.series_list_model.itemFromIndex(v_ind)
 			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
+				indList.extend(self.return_grouped_data_fn(id(item)))
 			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
+				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
 
 		
 		#Removes duplicates
@@ -1646,6 +1648,7 @@ class Form(QMainWindow):
 		#Finds the current name selected in the list, before things change.
 		#Makes sure there are files to be had.
 		try:
+
 			curr_name = self.objIdArr[self.modelFitSel.model_obj_ind_list[self.modelFitSel.currentIndex()]]
 		except:
 			curr_name = None
@@ -1751,9 +1754,9 @@ class Form(QMainWindow):
 			for v_ind in listToFit:
 				item = self.series_list_model.itemFromIndex(v_ind)
 				if item.hasChildren():
-					indList.extend(self.return_grouped_data_fn(item))
+					indList.extend(self.return_grouped_data_fn(id(item)))
 				else:
-					indList.append(self.obj_hash_list[self.tree_hash_list[item]])
+					indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
 		
 		
 		#Opens export files
@@ -1814,11 +1817,14 @@ class Form(QMainWindow):
 					rowText.append(str(self.objIdArr[v_ind].model_autotime[0]))
 					rowText.append(str(self.objIdArr[v_ind].model_autotime[-1]))
 					
+					
 					for item in self.order_list:
 							if  param[item]['calc'] == False:
 								if param[item]['to_show'] == True:
+									
 									rowText.append(str(param[item]['value']))
 									rowText.append(str(param[item]['stderr']))
+									
 							else:
 								if param[item]['to_show'] == True:
 									rowText.append(str(param[item]['value']))
@@ -1849,7 +1855,7 @@ class Form(QMainWindow):
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(item))
 			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[item]])
+				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
 
 		
 		#Removes duplicates
@@ -1951,11 +1957,9 @@ class Form(QMainWindow):
 				try:
 					exec("self."+paraTxt+"_value.setValue(float(param[\'"+paraTxt+"\']['value']))");
 				except:
-					
 					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\']['value']))");
 				
 				exec("self."+paraTxt+"_vary = QCheckBox()");
-				checkCont = QHBoxLayout()
 				try:
 					exec("self."+paraTxt+"_vary.setChecked(param[\'"+paraTxt+"\']['vary'])");
 				except:

@@ -89,7 +89,7 @@ class folderOutput(QtWidgets.QMainWindow):
                 self.filepath = tfilepath
             #Save to the config file.
                 self.parent.config['output_corr_filepath'] = str(tfilepath)
-                pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "w" ))
+                pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "wb" ))
             
 
 class Annotate():

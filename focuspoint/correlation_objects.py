@@ -609,9 +609,6 @@ class corrObject():
 		residuals = np.array(data)-np.array(A)
 		return np.array(residuals).astype(np.float64)
 	def fitToParameters(self):
-		#self.parentFn.updateParamFirst()
-		#self.parentFn.updateTableFirst()
-		#self.parentFn.updateParamFirst()
 		
 
 		#Populate param for lmfit.
@@ -643,6 +640,8 @@ class corrObject():
 
 			lim_scale = scale[self.indx_L:self.indx_R+1].astype(np.float64)
 			lim_data  = data[self.indx_L:self.indx_R+1].astype(np.float64)
+
+			
 			#Populate a container which will store our output variables from the bootstrap.
 			for art in self.param:
 					if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
@@ -678,13 +677,15 @@ class corrObject():
 			
 			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 			#Repopulate the parameter object.
-			#print('message',(fit_report(res)))
+			
 
 			for art in self.param:
+				
 				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 
 					self.param[art]['value'] = res.params[art].value
 					self.param[art]['stderr'] = float(res.params[art].stderr)
+					
 					
 
 

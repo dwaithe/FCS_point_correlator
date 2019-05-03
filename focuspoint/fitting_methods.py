@@ -157,14 +157,17 @@ def decide_which_to_show(int_obj):
 def update_each(int_obj,text):
 		"""Will try and populate paramaters with what is present in the inteface, but if new option will goto the default"""
 		try:
-			exec("valueV = int_obj."+text+"_value.value()"); exec("minV = int_obj."+text+"_min.value()"); exec("maxV = int_obj."+text+"_max.value()"); exec("varyV = int_obj."+text+"_vary.isChecked()");
+			
+			exec("valueV = int_obj."+text+"_value.value()", locals(), globals()); 
+			exec("minV = int_obj."+text+"_min.value()", locals(), globals()); 
+			exec("maxV = int_obj."+text+"_max.value()", locals(), globals()); 
+			exec("varyV = int_obj."+text+"_vary.isChecked()", locals(), globals()); 
 			
 			int_obj.objId_sel.param[text]['value'] = valueV 
 			int_obj.objId_sel.param[text]['minv'] = minV
 			int_obj.objId_sel.param[text]['maxv'] = maxV
 			int_obj.objId_sel.param[text]['vary'] = varyV
-		except:
-			
+		except Exception as e: 
 			int_obj.objId_sel.param[text] = copy.deepcopy(int_obj.def_param[text])
 def update_param_fcs(int_obj):
 		"""Depending on the menu options this function will update the params of the current data set. """

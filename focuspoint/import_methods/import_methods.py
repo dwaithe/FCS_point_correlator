@@ -135,7 +135,7 @@ def ptuimport(filepath):
     f = open(filepath, 'rb')
     magic = str(f.read(8))
     if magic[0:6] != "PQTTTR":
-        print 'Your file is an invalid .ptu'
+        print( 'Your file is an invalid .ptu')
         return
     version =  f.read(8)
     #print 'version',version
@@ -232,43 +232,43 @@ def ptuimport(filepath):
     TTResultFormat_TTTRRecType = file_type['TTResultFormat_TTTRRecType']
     if TTResultFormat_TTTRRecType == rtPicoHarpT3:
         isT2 = False
-        print 'PicoHarp T3 data\n'
+        print( 'PicoHarp T3 data\n')
 
     elif TTResultFormat_TTTRRecType == rtPicoHarpT2:
         isT2 =True
-        print 'PicoHarp T2 data \n'
+        print ('PicoHarp T2 data \n')
 
     elif TTResultFormat_TTTRRecType == rtHydraHarpT3:
         isT2 = False
-        print 'HydraHarp V1 T3 data \n'
+        print ('HydraHarp V1 T3 data \n')
 
     elif TTResultFormat_TTTRRecType == rtHydraHarpT2:
         isT2 = True
-        print 'HydraHarp V1 T2 data \n'
+        print ('HydraHarp V1 T2 data \n')
 
     elif TTResultFormat_TTTRRecType == rtHydraHarp2T3:
         isT2 = False
-        print 'HydraHarp V2 T3 data \n'
+        print ('HydraHarp V2 T3 data \n')
 
     elif TTResultFormat_TTTRRecType == rtHydraHarp2T2:
         isT2 = True
-        print 'HydraHarp V2 T2 data \n'
+        print( 'HydraHarp V2 T2 data \n')
 
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT3:
         isT2 = False
-        print 'TimeHarp260N T3 data \n'
+        print ('TimeHarp260N T3 data \n')
 
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT2:
         isT2 = True
-        print 'TimeHarp260P T3 data \n'
+        print ('TimeHarp260P T3 data \n')
 
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT3:
         isT2 = False
-        print 'TimeHarp260P T3 data \n'
+        print ('TimeHarp260P T3 data \n')
 
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2:
         isT2 = True
-        print 'TimeHarp260P T2 data \n'
+        print ('TimeHarp260P T2 data \n')
 
     else:
         print('Illegal RecordType')
@@ -285,27 +285,27 @@ def ptuimport(filepath):
         return ReadPT3(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'])
 
     elif TTResultFormat_TTTRRecType == rtPicoHarpT2: #ReadPT2
-        print 'currently this type of file is not supported using this python implementation'
+        print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtHydraHarpT3: #ReadHT3(1)
         return ReadHT3(1,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarpT2: #ReadHT3(1)
-        print 'currently this type of file is not supported using this python implementation'
+        print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtHydraHarp2T3: 
         return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarp2T2: #ReadHT2(2);
-        print 'currently this type of file is not supported using this python implementation'
+        print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT3: #ReadHT3(2);
         return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT2: #ReadHT2(2);
-        print 'currently this type of file is not supported using this python implementation'
+        print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT3: #ReadHT3(2);
         return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2: #ReadHT2(2);
-        print 'currently this type of file is not supported using this python implementation'
+        print ('currently this type of file is not supported using this python implementation')
         return False
     else: 
         print('Illegal RecordType')
@@ -470,7 +470,7 @@ def csvimport(filepath):
             
             version = 2
         else:
-            print 'version not known:',line_one[1]
+            print ('version not known:',line_one[1])
     
     if version == 2:
         type =str(r_obj.next()[1])
@@ -488,7 +488,7 @@ def csvimport(filepath):
                 line = r_obj.next()
             return np.array(chanArr), np.array(trueTimeArr), np.array(dTimeArr), Resolution
         else:
-            print 'type not recognised'
+            print ('type not recognised')
             return None, None,None,None
 
     

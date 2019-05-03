@@ -1,7 +1,7 @@
 import numpy as np
 import fib4
 import time
-import thread
+import _thread
 
 """FCS Bulk Correlation Software
 
