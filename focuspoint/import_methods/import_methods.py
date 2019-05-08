@@ -287,8 +287,7 @@ def ptuimport(filepath):
         return ReadPT3(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'])
 
     elif TTResultFormat_TTTRRecType == rtPicoHarpT2: #ReadPT2
-        print ('currently this type of file is not supported using this python implementation')
-        return False
+        return readPT2(inputfile,numRecords,MeasDesc_GlobalResolution)
     elif TTResultFormat_TTTRRecType == rtHydraHarpT3: #ReadHT3(1)
         return ReadHT3(1,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarpT2: #ReadHT3(1)
@@ -315,6 +314,44 @@ def ptuimport(filepath):
         
     ###Decoder functions
     f.close()
+def readPT2(inputfile,numRecords,MeasDesc_GlobalResolution):
+    #Contributed by Volodymyr (VolBog).
+    chanArr = [0]*TTResult_NumberOfRecords
+    trueTimeArr =[0]*TTResult_NumberOfRecords
+    dTimeArr= [0]*TTResult_NumberOfRecords
+    T2WRAPAROUND = 210698240
+    for recNum in range(0, numRecords):
+    try:
+        recordData = "{0:0{1}b}".format(struct.unpack("<I", inputfile.read(4))[0], 32)
+        except:
+            print("The file ended earlier than expected, at record %d/%d." \
+                  % (recNum, numRecords))
+        exit(0)
+        channel = int(recordData[0:4], base=2)
+        time = int(recordData[4:32], base=2)
+        if channel == 0xF:  # Special record
+            # lower 4 bits of time are marker bits
+            markers = int(recordData[28:32], base=2)
+            if markers == 0:  # Not a marker, so overflow
+                gotOverflow(1)
+                oflcorrection += T2WRAPAROUND
+            else:
+                # Actually, the lower 4 bits for the time aren't valid because
+                # they belong to the marker. But the error caused by them is
+                # so small that we can just ignore it.
+                truetime = oflcorrection + time
+                gotMarker(truetime, markers)
+        else:
+            if channel > 4:  # Should not occur
+                print("Illegal Channel: #%1d %1u" % (recNum, channel))
+            truetime = oflcorrection + time
+            
+
+        trueTimeArr[cnt_ph] = truetime
+        dTimeArr[cnt_ph] = time
+        chanArr[cnt_ph] = channel+1
+        cnt_ph = cnt_ph +1
+    return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e6
 # Read HydraHarp/TimeHarp260 T3
 def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     T3WRAPAROUND = 1024
