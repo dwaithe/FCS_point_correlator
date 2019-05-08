@@ -51,23 +51,17 @@ def spc_file_import(file_path):
         INVALID =  int(byte3[0])
         MTOV = int(byte3[1])
         GAP = int(byte3[2])
+
         if MTOV == 1: 
             count0 +=1
             overflow += 4096
         if INVALID == 1:
             count1 +=1
-        elif int(byte1[0:4],2) == 0:
+        else:
             chan_arr.append(int(byte1[0:4],2))
             true_time_arr.append(int(byte1[4:8]+byte0,2)+overflow)
             dtime_arr.append(4095 - int(byte3[4:8]+byte2,2))
-        elif int(byte1[0:4],2) == 1:
-            chan_arr.append(int(byte1[0:4],2))
-            true_time_arr.append(int(byte1[4:8]+byte0,2)+overflow)
-            dtime_arr.append(4095 - int(byte3[4:8]+byte2,2))
-        elif int(byte1[0:4],2) == 2:
-            chan_arr.append(int(byte1[0:4],2))
-            true_time_arr.append(int(byte1[4:8]+byte0,2)+overflow)
-            dtime_arr.append(4095 - int(byte3[4:8]+byte2,2))
+        
             
             #file_out.write(str(int(byte1[4:8]+byte0,2)+overflow)+'\t'+str(4095 - int(byte3[4:8]+byte2,2))+'\t'+str(int(byte1[0:4],2))+'\t'+str(byte3[0:4])+'\n')
     
