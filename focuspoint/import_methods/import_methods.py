@@ -321,12 +321,12 @@ def readPT2(inputfile,numRecords,MeasDesc_GlobalResolution):
     dTimeArr= [0]*TTResult_NumberOfRecords
     T2WRAPAROUND = 210698240
     for recNum in range(0, numRecords):
-    try:
-        recordData = "{0:0{1}b}".format(struct.unpack("<I", inputfile.read(4))[0], 32)
+        try:
+            recordData = "{0:0{1}b}".format(struct.unpack("<I", inputfile.read(4))[0], 32)
         except:
             print("The file ended earlier than expected, at record %d/%d." \
                   % (recNum, numRecords))
-        exit(0)
+            return False
         channel = int(recordData[0:4], base=2)
         time = int(recordData[4:32], base=2)
         if channel == 0xF:  # Special record

@@ -3,10 +3,10 @@ import os, sys
 from correlation_methods.correlation_methods import *
 from import_methods.import_methods import *
 import time
-import fitting_methods as SE
-import fitting_methods_GS as GS
-import fitting_methods_VD as VD
-import fitting_methods_PB as PB
+import fitting_methods.fitting_methods_SE as SE
+import fitting_methods.fitting_methods_GS as GS
+import fitting_methods.fitting_methods_VD as VD
+import fitting_methods.fitting_methods_PB as PB
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
 import copy

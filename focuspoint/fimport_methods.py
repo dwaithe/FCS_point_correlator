@@ -1,6 +1,6 @@
 from correlation_objects import corrObject
-import fitting_methods as SE
-import fitting_methods_GS as GS
+import fitting_methods.fitting_methods_SE as SE
+import fitting_methods.fitting_methods_GS as GS
 import csv
 import numpy as np
 import copy
