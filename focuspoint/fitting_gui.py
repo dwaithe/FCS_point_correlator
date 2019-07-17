@@ -214,7 +214,8 @@ class Form(QMainWindow):
 		except:
 			self.loadpath = os.path.expanduser('~')+'/FCS_Analysis/'
 		
-		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)')
+		# The first index of the returned tuple contains the file list.
+		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'Supported Files (*.csv *.sin *.fcs);;All Files (*.*)')[0]
 		self.load_series(files_to_load)
 		
 		try:
