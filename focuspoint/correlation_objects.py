@@ -46,7 +46,7 @@ class picoObject():
 		self.name = self.nameAndExt[0]
 		self.ext = self.nameAndExt[-1]
 
-		self.par_obj.data.append(filepath);
+		self.par_obj.data.append(filepath)
 		self.par_obj.objectRef.append(self)
 		
 		#Imports pt3 file format to object.
@@ -57,9 +57,9 @@ class picoObject():
 		self.objId2 = None
 		self.objId3 = None
 		self.objId4 = None
-		self.processData();
+		self.processData()
 		
-		self.plotOn = True;
+		self.plotOn = True
 
 
 	def processData(self):
@@ -94,7 +94,7 @@ class picoObject():
 			#If the file is empty.
 			if self.subChanArr == None:
 				#Undoes any preparation of resource.
-				self.par_obj.data.pop(-1);
+				self.par_obj.data.pop(-1)
 				self.par_obj.objectRef.pop(-1)
 				self.exit = True
 				
@@ -167,7 +167,7 @@ class picoObject():
 		if self.fit_obj != None:
 			#If fit object provided then creates fit objects.
 			if self.objId1 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj);
+				corrObj= corrObject(self.filepath,self.fit_obj)
 				self.objId1 = corrObj.objId
 				self.objId1.parent_name = 'point FCS'
 				self.objId1.parent_uqid = 'point FCS'
@@ -191,7 +191,7 @@ class picoObject():
 				
 
 				if self.objId3 == None:
-					corrObj= corrObject(self.filepath,self.fit_obj);
+					corrObj= corrObject(self.filepath,self.fit_obj)
 					self.objId3 = corrObj.objId
 					self.objId3.parent_name = 'point FCS'
 					self.objId3.parent_uqid = 'point FCS'
@@ -210,7 +210,7 @@ class picoObject():
 				self.objId3.min = np.min(self.objId3.autoNorm)
 				self.objId3.CV = self.CV
 				if self.objId2 == None:
-					corrObj= corrObject(self.filepath,self.fit_obj);
+					corrObj= corrObject(self.filepath,self.fit_obj)
 					self.objId2 = corrObj.objId
 					self.objId2.parent_name = 'point FCS'
 					self.objId2.parent_uqid = 'point FCS'
@@ -229,7 +229,7 @@ class picoObject():
 				self.objId2.CV =self.CV
 
 				if self.objId4 == None:
-					corrObj= corrObject(self.filepath,self.fit_obj);
+					corrObj= corrObject(self.filepath,self.fit_obj)
 					self.objId4 = corrObj.objId
 					self.objId4.parent_name = 'point FCS'
 					self.objId4.parent_uqid = 'point FCS'
@@ -347,7 +347,7 @@ class subPicoObject():
 		self.objId2 = None
 		self.objId3 = None
 		self.objId4 = None
-		self.processData();
+		self.processData()
 		self.plotOn = True
 		
 		
@@ -414,7 +414,7 @@ class subPicoObject():
 		
 		#Adds names to the fit function for later fitting.
 		if self.objId1 == None:
-			corrObj= corrObject(self.filepath,self.fit_obj);
+			corrObj= corrObject(self.filepath,self.fit_obj)
 			self.objId1 = corrObj.objId
 			self.objId1.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 			self.objId1.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
@@ -434,7 +434,7 @@ class subPicoObject():
 		if self.numOfCH == 2:
 			self.objId1.CV = self.CV
 			if self.objId3 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj);
+				corrObj= corrObject(self.filepath,self.fit_obj)
 				self.objId3 = corrObj.objId
 				self.objId3.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 				self.objId3.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
@@ -452,7 +452,7 @@ class subPicoObject():
 			self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 			self.objId3.CV = self.CV
 			if self.objId2 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj);
+				corrObj= corrObject(self.filepath,self.fit_obj)
 				self.objId2 = corrObj.objId
 				self.objId2.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
 				self.objId2.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
@@ -469,7 +469,7 @@ class subPicoObject():
 			self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 			self.objId2.CV = self.CV
 			if self.objId4 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj);
+				corrObj= corrObject(self.filepath,self.fit_obj)
 				self.objId4 = corrObj.objId
 				
 				self.objId4.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
@@ -565,7 +565,7 @@ class corrObject():
 		self.parent_name = 'Not known'
 		self.file_name = 'Not known'
 		self.datalen= []
-		self.objId = self;
+		self.objId = self
 		self.param = []
 		self.goodFit = True
 		self.fitted = False
@@ -618,7 +618,7 @@ class corrObject():
 			
 			if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 				
-				param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']), max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
+				param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']), max=float(self.param[art]['maxv']), vary=self.param[art]['vary'])
 				
 		
 
@@ -650,7 +650,7 @@ class corrObject():
 
 			for i in range(0,num_of_straps):
 				#Bootstrap our sample, but remove duplicates.
-				boot_ind = np.random.choice(np.arange(0,lim_data.shape[0]),size=lim_data.shape[0],replace=True);
+				boot_ind = np.random.choice(np.arange(0,lim_data.shape[0]),size=lim_data.shape[0],replace=True)
 
 
 				#boot_ind = np.arange(0,lim_data.shape[0])#np.sort(boot_ind)
@@ -702,7 +702,7 @@ class corrObject():
 			
 			if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 				
-				plot_param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']), max=float(self.param[art]['maxv']), vary=self.param[art]['vary']);
+				plot_param.add(art, value=float(self.param[art]['value']), min=float(self.param[art]['minv']), max=float(self.param[art]['maxv']), vary=self.param[art]['vary'])
 				
 
 		

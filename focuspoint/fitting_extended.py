@@ -13,17 +13,17 @@ class TableFilterBox(QTableWidget):
 	def __init__(self,int_obj):
 		QTableWidget.__init__(self,int_obj)
 		#self.setSelectionMode(QAbstractItemView.NoSelection)
-		self.setShowGrid(False);
+		self.setShowGrid(False)
 
 		self.verticalHeader().setVisible(False)
 		self.horizontalHeader().setVisible(False)
 		
 		self.setRowCount(1)
 		self.setColumnCount(4)
-		self.setColumnWidth(0,20);
-		self.setColumnWidth(1,100);
-		self.setColumnWidth(2,65);
-		self.setColumnWidth(3,30);
+		self.setColumnWidth(0,20)
+		self.setColumnWidth(1,100)
+		self.setColumnWidth(2,65)
+		self.setColumnWidth(3,30)
 		
 
 
@@ -43,7 +43,7 @@ class TableFilterBox(QTableWidget):
 		try: 
 			filter_float = float(filter_value)
 		except:
-			return;
+			return
 		#if lessthan_txt =='>':
 		#	less_than_op = True
 		#else:
@@ -155,13 +155,13 @@ class visualScatter(QMainWindow):
 		self.generate_scatter_btn = QPushButton('Generate Scatter')
 		
 		self.visual_param_select_1_panel = QHBoxLayout()
-		self.visual_param_select_1 = QComboBox();
+		self.visual_param_select_1 = QComboBox()
 		self.visual_param_select_1_check = QCheckBox('norm',self)
 		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1)
 		self.visual_param_select_1_panel.addWidget(self.visual_param_select_1_check)
 
 		self.visual_param_select_2_panel = QHBoxLayout()
-		self.visual_param_select_2 = QComboBox();
+		self.visual_param_select_2 = QComboBox()
 		self.visual_param_select_2_check = QCheckBox('norm',self)
 		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2)
 		self.visual_param_select_2_panel.addWidget(self.visual_param_select_2_check)
@@ -193,7 +193,7 @@ class visualScatter(QMainWindow):
 		vbox0.addWidget(self.generate_scatter_btn)
 		vbox0.addWidget(copy_data_btn)
 		vbox0.addWidget(save_data_btn)
-		vbox0.addStretch();
+		vbox0.addStretch()
 		vbox1.addWidget(self.canvas1)
 		
 		page.setLayout(hbox_main)
@@ -226,7 +226,7 @@ class visualScatter(QMainWindow):
 			if self.visual_param_select_2_check.isChecked():
 				self.data_2 = list(np.array(self.data_2)/np.median(self.data_2))
 
-			self.plt1.cla();
+			self.plt1.cla()
 			self.plt1.scatter(np.array(self.data_1).astype(np.float64), np.array(self.data_2).astype(np.float64), facecolor='green', alpha=0.75)
 			
 			self.plt1.set_xlim(np.min(self.data_1)*0.8,np.max(self.data_1)*1.2)
@@ -263,13 +263,13 @@ class visualScatter(QMainWindow):
 		#Ensures the headings are relevant to the fit.
 
 		
-		proceed=False;
+		proceed=False
 		for i in range(0,self.parObj.objIdArr.__len__()):
 			if self.parObj.objIdArr[i].toFit == True:
 				if self.parObj.objIdArr[i].fitted == True:
-					v_ind = i;
-					proceed = True;
-					break;
+					v_ind = i
+					proceed = True
+					break
 			
 		
 		if proceed == True:
@@ -306,24 +306,24 @@ class visualHisto(QMainWindow):
 		
 		self.generate_histogram_btn = QPushButton('Generate Histogram')
 		
-		self.visual_param_select = QComboBox();
+		self.visual_param_select = QComboBox()
 
 		self.min_range_lbl = QLabel("min range:") 
-		self.min_range_txt = QLineEdit();
+		self.min_range_txt = QLineEdit()
 		self.min_range_txt.setPlaceholderText("default:input data min")
 		self.max_range_lbl = QLabel("max range:") 
-		self.max_range_txt = QLineEdit();
+		self.max_range_txt = QLineEdit()
 		self.max_range_txt.setPlaceholderText("default:input data max")
 		self.num_of_bins_lbl = QLabel("bin width:") 
-		self.num_of_bins_txt = QLineEdit('2');
+		self.num_of_bins_txt = QLineEdit('2')
 
-		min_box = QHBoxLayout();
+		min_box = QHBoxLayout()
 		min_box.addWidget(self.min_range_lbl)
 		min_box.addWidget(self.min_range_txt)
-		max_box = QHBoxLayout();
+		max_box = QHBoxLayout()
 		max_box.addWidget(self.max_range_lbl)
 		max_box.addWidget(self.max_range_txt)
-		bin_box = QHBoxLayout();
+		bin_box = QHBoxLayout()
 		bin_box.addWidget(self.num_of_bins_lbl)
 		bin_box.addWidget(self.num_of_bins_txt)
 
@@ -351,7 +351,7 @@ class visualHisto(QMainWindow):
 		vbox0.addWidget(self.generate_histogram_btn)
 		vbox0.addWidget(copy_data_btn)
 		vbox0.addWidget(save_data_btn)
-		vbox0.addStretch();
+		vbox0.addStretch()
 		vbox1.addWidget(self.canvas1)
 		
 		page.setLayout(hbox_main)
@@ -383,7 +383,7 @@ class visualHisto(QMainWindow):
 				max_range = max(self.data)
 			else:
 				max_range = float(min_range)
-			self.plt1.cla();
+			self.plt1.cla()
 
 			bins = np.arange(min_range,max_range+bin_width,bin_width)
 			
@@ -420,13 +420,13 @@ class visualHisto(QMainWindow):
 		#Ensures the headings are relevant to the fit.
 
 		
-		proceed=False;
+		proceed=False
 		for i in range(0,self.parObj.objIdArr.__len__()):
 			if self.parObj.objIdArr[i].toFit == True:
 				#if self.parObj.objIdArr[i].fitted == True:
-					v_ind = i;
-					proceed = True;
-					break;
+					v_ind = i
+					proceed = True
+					break
 			
 		
 		if proceed == True:

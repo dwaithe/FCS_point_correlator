@@ -15,7 +15,7 @@ def fcs_import_method(fit_obj,file_path):
 	ind = 0
 	while  read == True:
 		
-		corrObj = corrObject(file_path,fit_obj);
+		corrObj = corrObject(file_path,fit_obj)
 		
 		line = next(r_obj)
 		text =[]
@@ -126,7 +126,7 @@ def fcs_import_method(fit_obj,file_path):
 			#must divide by duration (in seconds).And to be in kHz we divide by 1000. 
 			corrObj.kcount = np.average(np.array(cdata)/unit)/1000
 			
-			corrObj.ch_type = channel;
+			corrObj.ch_type = channel
 			corrObj.param = copy.deepcopy(fit_obj.def_param)
 			corrObj.calculate_suitability()
 			#if fit_obj.diffModEqSel.currentIndex()+1 == 3:
@@ -142,14 +142,14 @@ def fcs_import_method(fit_obj,file_path):
 				SE.calc_param_fcs(fit_obj,corrObj)
 		
 def sin_import_method(fit_obj,file_path):
-		tscale = [];
-		tdata = [];
-		tdata2 = [];
-		tdata3 = [];
-		tdata4 = [];
-		int_tscale =[];
-		int_tdata = [];
-		int_tdata2 = [];
+		tscale = []
+		tdata = []
+		tdata2 = []
+		tdata3 = []
+		tdata4 = []
+		int_tscale =[]
+		int_tdata = []
+		int_tdata2 = []
 		
 		
 		proceed = False
@@ -158,7 +158,7 @@ def sin_import_method(fit_obj,file_path):
 			
 			if proceed =='correlated':
 				if line ==[]:
-					proceed =False;
+					proceed =False
 				else:
 					tscale.append(float(line[0]))
 					tdata.append(float(line[1]))
@@ -171,7 +171,7 @@ def sin_import_method(fit_obj,file_path):
 			if proceed =='intensity':
 				
 				if line ==[]:
-					proceed=False;
+					proceed=False
 				elif line.__len__()> 1:
 					
 					int_tscale.append(float(line[0]))
@@ -180,9 +180,9 @@ def sin_import_method(fit_obj,file_path):
 						int_tdata2.append(float(line[2]))
 					
 			if (str(line)  == "[\'[CorrelationFunction]\']"):
-				proceed = 'correlated';
+				proceed = 'correlated'
 			elif (str(line)  == "[\'[IntensityHistory]\']"):
-				proceed = 'intensity';
+				proceed = 'intensity'
 			
 			
 		
@@ -196,7 +196,7 @@ def sin_import_method(fit_obj,file_path):
 		corrObj1.parent_uqid = '0'
 					
 					
-		corrObj1.ch_type = 0;
+		corrObj1.ch_type = 0
 		#Average counts per bin. Apparently they are normalised to time.
 		unit = int_tscale[-1]/(int_tscale.__len__()-1)
 		#And to be in kHz we divide by 1000.
@@ -222,7 +222,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj2.name = corrObj2.name+'-CH1'
 			corrObj2.parent_name = '.sin files'
 			corrObj2.parent_uqid = '0'
-			corrObj2.ch_type = 1;
+			corrObj2.ch_type = 1
 	
 			#And to be in kHz we divide by 1000.
 			corrObj2.kcount = np.average(np.array(int_tdata2))/1000
@@ -244,7 +244,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj3.autoNorm= np.array(tdata3).astype(np.float64).reshape(-1)
 			corrObj3.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
-			corrObj3.ch_type = 2;
+			corrObj3.ch_type = 2
 			corrObj3.name = corrObj3.name+'-CH10'
 			corrObj3.parent_name = '.sin files'
 			corrObj3.parent_uqid = '0'
@@ -271,7 +271,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj4.autoNorm= np.array(tdata4).astype(np.float64).reshape(-1)
 			corrObj4.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
-			corrObj4.ch_type = 3;
+			corrObj4.ch_type = 3
 			corrObj4.name = corrObj4.name+'-CH01'
 			corrObj4.parent_name = '.sin files'
 			corrObj4.parent_uqid = '0'
@@ -312,7 +312,7 @@ def csv_import_method(fit_obj,file_path):
 			else:
 				version = 1
 
-			corrObj1 = corrObject(file_path,fit_obj);
+			corrObj1 = corrObject(file_path,fit_obj)
 
 			if version == 1:
 				fit_obj.objIdArr.append(corrObj1)
@@ -323,7 +323,7 @@ def csv_import_method(fit_obj,file_path):
 					if (c >0):
 						tscale.append(line[0])
 						tdata.append(line[1])
-					c +=1;
+					c +=1
 
 				corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 				corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)
@@ -399,8 +399,8 @@ def csv_import_method(fit_obj,file_path):
 					
 
 				if numOfCH == 2:
-					corrObj2 = corrObject(file_path,fit_obj);
-					corrObj3 = corrObject(file_path,fit_obj);
+					corrObj2 = corrObject(file_path,fit_obj)
+					corrObj3 = corrObject(file_path,fit_obj)
 
 					
 					fit_obj.objIdArr.append(corrObj1)
