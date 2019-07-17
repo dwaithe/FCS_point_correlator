@@ -552,7 +552,7 @@ class Form(QMainWindow):
 	#		item = objId.series_list_id
 	#lis		objId.name = item.text()
 	def file_item_edited(self, model_index):
-		
+		# In case a parent is selected.
 		if model_index.hasChildren() == True:
 			self.series_list_model.itemChanged.disconnect()
 			for file_id in self.root_name:
@@ -568,6 +568,14 @@ class Form(QMainWindow):
 							objId.checked = True
 							objId.item_in_list.setCheckState(QtCore.Qt.Checked)
 			self.series_list_model.itemChanged.connect(self.file_item_edited)
+		# In case a child (correlated data) is selected.
+		else:
+			corrObj = self.objIdArr[self.obj_hash_list[self.tree_hash_list[id(model_index)]]]
+			corrObj.name = model_index.text()
+
+			# Update the fit list with the new name.
+			self.updateFitList()
+
 	def colour_entry(self,objId):
 		#Context sensitive colour highlighting
 		if objId.goodFit == False:
@@ -756,7 +764,7 @@ class Form(QMainWindow):
 					self.root_name[file_id]['file_item'].setChild(idx,item)
 					idx = idx +1
 					item.setCheckable(True)
-					item.setEditable(False)
+					#item.setEditable(False)
 					
 					objId.item_in_list = item
 					if objId.clicked == True:
@@ -771,16 +779,20 @@ class Form(QMainWindow):
 		
 		self.updateFitList()
 		self.series_list_model.itemChanged.connect(self.file_item_edited)
-		self.series_list_view.doubleClicked.connect(self.dbl_click_method)
+		self.series_list_view.selectionModel().selectionChanged.connect(self.selection_method)
 
 				
 
 
 				
-	def dbl_click_method(self,index):
-		
+	def selection_method(self,index):
+		"""Called when a selection is made in the data tree"""
 		#Returns the indices of what has been double clicked.
-		itemToSelect = self.series_list_view.selectedIndexes()[0]
+		try:
+			itemToSelect = self.series_list_view.selectedIndexes()[0]
+		except:
+			# No selection has been made
+			return
 		#Gets the associated index.
 		item = self.series_list_model.itemFromIndex(itemToSelect)
 		if item.hasChildren():
