@@ -1411,15 +1411,7 @@ class Form(QMainWindow):
 		
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
-		for v_ind in listToFit:
-			item = self.series_list_model.itemFromIndex(v_ind)
-			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
-			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1551,15 +1543,7 @@ class Form(QMainWindow):
 	def fitSelected_equation(self):
 		
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
-		for v_ind in listToFit:
-			item = self.series_list_model.itemFromIndex(v_ind)
-			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
-			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1605,22 +1589,25 @@ class Form(QMainWindow):
 			return indList			
 			
 
-					
-			
-	def removeDataFn(self):
-		"""Removes data from the displayed dataseries."""
+	def return_obj_ind_list(self, listToFit):
+		indList =[]
 		
-		#Reads those indices which are highlighted.
-		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
 		for v_ind in listToFit:
 			item = self.series_list_model.itemFromIndex(v_ind)
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(id(item)))
 			else:
 				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		
+		return indList
+
+			
+	def removeDataFn(self):
+		"""Removes data from the displayed dataseries."""
+		
+		#Reads those indices which are highlighted.
+		listToFit = self.series_list_view.selectedIndexes()
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1753,12 +1740,7 @@ class Form(QMainWindow):
 		if listToFit ==[]:
 			indList = range(0,self.objIdArr.__len__())
 		else:
-			for v_ind in listToFit:
-				item = self.series_list_model.itemFromIndex(v_ind)
-				if item.hasChildren():
-					indList.extend(self.return_grouped_data_fn(id(item)))
-				else:
-					indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+			indList = self.return_obj_ind_list(listToFit)
 		
 		
 		#Opens export files
@@ -1849,15 +1831,7 @@ class Form(QMainWindow):
 	def clearFits(self):
 		"""If items are selected in the tree view. Clear their fit settings."""
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
-		for v_ind in listToFit:
-			item = self.series_list_model.itemFromIndex(v_ind)
-			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
-			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1897,12 +1871,7 @@ class Form(QMainWindow):
 
 
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		if listToFit ==[]:
-			indList = range(0,self.objIdArr.__len__())
-		else:
-			for v_ind in listToFit:
-				indList.append(v_ind.row())
+		indList = self.return_obj_ind_list(listToFit)
 		
 		if copy_fn == True:
 			for v_ind in indList:
