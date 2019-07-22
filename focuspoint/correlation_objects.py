@@ -684,8 +684,7 @@ class corrObject():
 				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 
 					self.param[art]['value'] = res.params[art].value
-					self.param[art]['stderr'] = float(res.params[art].stderr)
-					
+					self.param[art]['stderr'] = res.params[art].stderr
 					
 
 
