@@ -1,7 +1,7 @@
 import struct
 import numpy as np
 import csv
-
+import time
 
 """FCS Bulk Correlation Software
 
@@ -105,29 +105,33 @@ def asc_file_import(file_path):
 def ptuimport(filepath):
 
     
-    tyEmpty8      = int('FFFF0008', 16);
-    tyBool8       = int('00000008', 16);
-    tyInt8        = int('10000008', 16);
-    tyBitSet64    = int('11000008', 16);
-    tyColor8      = int('12000008', 16);
-    tyFloat8      = int('20000008', 16);
-    tyTDateTime   = int('21000008', 16);
-    tyFloat8Array = int('2001FFFF', 16);
-    tyAnsiString  = int('4001FFFF', 16);
-    tyWideString  = int('4002FFFF', 16);
-    tyBinaryBlob  = int('FFFFFFFF', 16);
-
-    rtPicoHarpT3     = int('00010303', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $03 (PicoHarp)
-    rtPicoHarpT2     = int('00010203', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $03 (PicoHarp)
-    rtHydraHarpT3    = int('00010304', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $04 (HydraHarp)
-    rtHydraHarpT2    = int('00010204', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $04 (HydraHarp)
-    rtHydraHarp2T3   = int('01010304', 16);# (SubID = $01 ,RecFmt: $01) (V2), T-Mode: $03 (T3), HW: $04 (HydraHarp)
-    rtHydraHarp2T2   = int('01010204', 16);# (SubID = $01 ,RecFmt: $01) (V2), T-Mode: $02 (T2), HW: $04 (HydraHarp)
-    rtTimeHarp260NT3 = int('00010305', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $05 (TimeHarp260N)
-    rtTimeHarp260NT2 = int('00010205', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $05 (TimeHarp260N)
-    rtTimeHarp260PT3 = int('00010306', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $06 (TimeHarp260P)
-    rtTimeHarp260PT2 = int('00010206', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $06 (TimeHarp260P)
-
+    # Tag Types
+    tyEmpty8 = struct.unpack(">i", bytes.fromhex("FFFF0008"))[0]
+    tyBool8 = struct.unpack(">i", bytes.fromhex("00000008"))[0]
+    tyInt8 = struct.unpack(">i", bytes.fromhex("10000008"))[0]
+    tyBitSet64 = struct.unpack(">i", bytes.fromhex("11000008"))[0]
+    tyColor8 = struct.unpack(">i", bytes.fromhex("12000008"))[0]
+    tyFloat8 = struct.unpack(">i", bytes.fromhex("20000008"))[0]
+    tyTDateTime = struct.unpack(">i", bytes.fromhex("21000008"))[0]
+    tyFloat8Array = struct.unpack(">i", bytes.fromhex("2001FFFF"))[0]
+    tyAnsiString = struct.unpack(">i", bytes.fromhex("4001FFFF"))[0]
+    tyWideString = struct.unpack(">i", bytes.fromhex("4002FFFF"))[0]
+    tyBinaryBlob = struct.unpack(">i", bytes.fromhex("FFFFFFFF"))[0]
+    
+    # Record types
+    rtPicoHarpT3 = struct.unpack(">i", bytes.fromhex('00010303'))[0]
+    rtPicoHarpT2 = struct.unpack(">i", bytes.fromhex('00010203'))[0]
+    rtHydraHarpT3 = struct.unpack(">i", bytes.fromhex('00010304'))[0]
+    rtHydraHarpT2 = struct.unpack(">i", bytes.fromhex('00010204'))[0]
+    rtHydraHarp2T3 = struct.unpack(">i", bytes.fromhex('01010304'))[0]
+    rtHydraHarp2T2 = struct.unpack(">i", bytes.fromhex('01010204'))[0]
+    rtTimeHarp260NT3 = struct.unpack(">i", bytes.fromhex('00010305'))[0]
+    rtTimeHarp260NT2 = struct.unpack(">i", bytes.fromhex('00010205'))[0]
+    rtTimeHarp260PT3 = struct.unpack(">i", bytes.fromhex('00010306'))[0]
+    rtTimeHarp260PT2 = struct.unpack(">i", bytes.fromhex('00010206'))[0]
+    rtMultiHarpNT3 = struct.unpack(">i", bytes.fromhex('00010307'))[0]
+    rtMultiHarpNT2 = struct.unpack(">i", bytes.fromhex('00010207'))[0]
+    
     fid = 0
     #TTResultFormat_TTTRRecType =0 ;
     #TTResult_NumberOfRecords = 0; #% Number of TTTR Records in the File;
@@ -135,102 +139,69 @@ def ptuimport(filepath):
     #MeasDesc_GlobalResolution =0;
 
     f = open(filepath, 'rb')
-    magic = str(f.read(8))
-    if magic[0:6] != "PQTTTR":
-        print( 'Your file is an invalid .ptu')
+    # Check if inputfile is a valid PTU file
+    # Python strings don't have terminating NULL characters, so they're stripped
+    magic = f.read(8).decode("utf-8").strip('\0')
+    if magic != "PQTTTR":
+        print("ERROR: Magic invalid, this is not a PTU file.")
         return
-    version =  f.read(8)
+    version = f.read(8).decode("utf-8").strip('\0')
     #print 'version',version
 
     file_type = {}
     while True:
-            #read Tag Head
-            TagIdent = f.read(32); # TagHead.Ident
-            TagIdent = string.replace(TagIdent,'\x00','')
-            #print 'Tag',TagIdent
-            #TagIdent = TagIdent[TagIdent != 0]]#'; # remove #0 and more more readable
-
-            TagIdx =  struct.unpack('i', f.read(4))[0] #TagHead.Idx
-            TagTyp =  np.array(struct.unpack('i', f.read(4))[0]).astype(np.uint32) #TagHead.Typ
-            #TagHead.Value will be read in the right type function
-            #print 'TagIdx',TagIdx
-            if TagIdx > -1:
-                EvalName = TagIdent+'('+str(TagIdx+1)+')'
+        tagIdent = f.read(32).decode("utf-8").strip('\0')
+        tagIdx = struct.unpack("<i", f.read(4))[0]
+        tagTyp = struct.unpack("<i", f.read(4))[0]
+        if tagIdx > -1:
+            evalName = tagIdent + '(' + str(tagIdx) + ')'
+        else:
+            evalName = tagIdent
+        if tagTyp == tyEmpty8:
+            f.read(8)
+        elif tagTyp == tyBool8:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            if tagInt == 0:
+                file_type[evalName] = False
             else:
-                EvalName = TagIdent
+                file_type[evalName] = True
+        elif tagTyp == tyInt8:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            file_type[evalName] = tagInt
+        elif tagTyp == tyBitSet64:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            file_type[evalName] = tagInt
+        elif tagTyp == tyColor8:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            file_type[evalName] = tagInt
+        elif tagTyp == tyFloat8:
+            tagFloat = struct.unpack("<d", f.read(8))[0]
+            file_type[evalName] = tagFloat
+        elif tagTyp == tyFloat8Array:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            file_type[evalName] = tagInt
+        elif tagTyp == tyTDateTime:
+            tagFloat = struct.unpack("<d", f.read(8))[0]
+            tagTime = int((tagFloat - 25569) * 86400)
+            tagTime = time.gmtime(tagTime)
+            file_type[evalName] = tagTime
+        elif tagTyp == tyAnsiString:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            tagString = f.read(tagInt).decode("utf-8").strip("\0")
+            file_type[evalName] = tagString
+        elif tagTyp == tyWideString:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            tagString = f.read(tagInt).decode("utf-16le", errors="ignore").strip("\0")
+            file_type[evalName] = tagString
+        elif tagTyp == tyBinaryBlob:
+            tagInt = struct.unpack("<q", f.read(8))[0]
+            file_type[evalName] = tagInt
+        else:
+            print('Illegal Type identifier found! Broken file?',tagTyp)
+            exit(0)
+        if tagIdent == "Header_End":
+            break
 
-            
-
-            #print('eval',str(EvalName))
-            
-            
-            
-            if TagTyp == tyEmpty8:
-                struct.unpack('Q', f.read(8))[0]
-                #print('empty')
-            elif TagTyp ==tyBool8:
-                TagInt = struct.unpack('Q', f.read(8))[0]
-                if TagInt == 0:
-                    #print('False')
-                    file_type[EvalName] = False
-                else:
-                    #print('True')
-                    file_type[EvalName] = True
-            elif TagTyp == tyInt8:
-                TagInt =  struct.unpack('Q', f.read(8))[0]
-                file_type[EvalName] = TagInt
-                #print('tyInt8',TagInt)
-            elif TagTyp == tyBitSet64:
-                TagInt = struct.unpack('Q', f.read(8))[0]
-                file_type[EvalName] = TagInt
-                #print('tyBitSet64',TagInt)
-            elif TagTyp == tyColor8:
-                TagInt = struct.unpack('Q', f.read(8))[0]
-                file_type[EvalName] = TagInt
-                #print('tyColor8',TagInt)
-            elif TagTyp == tyFloat8:
-                TagInt = struct.unpack('d', f.read(8))[0]
-                file_type[EvalName] = TagInt
-                #print('tyFloat8',TagInt)
-            elif TagTyp == tyFloat8Array:
-                TagInt = struct.unpack('Q', f.read(8))[0]
-                file_type[EvalName] = TagInt
-                #print '<Float array with'+str(TagInt / 8)+'Entries>'
-                #print('tyFloat8Array',TagInt)
-                f.seek(TagInt)
-            elif TagTyp == tyTDateTime:
-                TagFloat = struct.unpack('d', f.read(8))[0]
-                #print('date'+str(TagFloat))
-                file_type[EvalName] = TagFloat
-            elif TagTyp == tyAnsiString:
-                TagInt = int(struct.unpack('Q', f.read(8))[0])
-                TagString = f.read(TagInt)
-                TagString = string.replace(TagString,'\x00','')
-
-                #print('tyAnsiString',TagString)
-                if TagIdx > -1:
-                    EvalName = TagIdent +'{'+str(TagIdx+1)+'}'
-                file_type[EvalName] = TagString
-            elif TagTyp == tyWideString:
-                TagInt = struct.unpack('i', f.read(4))[0].astype(np.float64)
-                TagString = struct.unpack('i', f.read(4))[0].astype(np.float64)
-
-                #print('tyWideString',TagString)
-                if TagIdx > -1:
-                    EvalName = TagIdent +'{'+str(TagIdx+1)+'}'
-                file_type[EvalName] = TagString
-            elif TagTyp == tyBinaryBlob:
-                TagInt = struct.unpack('i', f.read(4))[0].astype(np.float64)
-                #print('<Binary Blob with '+str(TagInt)+'Bytes>')
-                f.seek(TagInt)
-            else:
-                print('Illegal Type identifier found! Broken file?',TagTyp)
-                
-            if TagIdent == "Header_End":
-                
-                break
-
-    print('\n------------------------\n')
     TTResultFormat_TTTRRecType = file_type['TTResultFormat_TTTRRecType']
     if TTResultFormat_TTTRRecType == rtPicoHarpT3:
         isT2 = False
@@ -287,7 +258,7 @@ def ptuimport(filepath):
         return ReadPT3(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'])
 
     elif TTResultFormat_TTTRRecType == rtPicoHarpT2: #ReadPT2
-        return readPT2(inputfile,numRecords,MeasDesc_GlobalResolution)
+        return readPT2(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'])
     elif TTResultFormat_TTTRRecType == rtHydraHarpT3: #ReadHT3(1)
         return ReadHT3(1,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarpT2: #ReadHT3(1)
@@ -314,44 +285,46 @@ def ptuimport(filepath):
         
     ###Decoder functions
     f.close()
-def readPT2(inputfile,numRecords,MeasDesc_GlobalResolution):
+def readPT2(inputfile,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     #Contributed by Volodymyr (VolBog).
     chanArr = [0]*TTResult_NumberOfRecords
     trueTimeArr =[0]*TTResult_NumberOfRecords
     dTimeArr= [0]*TTResult_NumberOfRecords
     T2WRAPAROUND = 210698240
-    for recNum in range(0, numRecords):
+    oflcorrection = 0
+    cnt_ph = 0
+    for recNum in range(0, TTResult_NumberOfRecords):
+        truetime = 0
         try:
             recordData = "{0:0{1}b}".format(struct.unpack("<I", inputfile.read(4))[0], 32)
         except:
             print("The file ended earlier than expected, at record %d/%d." \
-                  % (recNum, numRecords))
+                  % (recNum, TTResult_NumberOfRecords))
             return False
         channel = int(recordData[0:4], base=2)
-        time = int(recordData[4:32], base=2)
+        dtime = int(recordData[4:32], base=2)
         if channel == 0xF:  # Special record
             # lower 4 bits of time are marker bits
             markers = int(recordData[28:32], base=2)
             if markers == 0:  # Not a marker, so overflow
-                gotOverflow(1)
                 oflcorrection += T2WRAPAROUND
             else:
                 # Actually, the lower 4 bits for the time aren't valid because
                 # they belong to the marker. But the error caused by them is
                 # so small that we can just ignore it.
-                truetime = oflcorrection + time
-                gotMarker(truetime, markers)
+                true_nSync = oflcorrection + dtime
+                truetime = (true_nSync * MeasDesc_GlobalResolution * 1e9)
         else:
             if channel > 4:  # Should not occur
                 print("Illegal Channel: #%1d %1u" % (recNum, channel))
-            truetime = oflcorrection + time
-            
+            true_nSync = oflcorrection + dtime
+            truetime = (true_nSync * MeasDesc_GlobalResolution * 1e9)
 
         trueTimeArr[cnt_ph] = truetime
-        dTimeArr[cnt_ph] = time
+        dTimeArr[cnt_ph] = dtime
         chanArr[cnt_ph] = channel+1
         cnt_ph = cnt_ph +1
-    return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e6
+    return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e9
 # Read HydraHarp/TimeHarp260 T3
 def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     T3WRAPAROUND = 1024
