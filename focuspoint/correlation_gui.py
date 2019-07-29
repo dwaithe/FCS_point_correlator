@@ -212,7 +212,7 @@ class FileDialog(QtWidgets.QMainWindow):
             self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:green;font-weight:regular;}")
             self.win_obj.image_status_text.showMessage("Processing file "+str(c+1)+" of "+str(file_imports.__len__()))
             self.fit_obj.app.processEvents()
-            pic = picoObject(filename,self.par_obj,self.fit_obj);
+            pic = picoObject(filename,self.par_obj,self.fit_obj)
             if pic.exit == True:
                 self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:red;font-weight:bold;}")
                 self.win_obj.image_status_text.showMessage("Your data-file is not a supported format.")
@@ -782,10 +782,11 @@ class Window(QtWidgets.QWidget):
         subDTimeMax = object.subDTimeMax
         subDTimeMin = object.subDTimeMin
         
-        
+        xlim = np.max(autotime) #max value of the X scale
+        xmin = np.min(autotime) #min value of the X scale
         self.plt1.plot(autotime,auto[:,0,0],object.color)
         self.plt1.set_xscale('log')
-        self.plt1.set_xlim([0, np.max(autotime)])
+        self.plt1.set_xlim([xmin, xlim])
        
         self.plt1.set_xlabel('Tau (ms)', fontsize=12)
         self.plt1.set_ylabel('Auto-correlation CH0 (tau)', fontsize=8)
@@ -800,7 +801,7 @@ class Window(QtWidgets.QWidget):
         if object.numOfCH ==  2:
             self.plt2.plot(autotime,auto[:,1,1],object.color)
             self.plt2.set_xscale('log')
-            self.plt2.set_xlim([0, np.max(autotime)])
+            self.plt2.set_xlim([xmin, xlim])
             
             self.plt2.set_xlabel('Tau (ms)', fontsize=12)
             self.plt2.xaxis.grid(True,'minor')
@@ -810,7 +811,7 @@ class Window(QtWidgets.QWidget):
             
             self.plt3.plot(autotime,auto[:,0,1],object.color)
             self.plt3.set_xscale('log')
-            self.plt3.set_xlim([0, np.max(autotime)])
+            self.plt3.set_xlim([xmin, xlim])
          
             self.plt3.set_xlabel('Tau (ms)', fontsize=12)
             
