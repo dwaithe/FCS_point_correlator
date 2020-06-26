@@ -1683,7 +1683,7 @@ class Form(QMainWindow):
 					#Save the index. Only one should be positive in all the data.
 					self.modelFitSel.setCurrentIndex(self.modelFitSel.count()-1)
 					self.modelFitSel.selected_name = self.objIdArr[i]
-					self.modelFitSel.objId_ind = i
+					self.modelFitSel.objId_idx = i
 					#The name was found.
 					name_found = True
 		#If the name wasn't found in the list, because it was filtered out. Default to first entry.      
