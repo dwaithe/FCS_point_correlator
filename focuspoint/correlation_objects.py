@@ -1,12 +1,12 @@
 import numpy as np
 import os, sys
-from correlation_methods.correlation_methods import *
-from import_methods.import_methods import *
+from focuspoint.correlation_methods.correlation_methods import *
+from focuspoint.import_methods.import_methods import *
 import time
-import fitting_methods.fitting_methods_SE as SE
-import fitting_methods.fitting_methods_GS as GS
-import fitting_methods.fitting_methods_VD as VD
-import fitting_methods.fitting_methods_PB as PB
+from focuspoint.fitting_methods import fitting_methods_SE as SE
+from focuspoint.fitting_methods import fitting_methods_GS as GS
+from focuspoint.fitting_methods import fitting_methods_VD as VD
+from focuspoint.fitting_methods import fitting_methods_PB as PB
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
 import copy
@@ -623,7 +623,7 @@ class corrObject():
 		
 
 
-
+		print('param',param)
 		#Find the index of the nearest point in the scale.
 		
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
@@ -632,7 +632,7 @@ class corrObject():
 		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
 		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
 
-		
+		print(data,scale,self.indx_L,self.indx_R)
 		
 		if  self.parentFn.bootstrap_enable_toggle == True:
 			num_of_straps = self.parentFn.bootstrap_samples.value()
@@ -678,13 +678,15 @@ class corrObject():
 			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 			#Repopulate the parameter object.
 			
+			print(fit_report(res))
 
 			for art in self.param:
 				
 				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 
 					self.param[art]['value'] = res.params[art].value
-					self.param[art]['stderr'] = float(res.params[art].stderr)
+					print(res)
+					self.param[art]['stderr'] = res.params[art].stderr
 					
 					
 

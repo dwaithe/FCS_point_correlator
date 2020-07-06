@@ -1,23 +1,25 @@
-from correlation_objects import corrObject
-import fitting_methods.fitting_methods_SE as SE
-import fitting_methods.fitting_methods_GS as GS
+
+from focuspoint.fitting_methods import fitting_methods_SE as SE
+from focuspoint.fitting_methods import fitting_methods_GS as GS
+from focuspoint.correlation_objects import corrObject
 import csv
 import numpy as np
 import copy
 def fcs_import_method(fit_obj,file_path):
 	text =[0]
-	r_obj = csv.reader(open(file_path, 'rb'),delimiter='\t')
-	title = r_obj.next()
-	line = r_obj.next() 
-	line = r_obj.next()
+	r_obj = csv.reader(open(file_path, 'r'),delimiter='\t')
+	title = next(r_obj)
+	line = next(r_obj) 
+	line = next(r_obj)
 	
 	read = True
 	ind = 0
+	channelnum =0
 	while  read == True:
 		
 		corrObj = corrObject(file_path,fit_obj);
 		
-		line = r_obj.next()
+		line = next(r_obj)
 		text =[]
 		for part in line:
 			if part != '':
@@ -28,21 +30,23 @@ def fcs_import_method(fit_obj,file_path):
 
 			if text[0].split(' = ')[0] == 'Channel':
 				channel_str = text[0].split(' = ')[1]
-				if channel_str == 'Auto-correlation detector Meta1':
-					channel = 0
-					name = 'CH0'
-					ind +=1
-				if channel_str == 'Auto-correlation detector Meta2':
-					channel = 1
-					name = 'CH1'
-				if channel_str == 'Cross-correlation detector Meta2 versus detector Meta1':
-					channel = 3
-					name = 'CH10'
-				if channel_str == 'Cross-correlation detector Meta1 versus detector Meta2':
-					channel = 2
-					name = 'CH01'
+				channel = np.copy(channelnum)
+				if channel_str[0:25] == 'Auto-correlation detector':
+					
+					if channelnum == 0: 
+						name = 'CH0'
+					if channelnum == 1:
+						name = 'CH1'
+				elif channel_str[0:26] == 'Cross-correlation detector':
+					
+					if channelnum == 2: 
+						name = 'CH10'
+					if channelnum == 3: 
+						name = 'CH01'
+				channelnum += 1
+				
 			try:
-				line = r_obj.next()
+				line = next(r_obj)
 			except:
 				read = False
 				break
@@ -55,7 +59,7 @@ def fcs_import_method(fit_obj,file_path):
 		
 		if read == False:
 			break
-		line = r_obj.next()
+		line = next(r_obj)
 		
 		dimensions = text[0].split(' = ')[1]
 		len_of_seq = int(dimensions.split(' ')[0])
@@ -74,13 +78,13 @@ def fcs_import_method(fit_obj,file_path):
 					cscale.append(float(text[0]))
 					cdata.append(float(text[1]))
 
-				line = r_obj.next()
+				line = next(r_obj)
 		
 
 		#Reads to first correlation array text.
 		while  text[0].split(' = ')[0] != 'CorrelationArray':
 			try:
-				line = r_obj.next()
+				line = next(r_obj)
 			except:
 				break
 				read = False
@@ -96,7 +100,7 @@ def fcs_import_method(fit_obj,file_path):
 		if len_of_seq >0:
 			tdata = []
 			tscale = []
-			line = r_obj.next()
+			line = next(r_obj)
 			for v in range(0,len_of_seq):
 
 				text =[]
@@ -107,7 +111,7 @@ def fcs_import_method(fit_obj,file_path):
 					tscale.append(float(text[0]))
 					tdata.append(float(text[1]))
 
-				line = r_obj.next()
+				line = next(r_obj)
 
 			
 			fit_obj.objIdArr.append(corrObj)
@@ -298,8 +302,8 @@ def sin_import_method(fit_obj,file_path):
 
 	
 def csv_import_method(fit_obj,file_path):
-			r_obj = csv.reader(open(file_path, 'rb'))
-			line_one = r_obj.next()
+			r_obj = csv.reader(open(str(file_path), 'r'))
+			line_one = next(r_obj)
 			if line_one.__len__()>1:
 				
 					if float(line_one[1]) == 2:
@@ -337,17 +341,17 @@ def csv_import_method(fit_obj,file_path):
 			if version >= 2:
 				
 					
-				numOfCH = float(r_obj.next()[1])
+				numOfCH = float(next(r_obj)[1])
 				
 				if numOfCH == 1:
 					fit_obj.objIdArr.append(corrObj1)
-					corrObj1.type =str(r_obj.next()[1])
-					corrObj1.ch_type = int(r_obj.next()[1])
+					corrObj1.type =str(next(r_obj)[1])
+					corrObj1.ch_type = int(next(r_obj)[1])
 					corrObj1.name = corrObj1.name+'-CH'+str(corrObj1.ch_type)
 					corrObj1.parent_name = 'no name'
 					corrObj1.parent_uqid = '0'
 					
-					line = r_obj.next()
+					line = next(r_obj)
 
 					while  line[0] != 'Time (ns)':
 						if line[0] == 'kcount':
@@ -371,7 +375,7 @@ def csv_import_method(fit_obj,file_path):
 						if line[0] == 'parent_uqid':
 							corrObj1.parent_uqid = str(line[1])
 						
-						line = r_obj.next()
+						line = next(r_obj)
 
 					
 					if pc_text != False:
@@ -381,16 +385,16 @@ def csv_import_method(fit_obj,file_path):
 					tscale = []
 					tdata = []
 
-					#null = r_obj.next()
+					#null = next(r_obj)
 					
 
-					line = r_obj.next()
+					line = next(r_obj)
 					
 					while  line[0] != 'end':
 
 						tscale.append(line[0])
 						tdata.append(line[1])
-						line = r_obj.next()
+						line = next(r_obj)
 
 					corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 					corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)
@@ -414,13 +418,13 @@ def csv_import_method(fit_obj,file_path):
 					corrObj3.parent_name = 'no name'
 					corrObj3.parent_uqid = '0'
 					
-					line_type = r_obj.next()
+					line_type = next(r_obj)
 					corrObj1.type = str(line_type[1])
 					corrObj2.type = str(line_type[1])
 					corrObj3.type = str(line_type[1])
 					
 
-					line_ch = r_obj.next()
+					line_ch = next(r_obj)
 					corrObj1.ch_type = int(line_ch[1])
 					corrObj2.ch_type = int(line_ch[2])
 					corrObj3.ch_type = int(line_ch[3])
@@ -429,7 +433,7 @@ def csv_import_method(fit_obj,file_path):
 					corrObj2.name = corrObj2.name+'-CH'+str(corrObj2.ch_type)
 					corrObj3.name = corrObj3.name+'-CH'+str(corrObj3.ch_type)
 
-					line = r_obj.next()
+					line = next(r_obj)
 					while  line[0] != 'Time (ns)':
 						if line[0] == 'kcount':
 							corrObj1.kcount = float(line[1])
@@ -463,7 +467,7 @@ def csv_import_method(fit_obj,file_path):
 							corrObj2.parent_uqid = str(line[1])
 							corrObj3.parent_uqid = str(line[1])
 						print(line)
-						line = r_obj.next()
+						line = next(r_obj)
 					
 					
 					
@@ -472,8 +476,8 @@ def csv_import_method(fit_obj,file_path):
 						corrObj2.name = corrObj2.name +'_pc_m'+str(pc_text)
 						corrObj3.name = corrObj3.name +'_pc_m'+str(pc_text)
 					
-					#null = r_obj.next()
-					line = r_obj.next()
+					#null = next(r_obj)
+					line = next(r_obj)
 					tscale = []
 					tdata0 = []
 					tdata1 = []
@@ -484,7 +488,7 @@ def csv_import_method(fit_obj,file_path):
 						tdata0.append(line[1])
 						tdata1.append(line[2])
 						tdata2.append(line[3])
-						line = r_obj.next()
+						line = next(r_obj)
 
 					
 					corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)

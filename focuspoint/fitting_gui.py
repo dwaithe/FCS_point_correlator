@@ -228,11 +228,12 @@ class Form(QMainWindow):
 
 	def load_series(self,files_to_load):
 		counter = 0
-		for file_path in  files_to_load:
+		for file_path in  files_to_load[0]:
 				self.nameAndExt = os.path.basename(str(file_path)).split('.')
+				print("nameAndExt", file_path)
 				self.name = self.nameAndExt[0]
-				self.ext = str(self.nameAndExt[-1])
-				
+				self.ext = self.nameAndExt[-1]
+				print('csv',self.ext)
 				#try:
 				if self.ext == 'SIN' or self.ext == 'sin':
 					sin_import_method(self,file_path)

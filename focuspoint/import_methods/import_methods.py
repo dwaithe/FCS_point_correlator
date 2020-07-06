@@ -502,8 +502,8 @@ def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     return np.array(chanArr), np.array(trueTimeArr), np.array(dTimeArr), MeasDesc_GlobalResolution* 1e6
 def csvimport(filepath):
     """Function for importing time-tag data directly into FCS point software. """
-    r_obj = csv.reader(open(filepath, 'rb'))
-    line_one = r_obj.next()
+    r_obj = csv.reader(open(filepath, 'r'))
+    line_one = next(r_obj)
     if line_one.__len__()>1:
         if float(line_one[1]) == 2:
             
@@ -512,7 +512,8 @@ def csvimport(filepath):
             print ('version not known:',line_one[1])
     
     if version == 2:
-        type =str(r_obj.next()[1])
+        type =str(next(r_obj)[1])
+        
         if type == "pt uncorrelated":
             Resolution = float(r_obj.next()[1])
             chanArr = []

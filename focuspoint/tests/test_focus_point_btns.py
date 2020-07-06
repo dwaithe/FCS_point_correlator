@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 def test_for_fit_btns(par_obj,win_obj,fit_obj):
-	print 'testing'
+	print ('testing')
 
 
 	

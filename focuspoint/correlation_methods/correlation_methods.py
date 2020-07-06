@@ -1,5 +1,5 @@
 import numpy as np
-import fib4
+from focuspoint import fib4
 import time
 import _thread
 
