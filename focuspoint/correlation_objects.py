@@ -73,14 +73,15 @@ class picoObject():
 		#File import
 		if self.ext == 'spc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
-		if self.ext == 'asc':
+		elif self.ext == 'asc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
-		if self.ext == 'pt2':
+		elif self.ext == 'pt2':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt2import(self.filepath)
-		if self.ext == 'pt3':
+		elif self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
-		if self.ext == 'ptu':
+		elif self.ext == 'ptu':
 			out = ptuimport(self.filepath)
+			print('out',out)
 			if out != False:
 				self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = out
 			else:
@@ -89,7 +90,7 @@ class picoObject():
 				self.exit = True
 				
 				return
-		if self.ext == 'csv':
+		elif self.ext == 'csv':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
 			#If the file is empty.
 			if self.subChanArr == None:
@@ -99,6 +100,9 @@ class picoObject():
 				self.exit = True
 				
 				return
+		else:
+			self.exit = True
+			return 
 
 					
 		
@@ -623,7 +627,7 @@ class corrObject():
 		
 
 
-		print('param',param)
+		
 		#Find the index of the nearest point in the scale.
 		
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
@@ -678,14 +682,14 @@ class corrObject():
 			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 			#Repopulate the parameter object.
 			
-			print(fit_report(res))
+			
 
 			for art in self.param:
 				
 				if self.param[art]['to_show'] == True and self.param[art]['calc'] == False:
 
 					self.param[art]['value'] = res.params[art].value
-					print(res)
+					
 					self.param[art]['stderr'] = res.params[art].stderr
 					
 					
@@ -730,7 +734,7 @@ class corrObject():
 
 
 		output = fit_report(res.params)
-		print('residual',res.chisqr)
+		
 		if(res.chisqr>self.parentFn.chisqr):
 			print('CAUTION DATA DID NOT FIT WELL CHI^2 >',self.parentFn.chisqr,' ',res.chisqr)
 			self.goodFit = False

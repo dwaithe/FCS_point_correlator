@@ -22,7 +22,7 @@ import csv
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 import struct
-import string
+
 
 def spc_file_import(file_path):
     f = open(file_path, 'rb')
@@ -134,11 +134,13 @@ def ptuimport(filepath):
     #MeasDesc_Resolution =0;      #% Resolution for the Dtime (T3 Only)
     #MeasDesc_GlobalResolution =0;
 
+    
     f = open(filepath, 'rb')
     magic = str(f.read(8))
-    if magic[0:6] != "PQTTTR":
+    if str(magic[2:8]) != "PQTTTR":
         print( 'Your file is an invalid .ptu')
-        return
+
+        return False
     version =  f.read(8)
     #print 'version',version
 
@@ -146,7 +148,7 @@ def ptuimport(filepath):
     while True:
             #read Tag Head
             TagIdent = f.read(32); # TagHead.Ident
-            TagIdent = string.replace(TagIdent,'\x00','')
+            TagIdent = str.replace(TagIdent.decode(),'\x00','')
             #print 'Tag',TagIdent
             #TagIdent = TagIdent[TagIdent != 0]]#'; # remove #0 and more more readable
 
@@ -205,7 +207,7 @@ def ptuimport(filepath):
             elif TagTyp == tyAnsiString:
                 TagInt = int(struct.unpack('Q', f.read(8))[0])
                 TagString = f.read(TagInt)
-                TagString = string.replace(TagString,'\x00','')
+                TagString = str.replace(TagString.decode(),'\x00','')
 
                 #print('tyAnsiString',TagString)
                 if TagIdx > -1:

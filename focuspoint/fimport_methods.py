@@ -158,7 +158,7 @@ def sin_import_method(fit_obj,file_path):
 		
 		proceed = False
 		
-		for line in csv.reader(open(file_path, 'rb'),delimiter='\t'):
+		for line in csv.reader(open(file_path, 'r'),delimiter='\t'):
 			
 			if proceed =='correlated':
 				if line ==[]:
