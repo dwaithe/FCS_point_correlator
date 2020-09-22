@@ -183,6 +183,10 @@ class Form(QMainWindow):
 		self.type = type
 		self.chisqr = 0.05
 		self.norm_to_one = False
+		self.yscale_min = 0.
+		self.yscale_max = 1.
+		self.xscale_min = 0.
+		self.xscale_max = 1.
 		
 
 			#Default parameters for each loaded file.
@@ -297,26 +301,43 @@ class Form(QMainWindow):
 		has_series = False
 		scaleMin = 0
 		scaleMax = 0
-		if self.setAutoScale == False:
-			self.axes.set_autoscale_on(False)
-		else:
+		
+		if self.setAutoScale == False: # Keep Scale is On.
+			self.axes.set_xlim(self.xscale_min, self.xscale_max)
+			self.axes.set_ylim(self.yscale_min, self.yscale_max)
+			
+		else:#Keep Scale is off
 			if self.norm_to_one == True:
 				self.axes.set_ylim(-0.1,1.1)
 			else:
-				try:
-					max_arr = []
-					min_arr = []
-					for Id, objId in enumerate(self.objIdArr):
-						model_index = objId.item_in_list
+				
+				max_arr = []
+				min_arr = []
+				tmax_arr = []
+				tmin_arr = []
+				for Id, objId in enumerate(self.objIdArr):
+					if objId.item_in_list == False: #i.e. we are not looking at this channel.
+						continue
+					model_index = objId.item_in_list
 
-						checked = model_index.checkState() == QtCore.Qt.Checked
-						if checked:
-							max_arr.append(objId.max)
-							min_arr.append(objId.min)
-
-					self.axes.set_ylim(np.min(np.array(min_arr)),np.max(np.array(max_arr))*1.1)
-				except:
-					self.axes.set_autoscale_on(True)
+					checked = model_index.checkState() == QtCore.Qt.Checked
+					if checked:
+						max_arr.append(objId.max)
+						min_arr.append(objId.min)
+						tmax_arr.append(objId.tmax)
+						tmin_arr.append(objId.tmin)
+				
+				if min_arr != []:
+					self.yscale_max = np.max(np.array(max_arr))*1.1
+					self.yscale_min = np.min(np.array(min_arr))
+					self.axes.set_ylim(self.yscale_min,self.yscale_max)
+					
+					self.xscale_max = np.max(np.array(tmax_arr))*1.2
+					self.xscale_min = np.min(np.array(tmin_arr))
+					self.axes.set_xlim(self.xscale_min,self.xscale_max)
+				else:
+					self.axes.autoscale(None)
+				
 			
 		row = 0;
 		row_checked = 0
@@ -368,7 +389,7 @@ class Form(QMainWindow):
 					self.axes.plot(self.scale, self.series, 'o',markersize=2, color="grey", label=objId,picker=4.0,alpha=alpha, linewidth=1.0)
 					
 
-					self.axes.set_autoscale_on(False)
+					#self.axes.autoscale(False)
 					row_checked += 1
 
 
@@ -582,16 +603,19 @@ class Form(QMainWindow):
 		try:
 			#Makes sure the root file names don't trigger strange effects
 			self.series_list_model.itemChanged.disconnect(self.file_item_edited)
-			#Trys to check to 
-			for Id, objId in enumerate(self.objIdArr):
-				if objId.toFit == True:
-					model_index = objId.item_in_list
-
-					checked = model_index.checkState() == QtCore.Qt.Checked
-					objId.checked = checked
-
 		except:
 			pass
+		#Trys to check to 
+		for Id, objId in enumerate(self.objIdArr):
+			if objId.toFit == True and objId.item_in_list !=False:
+				model_index = objId.item_in_list
+
+				checked = model_index.checkState() == QtCore.Qt.Checked
+				objId.checked = checked
+
+		#except:
+			#print('passed')
+			#pass
 
 		
 		self.root_name_copy = {}
@@ -721,7 +745,7 @@ class Form(QMainWindow):
 				
 				
 				
-
+				
 
 				#If the data should appear in the list:
 				if objId.toFit == True:
@@ -763,6 +787,9 @@ class Form(QMainWindow):
 						item.setBackground(QColor(0, 0, 255, 127))
 						to_focus = self.series_list_model.rowCount()
 						to_focus_item = item
+
+				else:
+					objId.item_in_list = False
 					
 		if to_focus_item != None:
 			self.series_list_view.scrollTo(self.series_list_model.indexFromItem(to_focus_item))
@@ -1710,10 +1737,16 @@ class Form(QMainWindow):
 		self.setAutoScale = False;
 	def autoScaleFn(self):
 		#self.turnOffAutoScale.setFlat(True)
-		if self.turnOffAutoScale.isChecked() == True:
+		if self.turnOffAutoScale.isChecked() == True:#Keep Scale on.
 			self.setAutoScale = False;
+			self.yscale_min,self.yscale_max = self.axes.get_ylim()
+			self.xscale_min,self.xscale_max = self.axes.get_xlim()
+
+
 		else:
 			self.setAutoScale = True;
+			
+
 	def norm_to_one_fn(self):
 		if self.norm_to_one_btn.isChecked() == True:
 			self.norm_to_one = True;

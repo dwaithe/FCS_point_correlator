@@ -122,6 +122,11 @@ def fcs_import_method(fit_obj,file_path):
 			corrObj.siblings = None
 			corrObj.autoNorm = np.array(tdata).astype(np.float64).reshape(-1)
 			corrObj.autotime = np.array(tscale).astype(np.float64).reshape(-1)*1000
+
+			corrObj.max = np.max(corrObj.autoNorm)
+			corrObj.min = np.min(corrObj.autoNorm)
+			corrObj.tmax = np.max(corrObj.autotime)
+			corrObj.tmin = np.min(corrObj.autotime)
 			
 
 			#Average counts per bin. For it to be seconds (Hz), we have cscale-1 because the first value corresponds to zero recording time.
@@ -207,6 +212,11 @@ def sin_import_method(fit_obj,file_path):
 		corrObj1.kcount = np.average(np.array(int_tdata))/1000
 		corrObj1.param = copy.deepcopy(fit_obj.def_param)
 		corrObj1.calculate_suitability()
+		corrObj1.max = np.max(corrObj1.autoNorm)
+		corrObj1.min = np.min(corrObj1.autoNorm)
+		corrObj1.tmax = np.max(corrObj1.autotime)
+		corrObj1.tmin = np.min(corrObj1.autotime)
+
 
 		if fit_obj.def_options['Diff_eq'] == 4: 
 			VD.calc_param_fcs(fit_obj,corrObj1)
@@ -234,8 +244,14 @@ def sin_import_method(fit_obj,file_path):
 
 			corrObj1.siblings = [corrObj2]
 			corrObj2.siblings = [corrObj1]
+
+
 			
 			corrObj2.calculate_suitability()
+			corrObj2.max = np.max(corrObj2.autoNorm)
+			corrObj2.min = np.min(corrObj2.autoNorm)
+			corrObj2.tmax = np.max(corrObj2.autotime)
+			corrObj2.tmin = np.min(corrObj2.autotime)
 			if fit_obj.def_options['Diff_eq'] == 4: 
 				VD.calc_param_fcs(fit_obj,corrObj2)
 			elif fit_obj.def_options['Diff_eq'] == 3: 
@@ -263,6 +279,10 @@ def sin_import_method(fit_obj,file_path):
 			corrObj3.siblings = [corrObj1,corrObj2]
 			
 			corrObj3.calculate_suitability()
+			corrObj3.max = np.max(corrObj3.autoNorm)
+			corrObj3.min = np.min(corrObj3.autoNorm)
+			corrObj3.tmax = np.max(corrObj3.autotime)
+			corrObj3.tmin = np.min(corrObj3.autotime)
 			if fit_obj.def_options['Diff_eq'] == 4: 
 				VD.calc_param_fcs(fit_obj,corrObj3)
 			elif fit_obj.def_options['Diff_eq'] == 3: 
@@ -291,6 +311,10 @@ def sin_import_method(fit_obj,file_path):
 			corrObj4.siblings = [corrObj1,corrObj2,corrObj3]
 			
 			corrObj4.calculate_suitability()
+			corrObj4.max = np.max(corrObj4.autoNorm)
+			corrObj4.min = np.min(corrObj4.autoNorm)
+			corrObj4.tmax = np.max(corrObj4.autotime)
+			corrObj4.tmin = np.min(corrObj4.autotime)
 			if fit_obj.def_options['Diff_eq'] == 4: 
 				VD.calc_param_fcs(fit_obj,corrObj4)
 			elif fit_obj.def_options['Diff_eq'] == 3: 
@@ -331,6 +355,8 @@ def csv_import_method(fit_obj,file_path):
 
 				corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 				corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+				corrObj1.max = np.max(corrObj1.autoNorm)
+				corrObj1.min = np.min(corrObj1.autoNorm)
 				corrObj1.calculate_suitability()
 				corrObj1.name = corrObj1.name+'-CH'+str(0)
 				corrObj1.ch_type = 0
@@ -398,11 +424,16 @@ def csv_import_method(fit_obj,file_path):
 
 					corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 					corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+					corrObj1.max = np.max(corrObj1.autoNorm)
+					corrObj1.min = np.min(corrObj1.autoNorm)
+					corrObj1.tmax = np.max(corrObj1.autotime)
+					corrObj1.tmin = np.min(corrObj1.autotime)
+					
 					corrObj1.siblings = None
 					corrObj1.param = copy.deepcopy(fit_obj.def_param)
 					
 
-				if numOfCH == 2:
+				elif numOfCH == 2:
 					corrObj2 = corrObject(file_path,fit_obj);
 					corrObj3 = corrObject(file_path,fit_obj);
 
@@ -417,6 +448,8 @@ def csv_import_method(fit_obj,file_path):
 					corrObj2.parent_uqid = '0'
 					corrObj3.parent_name = 'no name'
 					corrObj3.parent_uqid = '0'
+
+					
 					
 					line_type = next(r_obj)
 					corrObj1.type = str(line_type[1])
@@ -466,7 +499,7 @@ def csv_import_method(fit_obj,file_path):
 							corrObj1.parent_uqid = str(line[1])
 							corrObj2.parent_uqid = str(line[1])
 							corrObj3.parent_uqid = str(line[1])
-						print(line)
+						
 						line = next(r_obj)
 					
 					
@@ -499,6 +532,19 @@ def csv_import_method(fit_obj,file_path):
 					corrObj2.autoNorm= np.array(tdata1).astype(np.float64).reshape(-1)
 					corrObj3.autoNorm= np.array(tdata2).astype(np.float64).reshape(-1)
 
+					corrObj1.max = np.max(corrObj1.autoNorm)
+					corrObj1.min = np.min(corrObj1.autoNorm)
+					corrObj2.max = np.max(corrObj2.autoNorm)
+					corrObj2.min = np.min(corrObj2.autoNorm)
+					corrObj3.max = np.max(corrObj3.autoNorm)
+					corrObj3.min = np.min(corrObj3.autoNorm)
+
+					corrObj1.tmax = np.max(corrObj1.autotime)
+					corrObj1.tmin = np.min(corrObj1.autotime)
+					corrObj2.tmax = np.max(corrObj2.autotime)
+					corrObj2.tmin = np.min(corrObj2.autotime)
+					corrObj3.tmax = np.max(corrObj3.autotime)
+					corrObj3.tmin = np.min(corrObj3.autotime)
 					
 					
 					corrObj1.siblings = [corrObj2,corrObj3]
