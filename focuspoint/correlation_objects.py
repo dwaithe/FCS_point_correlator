@@ -81,7 +81,7 @@ class picoObject():
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
 		elif self.ext == 'ptu':
 			out = ptuimport(self.filepath)
-			print('out',out)
+			
 			if out != False:
 				self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = out
 			else:
@@ -182,12 +182,16 @@ class picoObject():
 				self.objId1.siblings = None
 				self.objId1.prepare_for_fit()
 				self.objId1.kcount = self.kcount_CH1
+				self.objId1.item_in_list = False
 				
 			self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
 			self.objId1.autotime = np.array(self.autotime).reshape(-1)
 			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 			self.objId1.max = np.max(self.objId1.autoNorm)
 			self.objId1.min = np.min(self.objId1.autoNorm)
+			self.objId1.tmax = np.max(self.objId1.autotime)
+			self.objId1.tmin = np.min(self.objId1.autotime)
+
 			
 			
 			if self.numOfCH ==  2:
@@ -206,12 +210,17 @@ class picoObject():
 					self.objId3.siblings = None
 					self.objId3.prepare_for_fit()
 					self.objId3.kcount = self.kcount_CH2
+					self.objId3.item_in_list = False
 					
 				self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 				self.objId3.autotime = np.array(self.autotime).reshape(-1)
 				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId3.max = np.max(self.objId3.autoNorm)
 				self.objId3.min = np.min(self.objId3.autoNorm)
+				self.objId3.tmax = np.max(self.objId3.autotime)
+				self.objId3.tmin = np.min(self.objId3.autotime)
+
+
 				self.objId3.CV = self.CV
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj);
@@ -224,12 +233,15 @@ class picoObject():
 					self.objId2.ch_type = 2 #01cross
 					self.objId2.siblings = None
 					self.objId2.prepare_for_fit()
+					self.objId2.item_in_list = False
 					
 				self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 				self.objId2.autotime = np.array(self.autotime).reshape(-1)
 				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId2.max = np.max(self.objId2.autoNorm)
 				self.objId2.min = np.min(self.objId2.autoNorm)
+				self.objId2.tmax = np.max(self.objId2.autotime)
+				self.objId2.tmin = np.min(self.objId2.autotime)
 				self.objId2.CV =self.CV
 
 				if self.objId4 == None:
@@ -243,12 +255,15 @@ class picoObject():
 					self.objId4.ch_type = 3 #10cross
 					self.objId4.siblings = None
 					self.objId4.prepare_for_fit()
-					
+					self.objId4.item_in_list = False
+
 				self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
 				self.objId4.autotime = np.array(self.autotime).reshape(-1)
 				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId4.max = np.max(self.objId4.autoNorm)
 				self.objId4.min = np.min(self.objId4.autoNorm)
+				self.objId4.tmax = np.max(self.objId4.autotime)
+				self.objId4.tmin = np.min(self.objId4.autotime)
 				self.objId4.CV = self.CV
 			self.fit_obj.fill_series_list()
 		self.dTimeMin = 0
@@ -636,7 +651,7 @@ class corrObject():
 		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
 		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
 
-		print(data,scale,self.indx_L,self.indx_R)
+		
 		
 		if  self.parentFn.bootstrap_enable_toggle == True:
 			num_of_straps = self.parentFn.bootstrap_samples.value()
