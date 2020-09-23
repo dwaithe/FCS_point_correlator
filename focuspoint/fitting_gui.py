@@ -1029,7 +1029,7 @@ class Form(QMainWindow):
 
 		
 		#self.fitTable.setMinimumWidth(320)
-		self.fitTable.setMaximumWidth(400)
+		#self.fitTable.setMaximumWidth(400)
 		self.fitTable.setMinimumHeight(100)
 		self.fitTable.setMaximumHeight(600)
 		
