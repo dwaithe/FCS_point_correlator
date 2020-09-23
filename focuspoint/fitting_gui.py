@@ -185,8 +185,8 @@ class Form(QMainWindow):
 		self.norm_to_one = False
 		self.yscale_min = 0.
 		self.yscale_max = 1.
-		self.xscale_min = 0.
-		self.xscale_max = 1.
+		self.xscale_min = 0.0001
+		self.xscale_max = 100000.
 		
 
 			#Default parameters for each loaded file.
@@ -298,6 +298,7 @@ class Form(QMainWindow):
 		self.axes2.yaxis.grid(True,'minor')
 		self.axes2.yaxis.grid(True,'major')
 		
+		
 		has_series = False
 		scaleMin = 0
 		scaleMax = 0
@@ -334,7 +335,10 @@ class Form(QMainWindow):
 					
 					self.xscale_max = np.max(np.array(tmax_arr))*1.2
 					self.xscale_min = np.min(np.array(tmin_arr))
+					if self.xscale_min == 0:
+						self.xscale_min = 0.0001
 					self.axes.set_xlim(self.xscale_min,self.xscale_max)
+					print(self.xscale_min,'xscale_min',self.xscale_max,'scale_max')
 				else:
 					self.axes.autoscale(None)
 				
@@ -373,8 +377,7 @@ class Form(QMainWindow):
 					
 					has_series = True
 					#Takes the values from the interface 
-					self.axes.set_xscale('log')
-					self.axes2.set_xscale('log')
+					
 					self.scale = objId.autotime
 					
 					self.series = objId.autoNorm
@@ -382,7 +385,8 @@ class Form(QMainWindow):
 					if self.norm_to_one == True:
 						self.series = self.series - np.average(self.series[-5:])
 						self.series = self.series / np.average(self.series[:5])
-
+					self.axes.set_xscale('log')
+					self.axes2.set_xscale('log')
 
 					
 					
