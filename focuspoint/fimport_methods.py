@@ -40,9 +40,9 @@ def fcs_import_method(fit_obj,file_path):
 				elif channel_str[0:26] == 'Cross-correlation detector':
 					
 					if channelnum == 2: 
-						name = 'CH10'
-					if channelnum == 3: 
 						name = 'CH01'
+					if channelnum == 3: 
+						name = 'CH10'
 				channelnum += 1
 				
 			try:
@@ -265,7 +265,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj3.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
 			corrObj3.ch_type = 2;
-			corrObj3.name = corrObj3.name+'-CH10'
+			corrObj3.name = corrObj3.name+'-CH01'
 			corrObj3.parent_name = '.sin files'
 			corrObj3.parent_uqid = '0'
 			
@@ -296,7 +296,7 @@ def sin_import_method(fit_obj,file_path):
 			corrObj4.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
 			corrObj4.ch_type = 3;
-			corrObj4.name = corrObj4.name+'-CH01'
+			corrObj4.name = corrObj4.name+'-CH10'
 			corrObj4.parent_name = '.sin files'
 			corrObj4.parent_uqid = '0'
 			
@@ -346,8 +346,11 @@ def csv_import_method(fit_obj,file_path):
 				fit_obj.objIdArr.append(corrObj1)
 				
 				c = 0
+
+				tscale = []
+				tdata = []
 				
-				for line in csv.reader(open(file_path, 'rb')):
+				for line in csv.reader(open(file_path, 'r')):
 					if (c >0):
 						tscale.append(line[0])
 						tdata.append(line[1])
