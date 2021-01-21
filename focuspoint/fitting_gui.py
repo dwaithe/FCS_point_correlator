@@ -12,7 +12,6 @@ from PyQt5.QtGui import QStandardItem, QColor, QIcon
 from scipy.special import _ufuncs_cxx
 
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
