@@ -29,14 +29,14 @@ import subprocess
 import pyperclip
 import pickle
 
-from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
-import fitting_methods.fitting_methods_SE as SE
-import fitting_methods.fitting_methods_GS as GS
-import fitting_methods.fitting_methods_VD as VD
-import fitting_methods.fitting_methods_PB as PB
+from focuspoint.fimport_methods import fcs_import_method,sin_import_method,csv_import_method
+import focuspoint.fitting_methods.fitting_methods_SE as SE
+import focuspoint.fitting_methods.fitting_methods_GS as GS
+import focuspoint.fitting_methods.fitting_methods_VD as VD
+import focuspoint.fitting_methods.fitting_methods_PB as PB
 
 
-from correlation_objects import corrObject
+from focuspoint.correlation_objects import corrObject
 
 """FCS Fitting Software
 
