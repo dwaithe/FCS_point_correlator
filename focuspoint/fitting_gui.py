@@ -19,7 +19,7 @@ from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import matplotlib.gridspec as gridspec
 import numpy as np
-from fitting_extended import TableFilterBox, visualHisto, visualScatter
+from focuspoint.fitting_extended import TableFilterBox, visualHisto, visualScatter
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import time
 import errno
@@ -1761,28 +1761,6 @@ class Form(QMainWindow):
 
 		self.saveOutputDataFn(True)
 	def saveOutputDataFn(self,copy_fn=False):
-		localTime = time.asctime( time.localtime(time.time()) )
-		coreArray = []
-		
-		copyStr =""
-		
-		
-		coreArray.append('name_of_plot')
-		coreArray.append('master_file')
-		coreArray.append('parent_name')
-		coreArray.append('parent_uqid')
-		coreArray.append('time of fit')
-		coreArray.append('Diff_eq')
-		coreArray.append('Diff_species')
-		coreArray.append('Triplet_eq')
-		coreArray.append('Triplet_species')
-		coreArray.append('Dimen')
-		coreArray.append('xmin')
-		coreArray.append('xmax')
-		
-		#Old key Array. 
-		okeyArray =[None]
-		
 		#Find highlighted indices
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[];
@@ -1796,92 +1774,8 @@ class Form(QMainWindow):
 					indList.extend(self.return_grouped_data_fn(id(item)))
 				else:
 					indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
-		
-		
-		#Opens export files
-		outPath = self.folderOutput.filepath
-		filenameTxt = str(self.fileNameText.text())
-		if copy_fn == False:
-			csvfile = open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a')
-			#spamwriter = csv.writer(csvfile)
-			spamwriter = csv.writer(csvfile,  dialect='excel')
-			
-		for v_ind in indList:
-			
-				
-			if(self.objIdArr[v_ind].toFit == True):
-				if(self.objIdArr[v_ind].fitted == True):
-					
-					#Includes the headers for the data which is present.
-					keyArray = copy.deepcopy(coreArray)
-					for item in self.order_list:
-						if self.objIdArr[v_ind].param[item]['to_show'] == True:
-							if  self.objIdArr[v_ind].param[item]['calc'] == False:
-								keyArray.append(str(self.objIdArr[v_ind].param[item]['alias']))
-								keyArray.append('stdev('+str(self.objIdArr[v_ind].param[item]['alias'])+')')
-							else:
-								keyArray.append(str(self.objIdArr[v_ind].param[item]['alias']))
+		saveOutputDataFn(self,indList,copy_fn)
 
-					#If there are any dissimilarities between the current keys and the last we reprint the headers.
-					reprint = False
-					
-					if keyArray.__len__() != okeyArray.__len__():
-						#If they are not same length then something is different.
-						reprint = True
-					else:
-						#Just to be really sure. Might remove if gets too slow.
-						for key,okey in zip(keyArray, okeyArray):
-							if key != okey:
-								reprint = True
-								break
-
-					if reprint == True:
-						headerText = '\t'.join(keyArray)
-						copyStr +=headerText +'\n'
-						if copy_fn == False:
-							spamwriter.writerow(keyArray)
-
-					param = self.objIdArr[v_ind].param
-					rowText = []
-					rowText.append(str(self.objIdArr[v_ind].name))
-					rowText.append(str(self.objIdArr[v_ind].file_name))
-					rowText.append(str(self.objIdArr[v_ind].parent_name))
-					rowText.append(str(self.objIdArr[v_ind].parent_uqid))
-					rowText.append(str(self.objIdArr[v_ind].localTime))
-					rowText.append(str(self.diffModEqSel.currentText()))
-					rowText.append(str(self.def_options['Diff_species']))
-					rowText.append(str(self.tripModEqSel.currentText()))
-					rowText.append(str(self.def_options['Triplet_species']))
-					rowText.append(str(self.dimenModSel.currentText()))
-					rowText.append(str(self.objIdArr[v_ind].model_autotime[0]))
-					rowText.append(str(self.objIdArr[v_ind].model_autotime[-1]))
-					
-					
-					for item in self.order_list:
-							if  param[item]['calc'] == False:
-								if param[item]['to_show'] == True:
-									
-									rowText.append(str(param[item]['value']))
-									rowText.append(str(param[item]['stderr']))
-									
-							else:
-								if param[item]['to_show'] == True:
-									rowText.append(str(param[item]['value']))
-
-								
-					if copy_fn == True:
-						copyStr += str('\t'.join(rowText)) +'\n'
-					if copy_fn == False:
-						spamwriter.writerow(rowText)
-					
-					#Updates the old  key array
-					okeyArray = copy.deepcopy(keyArray)
-
-		if copy_fn == True:
-			copyStr += str('end\n')
-			pyperclip.copy(copyStr)
-		else:
-			csvfile.close()
 
 	def clearFits(self):
 		"""If items are selected in the tree view. Clear their fit settings."""
@@ -2170,7 +2064,13 @@ class Form(QMainWindow):
 		#Make sure all table properties are stored
 		self.updateParamFirst()
 		c = 0;
+		import time
 		for Id, objId in enumerate(self.objIdArr):
+			t0 = time.time()
+			#Preflight fit.
+			#This will fit the selected curve once before using those generated parameters to initialise all the other curves before fitting them in bulk.
+			#This was done accidently in the standalone versions, but made subsequent fits much faster and so is included here as an option.
+			#Makes a big difference if the parameters are not well chosen by the user or defaults are used, as it prevents lots of badly conditioned fits.
 			if objId.toFit == True:
 				c = c+1
 				if objId != self.objId_sel:
@@ -2185,7 +2085,7 @@ class Form(QMainWindow):
 					
 				#Context sensitive colour highlighting
 				self.colour_entry(objId)
-					
+			print('time',time.time()-t0)		
 
 
 		
@@ -2193,8 +2093,7 @@ class Form(QMainWindow):
 		self.on_show()
 		self.updateFitList() 
 		#self.fill_series_list()
-	
-		
+
 
 class draggableLine:
 	"""Prototype class for the draggable lines """

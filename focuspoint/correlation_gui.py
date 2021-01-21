@@ -880,7 +880,7 @@ class Window(QtWidgets.QWidget):
             f.write('brightnessNandB,'+str(objId.brightnessNandBCH0)+'\n')
             f.write('carpet pos, 0 \n')
             f.write('pc, 0\n');
-            f.write('Time (ns), CH0 Auto-Correlation\n')
+            f.write('Time (ms), CH0 Auto-Correlation\n')
             for x in range(0,objId.autotime.shape[0]):
                 f.write(str(objId.autotime[x][0])+','+str(objId.autoNorm[x,0,0])+ '\n')
             f.write('end\n')
@@ -893,7 +893,7 @@ class Window(QtWidgets.QWidget):
             f.write('carpet pos, 0 \n')
             
             f.write('pc, 0\n');
-            f.write('Time (ns), CH0 Auto-Correlation, CH1 Auto-Correlation, CH01 Cross-Correlation\n')
+            f.write('Time (ms), CH0 Auto-Correlation, CH1 Auto-Correlation, CH01 Cross-Correlation\n')
             for x in range(0,objId.autotime.shape[0]):
                 f.write(str(objId.autotime[x][0])+','+str(objId.autoNorm[x,0,0])+','+str(objId.autoNorm[x,1,1])+','+str(objId.autoNorm[x,0,1])+'\n')
             f.write('end\n')

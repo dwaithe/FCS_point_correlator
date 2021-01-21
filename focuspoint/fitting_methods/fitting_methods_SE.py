@@ -371,13 +371,13 @@ def equation_(param, tc,options):
 			GT = 1- T1 + (T1*np.exp(-tc/tauT1))
 		elif (options['Triplet_species'] == 2):
 			T1 = param['T1'].value;tauT1 = param['tauT1'].value;
-			T1 = param['T2'].value;tauT1 = param['tauT2'].value;
+			T1 = param['T2'].value;tauT2 = param['tauT2'].value;
 			#For two dark state.
 			GT = 1- (T1+T2 )+ ((T1*np.exp(-tc/tauT1))+(T2*np.exp(-tc/tauT2)))
 		elif (options['Triplet_species'] == 3):
 			T1 = param['T1'].value;tauT1 = param['tauT1'].value;
-			T2 = param['T2'].value;tauT1 = param['tauT2'].value;
-			T3 = param['T3'].value;tauT1 = param['tauT3'].value;
+			T2 = param['T2'].value;tauT2 = param['tauT2'].value;
+			T3 = param['T3'].value;tauT3 = param['tauT3'].value;
 			#For three dark state.
 			GT = 1- (T1+T2+T3)+ ((T1*np.exp(-tc/tauT1))+(T2*np.exp(-tc/tauT2))+(T3*np.exp(-tc/tauT3)))
 			

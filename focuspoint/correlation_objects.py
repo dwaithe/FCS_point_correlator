@@ -617,6 +617,7 @@ class corrObject():
 		self.above_zero =  (size_of_sequence - sum_below_origin)/size_of_sequence
 
 	def residual(self, param, x, data,options):
+
 		if self.parentFn.def_options['Diff_eq'] == 5:
 			A = PB.equation_(param, x,options)
 		elif self.parentFn.def_options['Diff_eq'] == 4:
@@ -651,7 +652,7 @@ class corrObject():
 		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
 		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
 
-		
+		print('idxl',self.indx_L,self.indx_R)
 		
 		if  self.parentFn.bootstrap_enable_toggle == True:
 			num_of_straps = self.parentFn.bootstrap_samples.value()

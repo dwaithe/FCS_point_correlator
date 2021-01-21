@@ -5,152 +5,289 @@ from focuspoint.correlation_objects import corrObject
 import csv
 import numpy as np
 import copy
-def fcs_import_method(fit_obj,file_path):
-	text =[0]
-	r_obj = csv.reader(open(file_path, 'r'),delimiter='\t')
-	title = next(r_obj)
-	line = next(r_obj) 
-	line = next(r_obj)
+import time
+def fcs_import_method(fit_obj,file_path,feed=None):
+	
+	
+	if feed == None:
+		#f.read().decode('UTF-8','replace')
+		file = open(str(file_path),'rb').read()
+		fileo = file.decode('UTF-8','replace').replace("\t","").split('\n')
+		r_obj = csv.reader(fileo)
+	else:
+		r_obj = csv.reader(feed.replace("\t","").split('\n'))
+
+	
+	
+	version = next(r_obj)
+	print(version)
+	null = next(r_obj)
+	name =  next(r_obj)[0].split(' = ')[1]
+
+	version_num = float(version[0].split("-")[2].split(" ")[2])
+	if version_num != 3.0:
+		print("Version of .fcs file:",version_num," must be 3.0 to continue. Please email Dominic with file.")
+		return False
+
 	
 	read = True
 	ind = 0
 	channelnum =0
+
+	tdata_arr = []
+	tscale_arr = []
+	cdata_arr = []
+	cscale_arr = []
+	
+
+	#Main loop which ends once all file is read.
 	while  read == True:
 		
-		corrObj = corrObject(file_path,fit_obj);
 		
-		line = next(r_obj)
-		text =[]
-		for part in line:
-			if part != '':
-					text.append(part)
+		
+		text = next(r_obj)
 
+		
 
-		while  text[0].split(' = ')[0] != 'CountRateArray':
+		while True:
+			if text[0].split(' = ')[0] == 'Name':
+				name2 = text[0].split(' = ')[1]
+				#print('text',name2,tscale_arr.__len__())
 
 			if text[0].split(' = ')[0] == 'Channel':
 				channel_str = text[0].split(' = ')[1]
-				channel = np.copy(channelnum)
-				if channel_str[0:25] == 'Auto-correlation detector':
-					
-					if channelnum == 0: 
-						name = 'CH0'
-					if channelnum == 1:
-						name = 'CH1'
-				elif channel_str[0:26] == 'Cross-correlation detector':
-					
-					if channelnum == 2: 
-						name = 'CH01'
-					if channelnum == 3: 
-						name = 'CH10'
-				channelnum += 1
-				
-			try:
-				line = next(r_obj)
-			except:
+			text = next(r_obj)
+			if text  ==[]:
 				read = False
 				break
-				
-
-			text =[]
-			for part in line:
-				if part != '':
-					text.append(part)
-		
-		if read == False:
+			if  text[0].split(' = ')[0] == 'CountRateArray':
+				break
+			
+		if read == False or text == []:
 			break
-		line = next(r_obj)
+		#text = next(r_obj)
 		
 		dimensions = text[0].split(' = ')[1]
 		len_of_seq = int(dimensions.split(' ')[0])
-
 		if len_of_seq >0:
 			cdata = []
 			cscale = []
-			
+			text = next(r_obj)[0].split(" ")
 			for v in range(0,len_of_seq):
 
-				text =[]
-				for part in line:
-					if part != '':
-						text.append(part)
+				
 				if text.__len__() >1:
 					cscale.append(float(text[0]))
 					cdata.append(float(text[1]))
 
-				line = next(r_obj)
-		
-
+				text = next(r_obj)[0].split(" ")
+			cdata_arr.append(cdata)
+			cscale_arr.append(cscale)
+			print("cscale_arr",cscale.__len__())
 		#Reads to first correlation array text.
 		while  text[0].split(' = ')[0] != 'CorrelationArray':
-			try:
-				line = next(r_obj)
-			except:
-				break
-				read = False
+			text = next(r_obj)
 
-			text =[]
-			for part in line:
-				if part != '':
-					text.append(part)
-		
 		
 		dimensions = text[0].split(' = ')[1]
 		len_of_seq = int(dimensions.split(' ')[0])
 		if len_of_seq >0:
 			tdata = []
 			tscale = []
-			line = next(r_obj)
+			text = next(r_obj)[0].split(" ")
 			for v in range(0,len_of_seq):
 
-				text =[]
-				for part in line:
-					if part != '':
-						text.append(part)
+				
+				#print(text)
 				if text.__len__() >1:
 					tscale.append(float(text[0]))
 					tdata.append(float(text[1]))
+				
 
-				line = next(r_obj)
+				text = next(r_obj)[0].split(" ")
+			tdata_arr.append(tdata)
+			tscale_arr.append(tscale)
+		#This is where we find-out how many channels. Unhelpfully after the raw data.
+		while  text[0].split(' = ')[0] != 'Channels':
+			text = next(r_obj)
 
-			
-			fit_obj.objIdArr.append(corrObj)
-			
-			corrObj.name = corrObj.name+'_'+str(ind)+'_'+str(name)
-			corrObj.parent_name = '.fcs files'
-			corrObj.parent_uqid = '0'
-			corrObj.siblings = None
-			corrObj.autoNorm = np.array(tdata).astype(np.float64).reshape(-1)
-			corrObj.autotime = np.array(tscale).astype(np.float64).reshape(-1)*1000
+		num_of_channels = int(text[0].split(' = ')[1])
 
-			corrObj.max = np.max(corrObj.autoNorm)
-			corrObj.min = np.min(corrObj.autoNorm)
-			corrObj.tmax = np.max(corrObj.autotime)
-			corrObj.tmin = np.min(corrObj.autotime)
-			
+		#Which channel is it. Found by matching string found earlier?? The only way I saw to do it.
+		for i in range(num_of_channels):
+			text = next(r_obj)[0].split(' = ')[1]
+			if text == channel_str:
+				this_is_ch = i
 
-			#Average counts per bin. For it to be seconds (Hz), we have cscale-1 because the first value corresponds to zero recording time.
-			unit = cscale[-1]/(cscale.__len__()-1)
+		if len_of_seq >0:
+			print('num_of_channels',num_of_channels)
+			#If a four channel file we want to skip until we have collected all channels.
+			if num_of_channels == 4 and tdata_arr.__len__() != 4:
+				continue
+				
+			corrObj1 = corrObject(file_path,fit_obj)
+			corrObj1.siblings = None
+			corrObj1.autoNorm= np.array(tdata_arr[0]).astype(np.float64).reshape(-1)
+			corrObj1.autotime= np.array(tscale_arr[0]).astype(np.float64).reshape(-1)*1000
 			
-			#must divide by duration (in seconds).And to be in kHz we divide by 1000. 
-			corrObj.kcount = np.average(np.array(cdata)/unit)/1000
-			
-			corrObj.ch_type = channel;
-			corrObj.param = copy.deepcopy(fit_obj.def_param)
-			corrObj.calculate_suitability()
-			#if fit_obj.diffModEqSel.currentIndex()+1 == 3:
-			#	GS.calc_param_fcs(fit_obj,corrObj)
-			#else:
-		#		SE.calc_param_fcs(fit_obj,corrObj)
+			corrObj1.name = name+'-CH0'
+			corrObj1.parent_name = '.fcs files'
+			corrObj1.parent_uqid = '0'
+						
+						
+			corrObj1.ch_type = 0;
+
+			if cscale_arr != []:
+				#Average counts per bin. Apparently they are normalised to time.
+				unit = cscale_arr[0][-1]/(cscale_arr[0].__len__()-1)
+				#And to be in kHz we divide by 1000.
+				corrObj1.kcount = np.average(np.array(cdata_arr[0])/unit)/1000
+			corrObj1.param = copy.deepcopy(fit_obj.def_param)
+			corrObj1.calculate_suitability()
+			corrObj1.max = np.max(corrObj1.autoNorm)
+			corrObj1.min = np.min(corrObj1.autoNorm)
+			corrObj1.tmax = np.max(corrObj1.autotime)
+			corrObj1.tmin = np.min(corrObj1.autotime)
 
 			if fit_obj.def_options['Diff_eq'] == 4: 
-				VD.calc_param_fcs(fit_obj,corrObj)
+				VD.calc_param_fcs(fit_obj,corrObj1)
 			elif fit_obj.def_options['Diff_eq'] == 3: 
-				GS.calc_param_fcs(fit_obj,corrObj)
+				GS.calc_param_fcs(fit_obj,corrObj1)
 			else:
-				SE.calc_param_fcs(fit_obj,corrObj)
+				SE.calc_param_fcs(fit_obj,corrObj1)
+
+			fit_obj.objIdArr.append(corrObj1)
+
+			
+			if num_of_channels == 1:
+				tscale_arr = []
+				tdata_arr = []
+				cscale_arr = []
+				cdata_arr = []
+				continue;
+
+
+			if num_of_channels == 4 and tdata_arr.__len__() == 4:
+				
+				corrObj2 = corrObject(file_path,fit_obj)
+				corrObj2.autoNorm= np.array(tdata_arr[1]).astype(np.float64).reshape(-1)
+				corrObj2.autotime= np.array(tscale_arr[1]).astype(np.float64).reshape(-1)*1000
+				
+				corrObj2.name = name+'-CH1'
+				corrObj2.parent_name = '.fcs files'
+				corrObj2.parent_uqid = '0'
+				corrObj2.ch_type = 1;
 		
-def sin_import_method(fit_obj,file_path):
+				#And to be in kHz we divide by 1000.
+				if cscale_arr != []:
+					corrObj2.kcount = np.average(np.array(cdata_arr[1])/unit)/1000
+				
+				corrObj2.param = copy.deepcopy(fit_obj.def_param)
+
+				corrObj1.siblings = [corrObj2]
+				corrObj2.siblings = [corrObj1]
+
+
+				
+				corrObj2.calculate_suitability()
+				corrObj2.max = np.max(corrObj2.autoNorm)
+				corrObj2.min = np.min(corrObj2.autoNorm)
+				corrObj2.tmax = np.max(corrObj2.autotime)
+				corrObj2.tmin = np.min(corrObj2.autotime)
+				
+				if fit_obj.def_options['Diff_eq'] == 4: 
+					VD.calc_param_fcs(fit_obj,corrObj2)
+				elif fit_obj.def_options['Diff_eq'] == 3: 
+					GS.calc_param_fcs(fit_obj,corrObj2)
+				else:
+					SE.calc_param_fcs(fit_obj,corrObj2)
+				
+				fit_obj.objIdArr.append(corrObj2)
+			
+				corrObj3 = corrObject(file_path,fit_obj)
+				corrObj3.autoNorm= np.array(tdata_arr[2]).astype(np.float64).reshape(-1)
+				corrObj3.autotime= np.array(tscale_arr[2]).astype(np.float64).reshape(-1)*1000
+				
+				corrObj3.ch_type = 2;
+				corrObj3.name = name+'-CH01'
+				corrObj3.parent_name = '.fcs files'
+				corrObj3.parent_uqid = '0'
+				
+		
+				#And to be in kHz we divide by 1000.
+				#corrObj3.kcount = np.average(np.array(int_tdata3)/unit)/1000
+				corrObj3.param = copy.deepcopy(fit_obj.def_param)
+
+				corrObj1.siblings = [corrObj2,corrObj3]
+				corrObj2.siblings = [corrObj1,corrObj3]
+				corrObj3.siblings = [corrObj1,corrObj2]
+				
+				corrObj3.calculate_suitability()
+				corrObj3.max = np.max(corrObj3.autoNorm)
+				corrObj3.min = np.min(corrObj3.autoNorm)
+				corrObj3.tmax = np.max(corrObj3.autotime)
+				corrObj3.tmin = np.min(corrObj3.autotime)
+				if fit_obj.def_options['Diff_eq'] == 4: 
+					VD.calc_param_fcs(fit_obj,corrObj3)
+				elif fit_obj.def_options['Diff_eq'] == 3: 
+					GS.calc_param_fcs(fit_obj,corrObj3)
+				else:
+					SE.calc_param_fcs(fit_obj,corrObj3)
+				fit_obj.objIdArr.append(corrObj3)
+				
+
+				corrObj4 = corrObject(file_path,fit_obj)
+				corrObj4.autoNorm= np.array(tdata_arr[3]).astype(np.float64).reshape(-1)
+				corrObj4.autotime= np.array(tscale_arr[3]).astype(np.float64).reshape(-1)*1000
+				
+				corrObj4.ch_type = 3;
+				corrObj4.name = name+'-CH10'
+				corrObj4.parent_name = '.fcs files'
+				corrObj4.parent_uqid = '0'
+				
+		
+				#And to be in kHz we divide by 1000.
+				#corrObj4.kcount = np.average(np.array(int_tdata4)/unit)/1000
+				corrObj4.param = copy.deepcopy(fit_obj.def_param)
+
+				corrObj1.siblings = [corrObj2,corrObj3,corrObj4]
+				corrObj2.siblings = [corrObj1,corrObj3,corrObj4]
+				corrObj3.siblings = [corrObj1,corrObj2,corrObj4]
+				corrObj4.siblings = [corrObj1,corrObj2,corrObj3]
+				
+				corrObj4.calculate_suitability()
+				corrObj4.max = np.max(corrObj4.autoNorm)
+				corrObj4.min = np.min(corrObj4.autoNorm)
+				corrObj4.tmax = np.max(corrObj4.autotime)
+				corrObj4.tmin = np.min(corrObj4.autotime)
+				
+				if fit_obj.def_options['Diff_eq'] == 4: 
+					VD.calc_param_fcs(fit_obj,corrObj4)
+				elif fit_obj.def_options['Diff_eq'] == 3: 
+					GS.calc_param_fcs(fit_obj,corrObj4)
+				else:
+					SE.calc_param_fcs(fit_obj,corrObj4)
+				fit_obj.objIdArr.append(corrObj4)
+
+
+				tscale_arr = []
+				tdata_arr = []
+				cscale_arr = []
+				cdata_arr = []
+		
+
+
+	
+
+#for i in range():
+#	corrObj.name = corrObj.name+'_'+str(ind)+'_'+str(name)
+		
+def sin_import_method(fit_obj,file_path,feed=None):
+
+		if feed == None:
+				r_obj = csv.reader(open(str(file_path)) ,delimiter='\t')
+		else:
+				r_obj = csv.reader(feed.split('\n'), delimiter='\t')
 		tscale = [];
 		tdata = [];
 		tdata2 = [];
@@ -163,7 +300,7 @@ def sin_import_method(fit_obj,file_path):
 		
 		proceed = False
 		
-		for line in csv.reader(open(file_path, 'r'),delimiter='\t'):
+		for line in r_obj:
 			
 			if proceed =='correlated':
 				if line ==[]:
@@ -325,8 +462,12 @@ def sin_import_method(fit_obj,file_path):
 
 
 	
-def csv_import_method(fit_obj,file_path):
-			r_obj = csv.reader(open(str(file_path), 'r'))
+def csv_import_method(fit_obj,file_path, feed = None):
+			if feed == None:
+				r_obj = csv.reader(open(str(file_path), 'r'))
+			else:
+				r_obj = csv.reader(feed.split('\n'), delimiter=',')
+				
 			line_one = next(r_obj)
 			if line_one.__len__()>1:
 				
@@ -382,7 +523,7 @@ def csv_import_method(fit_obj,file_path):
 					
 					line = next(r_obj)
 
-					while  line[0] != 'Time (ns)':
+					while  line[0][:4] != 'Time':
 						if line[0] == 'kcount':
 							corrObj1.kcount = float(line[1])
 						if line[0] == 'numberNandB':
@@ -470,7 +611,7 @@ def csv_import_method(fit_obj,file_path):
 					corrObj3.name = corrObj3.name+'-CH'+str(corrObj3.ch_type)
 
 					line = next(r_obj)
-					while  line[0] != 'Time (ns)':
+					while  line[0][:4] != 'Time':
 						if line[0] == 'kcount':
 							corrObj1.kcount = float(line[1])
 							corrObj2.kcount = float(line[2])
@@ -563,31 +704,115 @@ def csv_import_method(fit_obj,file_path):
 					corrObj3.calculate_suitability()
 
 					SE.calc_param_fcs(fit_obj,corrObj1)
-					
-
-
+import pyperclip
+def saveOutputDataFn(fit_obj,indList,copy_fn=False):
+		localTime = time.asctime( time.localtime(time.time()) )
+		coreArray = []
+		
+		copyStr =""
+		
+		
+		coreArray.append('name_of_plot')
+		coreArray.append('master_file')
+		coreArray.append('parent_name')
+		coreArray.append('parent_uqid')
+		coreArray.append('time of fit')
+		coreArray.append('Diff_eq')
+		coreArray.append('Diff_species')
+		coreArray.append('Triplet_eq')
+		coreArray.append('Triplet_species')
+		coreArray.append('Dimen')
+		coreArray.append('xmin')
+		coreArray.append('xmax')
+		
+		#Old key Array. 
+		okeyArray =[None]
+		
+		
+		
+		
+		#Opens export files
+		outPath = fit_obj.folderOutput.filepath
+		filenameTxt = str(fit_obj.fileNameText.text())
+		if copy_fn == False:
+			csvfile = open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a')
+			#spamwriter = csv.writer(csvfile)
+			spamwriter = csv.writer(csvfile,  dialect='excel')
+			
+		for v_ind in indList:
+			
 				
+			if(fit_obj.objIdArr[v_ind].toFit == True):
+				if(fit_obj.objIdArr[v_ind].fitted == True):
+					
+					#Includes the headers for the data which is present.
+					keyArray = copy.deepcopy(coreArray)
+					for item in fit_obj.order_list:
+						if fit_obj.objIdArr[v_ind].param[item]['to_show'] == True:
+							if  fit_obj.objIdArr[v_ind].param[item]['calc'] == False:
+								keyArray.append(str(fit_obj.objIdArr[v_ind].param[item]['alias']))
+								keyArray.append('stdev('+str(fit_obj.objIdArr[v_ind].param[item]['alias'])+')')
+							else:
+								keyArray.append(str(fit_obj.objIdArr[v_ind].param[item]['alias']))
 
+					#If there are any dissimilarities between the current keys and the last we reprint the headers.
+					reprint = False
+					
+					if keyArray.__len__() != okeyArray.__len__():
+						#If they are not same length then something is different.
+						reprint = True
+					else:
+						#Just to be really sure. Might remove if gets too slow.
+						for key,okey in zip(keyArray, okeyArray):
+							if key != okey:
+								reprint = True
+								break
 
+					if reprint == True:
+						headerText = '\t'.join(keyArray)
+						copyStr +=headerText +'\n'
+						if copy_fn == False:
+							spamwriter.writerow(keyArray)
 
+					param = fit_obj.objIdArr[v_ind].param
+					rowText = []
+					rowText.append(str(fit_obj.objIdArr[v_ind].name))
+					rowText.append(str(fit_obj.objIdArr[v_ind].file_name))
+					rowText.append(str(fit_obj.objIdArr[v_ind].parent_name))
+					rowText.append(str(fit_obj.objIdArr[v_ind].parent_uqid))
+					rowText.append(str(fit_obj.objIdArr[v_ind].localTime))
+					rowText.append(str(fit_obj.diffModEqSel.currentText()))
+					rowText.append(str(fit_obj.def_options['Diff_species']))
+					rowText.append(str(fit_obj.tripModEqSel.currentText()))
+					rowText.append(str(fit_obj.def_options['Triplet_species']))
+					rowText.append(str(fit_obj.dimenModSel.currentText()))
+					rowText.append(str(fit_obj.objIdArr[v_ind].model_autotime[0]))
+					rowText.append(str(fit_obj.objIdArr[v_ind].model_autotime[-1]))
+					
+					
+					for item in fit_obj.order_list:
+							if  param[item]['calc'] == False:
+								if param[item]['to_show'] == True:
+									
+									rowText.append(str(param[item]['value']))
+									rowText.append(str(param[item]['stderr']))
+									
+							else:
+								if param[item]['to_show'] == True:
+									rowText.append(str(param[item]['value']))
 
-
-
-		
-		
-
-
-		
-		
-		
-		
-
-		
-		
-		
-
-
-		
-		
-
-	
+								
+					if copy_fn == True:
+						copyStr += str('\t'.join(rowText)) +'\n'
+					if copy_fn == False:
+						spamwriter.writerow(rowText)
+					
+					#Updates the old  key array
+					okeyArray = copy.deepcopy(keyArray)
+		copyStr += str('end\n')
+		if copy_fn == True:
+			
+			pyperclip.copy(copyStr)
+		else:
+			csvfile.close()
+		return copyStr
