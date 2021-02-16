@@ -214,8 +214,9 @@ def ptuimport(filepath):
                     EvalName = TagIdent +'{'+str(TagIdx+1)+'}'
                 file_type[EvalName] = TagString
             elif TagTyp == tyWideString:
-                TagInt = struct.unpack('i', f.read(4))[0].astype(np.float64)
-                TagString = struct.unpack('i', f.read(4))[0].astype(np.float64)
+                TagInt = int(struct.unpack('Q', f.read(8))[0])#struct.unpack('i', f.read(4))[0].astype(np.float64)
+                TagString = f.read(TagInt)
+                TagString = str.replace(TagString.decode(),'\x00','')#struct.unpack('i', f.read(4))[0].astype(np.float64)
 
                 #print('tyWideString',TagString)
                 if TagIdx > -1:

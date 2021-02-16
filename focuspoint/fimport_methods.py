@@ -524,6 +524,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 					line = next(r_obj)
 
 					while  line[0][:4] != 'Time':
+						
 						if line[0] == 'kcount':
 							corrObj1.kcount = float(line[1])
 						if line[0] == 'numberNandB':
@@ -612,6 +613,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 
 					line = next(r_obj)
 					while  line[0][:4] != 'Time':
+
 						if line[0] == 'kcount':
 							corrObj1.kcount = float(line[1])
 							corrObj2.kcount = float(line[2])
