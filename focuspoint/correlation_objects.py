@@ -649,10 +649,13 @@ class corrObject():
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
 		
 		scale = np.array(self.autotime).astype(np.float64).reshape(-1)
-		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
-		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
+		if self.parentFn.dr == None or  self.parentFn.dr1 == None:
+			self.indx_L = 0
+			self.indx_R = -2
+		else:
+			self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
+			self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
 
-		print('idxl',self.indx_L,self.indx_R)
 		
 		if  self.parentFn.bootstrap_enable_toggle == True:
 			num_of_straps = self.parentFn.bootstrap_samples.value()

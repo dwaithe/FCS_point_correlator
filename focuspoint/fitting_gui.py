@@ -186,6 +186,8 @@ class Form(QMainWindow):
 		self.yscale_max = 1.
 		self.xscale_min = 0.0001
 		self.xscale_max = 100000.
+		self.dr = None
+		self.dr1 = None
 		
 
 			#Default parameters for each loaded file.
@@ -296,6 +298,7 @@ class Form(QMainWindow):
 		self.axes2.xaxis.grid(True,'major')
 		self.axes2.yaxis.grid(True,'minor')
 		self.axes2.yaxis.grid(True,'major')
+		
 		
 		
 		has_series = False
@@ -1496,6 +1499,7 @@ class Form(QMainWindow):
 		corrObj1.numberNandB = None #objId.numberNandBCH0[i]
 		corrObj1.brightnessNandB = None #objId.brightnessNandBCH0[i]
 		corrObj1.type = "scan"
+		corrObj1.item_in_list = False
 		#corrObj1.siblings = None
 
 		
@@ -1504,6 +1508,10 @@ class Form(QMainWindow):
 		corrObj1.parent_uqid = 'average_data'
 		corrObj1.autotime = autotime
 		corrObj1.autoNorm = average_out
+		corrObj1.min = np.min(average_out) 
+		corrObj1.max = np.max(average_out)
+		corrObj1.tmin = np.min(autotime) 
+		corrObj1.tmax = np.max(autotime)
 
 		self.fill_series_list()
 		
@@ -1598,18 +1606,18 @@ class Form(QMainWindow):
 		indList.sort(reverse=True)
 		
 		c =0
-		#deletes the objects
-		for indL in indList:
+		
 
-					if self.objIdArr[indL].toFit == True:
-					
-						c = c+1
-						self.objIdArr[indL].param = copy.deepcopy(self.objId_sel.param)
-						self.objIdArr[indL].fitToParameters()
-						self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
-						self.app.processEvents()
-						#Context sensitive colour highlighting
-						self.colour_entry(self.objIdArr[indL])
+		for indL in indList:
+			if self.objIdArr[indL].toFit == True:
+				c = c+1
+				self.objIdArr[indL].param = copy.deepcopy(self.objId_sel.param)
+				self.objIdArr[indL].fitToParameters()
+				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
+				self.app.processEvents()
+				#Context sensitive colour highlighting
+				self.colour_entry(self.objIdArr[indL])
+		
 		self.updateFitList()
 		self.on_show()
 	def return_grouped_data_fn(self,indL):
@@ -1628,7 +1636,8 @@ class Form(QMainWindow):
 					for objId in objId_list:
 						if objId.series_list_id != None:
 							if objId.toFit == True:
-								indList.append(self.obj_hash_list[self.tree_hash_list[objId.series_list_id]])
+
+								indList.append(self.obj_hash_list[self.tree_hash_list[id(objId.series_list_id)]])
 
 							
 					
@@ -1744,8 +1753,6 @@ class Form(QMainWindow):
 			self.setAutoScale = False;
 			self.yscale_min,self.yscale_max = self.axes.get_ylim()
 			self.xscale_min,self.xscale_max = self.axes.get_xlim()
-
-
 		else:
 			self.setAutoScale = True;
 			
