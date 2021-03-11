@@ -28,7 +28,7 @@ import subprocess
 import pyperclip
 import pickle
 
-from focuspoint.fimport_methods import fcs_import_method,sin_import_method,csv_import_method
+from focuspoint.fimport_methods import fcs_import_method,sin_import_method,csv_import_method, saveOutputDataFn
 import focuspoint.fitting_methods.fitting_methods_SE as SE
 import focuspoint.fitting_methods.fitting_methods_GS as GS
 import focuspoint.fitting_methods.fitting_methods_VD as VD

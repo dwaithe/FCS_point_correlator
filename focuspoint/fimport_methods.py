@@ -184,11 +184,6 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				
 				corrObj2.param = copy.deepcopy(fit_obj.def_param)
 
-				corrObj1.siblings = [corrObj2]
-				corrObj2.siblings = [corrObj1]
-
-
-				
 				corrObj2.calculate_suitability()
 				corrObj2.max = np.max(corrObj2.autoNorm)
 				corrObj2.min = np.min(corrObj2.autoNorm)
@@ -218,9 +213,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				#corrObj3.kcount = np.average(np.array(int_tdata3)/unit)/1000
 				corrObj3.param = copy.deepcopy(fit_obj.def_param)
 
-				corrObj1.siblings = [corrObj2,corrObj3]
-				corrObj2.siblings = [corrObj1,corrObj3]
-				corrObj3.siblings = [corrObj1,corrObj2]
+			
 				
 				corrObj3.calculate_suitability()
 				corrObj3.max = np.max(corrObj3.autoNorm)
