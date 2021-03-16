@@ -140,8 +140,8 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			if cscale_arr != []:
 				#Average counts per bin. Apparently they are normalised to time.
 				unit = cscale_arr[0][-1]/(cscale_arr[0].__len__()-1)
-				#And to be in kHz we divide by 1000.
-				corrObj1.kcount = np.average(np.array(cdata_arr[0])/unit)/1000
+				#And to be in kHz we divide by 1000. This we found through comparison with Zeiss software.
+				corrObj1.kcount = np.average(np.array(cdata_arr[0])/unit)/1000000
 			corrObj1.param = copy.deepcopy(fit_obj.def_param)
 			corrObj1.calculate_suitability()
 			corrObj1.max = np.max(corrObj1.autoNorm)
@@ -178,9 +178,9 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				corrObj2.parent_uqid = '0'
 				corrObj2.ch_type = 1;
 		
-				#And to be in kHz we divide by 1000.
+				#And to be in kHz we divide by 1000000. This we found through comparison with Zeiss software.
 				if cscale_arr != []:
-					corrObj2.kcount = np.average(np.array(cdata_arr[1])/unit)/1000
+					corrObj2.kcount = np.average(np.array(cdata_arr[1])/unit)/1000000
 				
 				corrObj2.param = copy.deepcopy(fit_obj.def_param)
 
