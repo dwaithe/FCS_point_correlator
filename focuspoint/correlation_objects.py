@@ -1,12 +1,12 @@
 import numpy as np
 import os, sys
-from correlation_methods.correlation_methods import *
-from import_methods.import_methods import *
+from focuspoint.correlation_methods.correlation_methods import *
+from focuspoint.import_methods.import_methods import *
 import time
-import fitting_methods.fitting_methods_SE as SE
-import fitting_methods.fitting_methods_GS as GS
-import fitting_methods.fitting_methods_VD as VD
-import fitting_methods.fitting_methods_PB as PB
+from focuspoint.fitting_methods import fitting_methods_SE as SE
+from focuspoint.fitting_methods import fitting_methods_GS as GS
+from focuspoint.fitting_methods import fitting_methods_VD as VD
+from focuspoint.fitting_methods import fitting_methods_PB as PB
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import csv
 import copy
@@ -73,14 +73,15 @@ class picoObject():
 		#File import
 		if self.ext == 'spc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
-		if self.ext == 'asc':
+		elif self.ext == 'asc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
-		if self.ext == 'pt2':
+		elif self.ext == 'pt2':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt2import(self.filepath)
-		if self.ext == 'pt3':
+		elif self.ext == 'pt3':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
-		if self.ext == 'ptu':
+		elif self.ext == 'ptu':
 			out = ptuimport(self.filepath)
+			
 			if out != False:
 				self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = out
 			else:
@@ -89,7 +90,7 @@ class picoObject():
 				self.exit = True
 				
 				return
-		if self.ext == 'csv':
+		elif self.ext == 'csv':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
 			#If the file is empty.
 			if self.subChanArr == None:
@@ -99,6 +100,9 @@ class picoObject():
 				self.exit = True
 				
 				return
+		else:
+			self.exit = True
+			return 
 
 					
 		
@@ -178,12 +182,16 @@ class picoObject():
 				self.objId1.siblings = None
 				self.objId1.prepare_for_fit()
 				self.objId1.kcount = self.kcount_CH1
+				self.objId1.item_in_list = False
 				
 			self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
 			self.objId1.autotime = np.array(self.autotime).reshape(-1)
 			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
 			self.objId1.max = np.max(self.objId1.autoNorm)
 			self.objId1.min = np.min(self.objId1.autoNorm)
+			self.objId1.tmax = np.max(self.objId1.autotime)
+			self.objId1.tmin = np.min(self.objId1.autotime)
+
 			
 			
 			if self.numOfCH ==  2:
@@ -202,12 +210,17 @@ class picoObject():
 					self.objId3.siblings = None
 					self.objId3.prepare_for_fit()
 					self.objId3.kcount = self.kcount_CH2
+					self.objId3.item_in_list = False
 					
 				self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
 				self.objId3.autotime = np.array(self.autotime).reshape(-1)
 				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId3.max = np.max(self.objId3.autoNorm)
 				self.objId3.min = np.min(self.objId3.autoNorm)
+				self.objId3.tmax = np.max(self.objId3.autotime)
+				self.objId3.tmin = np.min(self.objId3.autotime)
+
+
 				self.objId3.CV = self.CV
 				if self.objId2 == None:
 					corrObj= corrObject(self.filepath,self.fit_obj)
@@ -220,12 +233,15 @@ class picoObject():
 					self.objId2.ch_type = 2 #01cross
 					self.objId2.siblings = None
 					self.objId2.prepare_for_fit()
+					self.objId2.item_in_list = False
 					
 				self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
 				self.objId2.autotime = np.array(self.autotime).reshape(-1)
 				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId2.max = np.max(self.objId2.autoNorm)
 				self.objId2.min = np.min(self.objId2.autoNorm)
+				self.objId2.tmax = np.max(self.objId2.autotime)
+				self.objId2.tmin = np.min(self.objId2.autotime)
 				self.objId2.CV =self.CV
 
 				if self.objId4 == None:
@@ -239,12 +255,15 @@ class picoObject():
 					self.objId4.ch_type = 3 #10cross
 					self.objId4.siblings = None
 					self.objId4.prepare_for_fit()
-					
+					self.objId4.item_in_list = False
+
 				self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
 				self.objId4.autotime = np.array(self.autotime).reshape(-1)
 				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
 				self.objId4.max = np.max(self.objId4.autoNorm)
 				self.objId4.min = np.min(self.objId4.autoNorm)
+				self.objId4.tmax = np.max(self.objId4.autotime)
+				self.objId4.tmin = np.min(self.objId4.autotime)
 				self.objId4.CV = self.CV
 			self.fit_obj.fill_series_list()
 		self.dTimeMin = 0
@@ -598,6 +617,7 @@ class corrObject():
 		self.above_zero =  (size_of_sequence - sum_below_origin)/size_of_sequence
 
 	def residual(self, param, x, data,options):
+
 		if self.parentFn.def_options['Diff_eq'] == 5:
 			A = PB.equation_(param, x,options)
 		elif self.parentFn.def_options['Diff_eq'] == 4:
@@ -623,16 +643,19 @@ class corrObject():
 		
 
 
-
+		
 		#Find the index of the nearest point in the scale.
 		
 		data = np.array(self.autoNorm).astype(np.float64).reshape(-1)
 		
 		scale = np.array(self.autotime).astype(np.float64).reshape(-1)
-		self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
-		self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
+		if self.parentFn.dr == None or  self.parentFn.dr1 == None:
+			self.indx_L = 0
+			self.indx_R = -2
+		else:
+			self.indx_L = int(np.argmin(np.abs(scale -  self.parentFn.dr.xpos)))
+			self.indx_R = int(np.argmin(np.abs(scale -  self.parentFn.dr1.xpos)))
 
-		
 		
 		if  self.parentFn.bootstrap_enable_toggle == True:
 			num_of_straps = self.parentFn.bootstrap_samples.value()
@@ -678,6 +701,7 @@ class corrObject():
 			res = minimize(self.residual, param, args=(scale[self.indx_L:self.indx_R+1],data[self.indx_L:self.indx_R+1], self.parentFn.def_options))
 			#Repopulate the parameter object.
 			
+			
 
 			for art in self.param:
 				
@@ -685,12 +709,7 @@ class corrObject():
 
 					self.param[art]['value'] = res.params[art].value
 					self.param[art]['stderr'] = res.params[art].stderr
-					
 
-
-
-		
-				
 		#Extra parameters, which are not fit or inherited.
 		#self.param['N_FCS']['value'] = np.round(1/self.param['GN0']['value'],4)
 
@@ -727,7 +746,7 @@ class corrObject():
 
 
 		output = fit_report(res.params)
-		print('residual',res.chisqr)
+		
 		if(res.chisqr>self.parentFn.chisqr):
 			print('CAUTION DATA DID NOT FIT WELL CHI^2 >',self.parentFn.chisqr,' ',res.chisqr)
 			self.goodFit = False

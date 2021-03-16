@@ -12,14 +12,13 @@ from PyQt5.QtGui import QStandardItem, QColor, QIcon
 from scipy.special import _ufuncs_cxx
 
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.transforms import ScaledTranslation
 import matplotlib.gridspec as gridspec
 import numpy as np
-from fitting_extended import TableFilterBox, visualHisto, visualScatter
+from focuspoint.fitting_extended import TableFilterBox, visualHisto, visualScatter
 from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
 import time
 import errno
@@ -29,14 +28,14 @@ import subprocess
 import pyperclip
 import pickle
 
-from fimport_methods import fcs_import_method,sin_import_method,csv_import_method
-import fitting_methods.fitting_methods_SE as SE
-import fitting_methods.fitting_methods_GS as GS
-import fitting_methods.fitting_methods_VD as VD
-import fitting_methods.fitting_methods_PB as PB
+from focuspoint.fimport_methods import fcs_import_method,sin_import_method,csv_import_method, saveOutputDataFn
+import focuspoint.fitting_methods.fitting_methods_SE as SE
+import focuspoint.fitting_methods.fitting_methods_GS as GS
+import focuspoint.fitting_methods.fitting_methods_VD as VD
+import focuspoint.fitting_methods.fitting_methods_PB as PB
 
 
-from correlation_objects import corrObject
+from focuspoint.correlation_objects import corrObject
 
 """FCS Fitting Software
 
@@ -183,6 +182,12 @@ class Form(QMainWindow):
 		self.type = type
 		self.chisqr = 0.05
 		self.norm_to_one = False
+		self.yscale_min = 0.
+		self.yscale_max = 1.
+		self.xscale_min = 0.0001
+		self.xscale_max = 100000.
+		self.dr = None
+		self.dr1 = None
 		
 
 			#Default parameters for each loaded file.
@@ -229,11 +234,12 @@ class Form(QMainWindow):
 
 	def load_series(self,files_to_load):
 		counter = 0
-		for file_path in  files_to_load:
+		for file_path in  files_to_load[0]:
 				self.nameAndExt = os.path.basename(str(file_path)).split('.')
+				print("nameAndExt", file_path)
 				self.name = self.nameAndExt[0]
-				self.ext = str(self.nameAndExt[-1])
-				
+				self.ext = self.nameAndExt[-1]
+				print('csv',self.ext)
 				#try:
 				if self.ext == 'SIN' or self.ext == 'sin':
 					sin_import_method(self,file_path)
@@ -294,29 +300,51 @@ class Form(QMainWindow):
 		self.axes2.yaxis.grid(True,'minor')
 		self.axes2.yaxis.grid(True,'major')
 		
+		
+		
 		has_series = False
 		scaleMin = 0
 		scaleMax = 0
-		if self.setAutoScale == False:
-			self.axes.set_autoscale_on(False)
-		else:
+		
+		if self.setAutoScale == False: # Keep Scale is On.
+			self.axes.set_xlim(self.xscale_min, self.xscale_max)
+			self.axes.set_ylim(self.yscale_min, self.yscale_max)
+			
+		else:#Keep Scale is off
 			if self.norm_to_one == True:
 				self.axes.set_ylim(-0.1,1.1)
 			else:
-				try:
-					max_arr = []
-					min_arr = []
-					for Id, objId in enumerate(self.objIdArr):
-						model_index = objId.item_in_list
+				
+				max_arr = []
+				min_arr = []
+				tmax_arr = []
+				tmin_arr = []
+				for Id, objId in enumerate(self.objIdArr):
+					if objId.item_in_list == False: #i.e. we are not looking at this channel.
+						continue
+					model_index = objId.item_in_list
 
-						checked = model_index.checkState() == QtCore.Qt.Checked
-						if checked:
-							max_arr.append(objId.max)
-							min_arr.append(objId.min)
-
-					self.axes.set_ylim(np.min(np.array(min_arr)),np.max(np.array(max_arr))*1.1)
-				except:
-					self.axes.set_autoscale_on(True)
+					checked = model_index.checkState() == QtCore.Qt.Checked
+					if checked:
+						max_arr.append(objId.max)
+						min_arr.append(objId.min)
+						tmax_arr.append(objId.tmax)
+						tmin_arr.append(objId.tmin)
+				
+				if min_arr != []:
+					self.yscale_max = np.max(np.array(max_arr))*1.1
+					self.yscale_min = np.min(np.array(min_arr))
+					self.axes.set_ylim(self.yscale_min,self.yscale_max)
+					
+					self.xscale_max = np.max(np.array(tmax_arr))*1.2
+					self.xscale_min = np.min(np.array(tmin_arr))
+					if self.xscale_min == 0:
+						self.xscale_min = 0.0001
+					self.axes.set_xlim(self.xscale_min,self.xscale_max)
+					print(self.xscale_min,'xscale_min',self.xscale_max,'scale_max')
+				else:
+					self.axes.autoscale(None)
+				
 			
 		row = 0
 		row_checked = 0
@@ -352,8 +380,7 @@ class Form(QMainWindow):
 					
 					has_series = True
 					#Takes the values from the interface 
-					self.axes.set_xscale('log')
-					self.axes2.set_xscale('log')
+					
 					self.scale = objId.autotime
 					
 					self.series = objId.autoNorm
@@ -361,14 +388,15 @@ class Form(QMainWindow):
 					if self.norm_to_one == True:
 						self.series = self.series - np.average(self.series[-5:])
 						self.series = self.series / np.average(self.series[:5])
-
+					self.axes.set_xscale('log')
+					self.axes2.set_xscale('log')
 
 					
 					
 					self.axes.plot(self.scale, self.series, 'o',markersize=2, color="grey", label=objId,picker=4.0,alpha=alpha, linewidth=1.0)
 					
 
-					self.axes.set_autoscale_on(False)
+					#self.axes.autoscale(False)
 					row_checked += 1
 
 
@@ -590,16 +618,19 @@ class Form(QMainWindow):
 		try:
 			#Makes sure the root file names don't trigger strange effects
 			self.series_list_model.itemChanged.disconnect(self.file_item_edited)
-			#Trys to check to 
-			for Id, objId in enumerate(self.objIdArr):
-				if objId.toFit == True:
-					model_index = objId.item_in_list
-
-					checked = model_index.checkState() == QtCore.Qt.Checked
-					objId.checked = checked
-
 		except:
 			pass
+		#Trys to check to 
+		for Id, objId in enumerate(self.objIdArr):
+			if objId.toFit == True and objId.item_in_list !=False:
+				model_index = objId.item_in_list
+
+				checked = model_index.checkState() == QtCore.Qt.Checked
+				objId.checked = checked
+
+		#except:
+			#print('passed')
+			#pass
 
 		
 		self.root_name_copy = {}
@@ -729,7 +760,7 @@ class Form(QMainWindow):
 				
 				
 				
-
+				
 
 				#If the data should appear in the list:
 				if objId.toFit == True:
@@ -771,6 +802,9 @@ class Form(QMainWindow):
 						item.setBackground(QColor(0, 0, 255, 127))
 						to_focus = self.series_list_model.rowCount()
 						to_focus_item = item
+
+				else:
+					objId.item_in_list = False
 					
 		if to_focus_item != None:
 			self.series_list_view.scrollTo(self.series_list_model.indexFromItem(to_focus_item))
@@ -1010,7 +1044,7 @@ class Form(QMainWindow):
 
 		
 		#self.fitTable.setMinimumWidth(320)
-		self.fitTable.setMaximumWidth(400)
+		#self.fitTable.setMaximumWidth(400)
 		self.fitTable.setMinimumHeight(100)
 		self.fitTable.setMaximumHeight(600)
 		
@@ -1470,6 +1504,7 @@ class Form(QMainWindow):
 		corrObj1.numberNandB = None #objId.numberNandBCH0[i]
 		corrObj1.brightnessNandB = None #objId.brightnessNandBCH0[i]
 		corrObj1.type = "scan"
+		corrObj1.item_in_list = False
 		#corrObj1.siblings = None
 
 		
@@ -1478,6 +1513,10 @@ class Form(QMainWindow):
 		corrObj1.parent_uqid = 'average_data'
 		corrObj1.autotime = autotime
 		corrObj1.autoNorm = average_out
+		corrObj1.min = np.min(average_out) 
+		corrObj1.max = np.max(average_out)
+		corrObj1.tmin = np.min(autotime) 
+		corrObj1.tmax = np.max(autotime)
 
 		self.fill_series_list()
 		
@@ -1564,18 +1603,18 @@ class Form(QMainWindow):
 		indList.sort(reverse=True)
 		
 		c =0
-		#deletes the objects
-		for indL in indList:
+		
 
-					if self.objIdArr[indL].toFit == True:
-					
-						c = c+1
-						self.objIdArr[indL].param = copy.deepcopy(self.objId_sel.param)
-						self.objIdArr[indL].fitToParameters()
-						self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
-						self.app.processEvents()
-						#Context sensitive colour highlighting
-						self.colour_entry(self.objIdArr[indL])
+		for indL in indList:
+			if self.objIdArr[indL].toFit == True:
+				c = c+1
+				self.objIdArr[indL].param = copy.deepcopy(self.objId_sel.param)
+				self.objIdArr[indL].fitToParameters()
+				self.image_status_text.showMessage("Fitting  "+str(c)+" of "+str(indList.__len__())+" plots.")
+				self.app.processEvents()
+				#Context sensitive colour highlighting
+				self.colour_entry(self.objIdArr[indL])
+		
 		self.updateFitList()
 		self.on_show()
 	def return_grouped_data_fn(self,indL):
@@ -1594,7 +1633,8 @@ class Form(QMainWindow):
 					for objId in objId_list:
 						if objId.series_list_id != None:
 							if objId.toFit == True:
-								indList.append(self.obj_hash_list[self.tree_hash_list[objId.series_list_id]])
+
+								indList.append(self.obj_hash_list[self.tree_hash_list[id(objId.series_list_id)]])
 
 							
 					
@@ -1683,7 +1723,7 @@ class Form(QMainWindow):
 					#Save the index. Only one should be positive in all the data.
 					self.modelFitSel.setCurrentIndex(self.modelFitSel.count()-1)
 					self.modelFitSel.selected_name = self.objIdArr[i]
-					self.modelFitSel.objId_ind = i
+					self.modelFitSel.objId_idx = i
 					#The name was found.
 					name_found = True
 		#If the name wasn't found in the list, because it was filtered out. Default to first entry.      
@@ -1709,10 +1749,14 @@ class Form(QMainWindow):
 		self.setAutoScale = False
 	def autoScaleFn(self):
 		#self.turnOffAutoScale.setFlat(True)
-		if self.turnOffAutoScale.isChecked() == True:
+
+		if self.turnOffAutoScale.isChecked() == True:#Keep Scale on.
 			self.setAutoScale = False
+			self.yscale_min,self.yscale_max = self.axes.get_ylim()
+			self.xscale_min,self.xscale_max = self.axes.get_xlim()
 		else:
 			self.setAutoScale = True
+
 	def norm_to_one_fn(self):
 		if self.norm_to_one_btn.isChecked() == True:
 			self.norm_to_one = True
@@ -1723,28 +1767,6 @@ class Form(QMainWindow):
 
 		self.saveOutputDataFn(True)
 	def saveOutputDataFn(self,copy_fn=False):
-		localTime = time.asctime( time.localtime(time.time()) )
-		coreArray = []
-		
-		copyStr =""
-		
-		
-		coreArray.append('name_of_plot')
-		coreArray.append('master_file')
-		coreArray.append('parent_name')
-		coreArray.append('parent_uqid')
-		coreArray.append('time of fit')
-		coreArray.append('Diff_eq')
-		coreArray.append('Diff_species')
-		coreArray.append('Triplet_eq')
-		coreArray.append('Triplet_species')
-		coreArray.append('Dimen')
-		coreArray.append('xmin')
-		coreArray.append('xmax')
-		
-		#Old key Array. 
-		okeyArray =[None]
-		
 		#Find highlighted indices
 		listToFit = self.series_list_view.selectedIndexes()
 		indList =[]
@@ -1752,93 +1774,15 @@ class Form(QMainWindow):
 		if listToFit ==[]:
 			indList = range(0,self.objIdArr.__len__())
 		else:
-			indList = self.return_obj_ind_list(listToFit)
-		
-		
-		#Opens export files
-		outPath = self.folderOutput.filepath
-		filenameTxt = str(self.fileNameText.text())
-		if copy_fn == False:
-			csvfile = open(outPath+'/'+filenameTxt+'_outputParam.csv', 'a')
-			#spamwriter = csv.writer(csvfile)
-			spamwriter = csv.writer(csvfile,  dialect='excel')
-			
-		for v_ind in indList:
-			
-				
-			if(self.objIdArr[v_ind].toFit == True):
-				if(self.objIdArr[v_ind].fitted == True):
-					
-					#Includes the headers for the data which is present.
-					keyArray = copy.deepcopy(coreArray)
-					for item in self.order_list:
-						if self.objIdArr[v_ind].param[item]['to_show'] == True:
-							if  self.objIdArr[v_ind].param[item]['calc'] == False:
-								keyArray.append(str(self.objIdArr[v_ind].param[item]['alias']))
-								keyArray.append('stdev('+str(self.objIdArr[v_ind].param[item]['alias'])+')')
-							else:
-								keyArray.append(str(self.objIdArr[v_ind].param[item]['alias']))
+			for v_ind in listToFit:
+				item = self.series_list_model.itemFromIndex(v_ind)
+				if item.hasChildren():
+					indList.extend(self.return_grouped_data_fn(id(item)))
+				else:
+					indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		saveOutputDataFn(self,indList,copy_fn)
 
-					#If there are any dissimilarities between the current keys and the last we reprint the headers.
-					reprint = False
-					
-					if keyArray.__len__() != okeyArray.__len__():
-						#If they are not same length then something is different.
-						reprint = True
-					else:
-						#Just to be really sure. Might remove if gets too slow.
-						for key,okey in zip(keyArray, okeyArray):
-							if key != okey:
-								reprint = True
-								break
 
-					if reprint == True:
-						headerText = '\t'.join(keyArray)
-						copyStr +=headerText +'\n'
-						if copy_fn == False:
-							spamwriter.writerow(keyArray)
-
-					param = self.objIdArr[v_ind].param
-					rowText = []
-					rowText.append(str(self.objIdArr[v_ind].name))
-					rowText.append(str(self.objIdArr[v_ind].file_name))
-					rowText.append(str(self.objIdArr[v_ind].parent_name))
-					rowText.append(str(self.objIdArr[v_ind].parent_uqid))
-					rowText.append(str(self.objIdArr[v_ind].localTime))
-					rowText.append(str(self.diffModEqSel.currentText()))
-					rowText.append(str(self.def_options['Diff_species']))
-					rowText.append(str(self.tripModEqSel.currentText()))
-					rowText.append(str(self.def_options['Triplet_species']))
-					rowText.append(str(self.dimenModSel.currentText()))
-					rowText.append(str(self.objIdArr[v_ind].model_autotime[0]))
-					rowText.append(str(self.objIdArr[v_ind].model_autotime[-1]))
-					
-					
-					for item in self.order_list:
-							if  param[item]['calc'] == False:
-								if param[item]['to_show'] == True:
-									
-									rowText.append(str(param[item]['value']))
-									rowText.append(str(param[item]['stderr']))
-									
-							else:
-								if param[item]['to_show'] == True:
-									rowText.append(str(param[item]['value']))
-
-								
-					if copy_fn == True:
-						copyStr += str('\t'.join(rowText)) +'\n'
-					if copy_fn == False:
-						spamwriter.writerow(rowText)
-					
-					#Updates the old  key array
-					okeyArray = copy.deepcopy(keyArray)
-
-		if copy_fn == True:
-			copyStr += str('end\n')
-			pyperclip.copy(copyStr)
-		else:
-			csvfile.close()
 
 	def clearFits(self):
 		"""If items are selected in the tree view. Clear their fit settings."""
@@ -2113,8 +2057,16 @@ class Form(QMainWindow):
 		"""Take the active parameters and applies them to all the other data which is not filtered"""
 		#Make sure all table properties are stored
 		self.updateParamFirst()
+
 		c = 0
+		import time
+
 		for Id, objId in enumerate(self.objIdArr):
+			t0 = time.time()
+			#Preflight fit.
+			#This will fit the selected curve once before using those generated parameters to initialise all the other curves before fitting them in bulk.
+			#This was done accidently in the standalone versions, but made subsequent fits much faster and so is included here as an option.
+			#Makes a big difference if the parameters are not well chosen by the user or defaults are used, as it prevents lots of badly conditioned fits.
 			if objId.toFit == True:
 				c = c+1
 				if objId != self.objId_sel:
@@ -2129,7 +2081,7 @@ class Form(QMainWindow):
 					
 				#Context sensitive colour highlighting
 				self.colour_entry(objId)
-					
+			print('time',time.time()-t0)		
 
 
 		
@@ -2137,8 +2089,7 @@ class Form(QMainWindow):
 		self.on_show()
 		self.updateFitList() 
 		#self.fill_series_list()
-	
-		
+
 
 class draggableLine:
 	"""Prototype class for the draggable lines """

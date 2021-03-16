@@ -22,7 +22,7 @@ import csv
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 import struct
-import string
+
 
 def spc_file_import(file_path):
     f = open(file_path, 'rb')
@@ -134,11 +134,13 @@ def ptuimport(filepath):
     #MeasDesc_Resolution =0;      #% Resolution for the Dtime (T3 Only)
     #MeasDesc_GlobalResolution =0;
 
+    
     f = open(filepath, 'rb')
     magic = str(f.read(8))
-    if magic[0:6] != "PQTTTR":
+    if str(magic[2:8]) != "PQTTTR":
         print( 'Your file is an invalid .ptu')
-        return
+
+        return False
     version =  f.read(8)
     #print 'version',version
 
@@ -146,7 +148,7 @@ def ptuimport(filepath):
     while True:
             #read Tag Head
             TagIdent = f.read(32); # TagHead.Ident
-            TagIdent = string.replace(TagIdent,'\x00','')
+            TagIdent = str.replace(TagIdent.decode(),'\x00','')
             #print 'Tag',TagIdent
             #TagIdent = TagIdent[TagIdent != 0]]#'; # remove #0 and more more readable
 
@@ -205,15 +207,16 @@ def ptuimport(filepath):
             elif TagTyp == tyAnsiString:
                 TagInt = int(struct.unpack('Q', f.read(8))[0])
                 TagString = f.read(TagInt)
-                TagString = string.replace(TagString,'\x00','')
+                TagString = str.replace(TagString.decode(),'\x00','')
 
                 #print('tyAnsiString',TagString)
                 if TagIdx > -1:
                     EvalName = TagIdent +'{'+str(TagIdx+1)+'}'
                 file_type[EvalName] = TagString
             elif TagTyp == tyWideString:
-                TagInt = struct.unpack('i', f.read(4))[0].astype(np.float64)
-                TagString = struct.unpack('i', f.read(4))[0].astype(np.float64)
+                TagInt = int(struct.unpack('Q', f.read(8))[0])#struct.unpack('i', f.read(4))[0].astype(np.float64)
+                TagString = f.read(TagInt)
+                TagString = str.replace(TagString.decode(),'\x00','')#struct.unpack('i', f.read(4))[0].astype(np.float64)
 
                 #print('tyWideString',TagString)
                 if TagIdx > -1:
@@ -502,8 +505,8 @@ def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     return np.array(chanArr), np.array(trueTimeArr), np.array(dTimeArr), MeasDesc_GlobalResolution* 1e6
 def csvimport(filepath):
     """Function for importing time-tag data directly into FCS point software. """
-    r_obj = csv.reader(open(filepath, 'rb'))
-    line_one = r_obj.next()
+    r_obj = csv.reader(open(filepath, 'r'))
+    line_one = next(r_obj)
     if line_one.__len__()>1:
         if float(line_one[1]) == 2:
             
@@ -512,7 +515,8 @@ def csvimport(filepath):
             print ('version not known:',line_one[1])
     
     if version == 2:
-        type =str(r_obj.next()[1])
+        type =str(next(r_obj)[1])
+        
         if type == "pt uncorrelated":
             Resolution = float(r_obj.next()[1])
             chanArr = []

@@ -7,7 +7,7 @@ setup(name='focuspoint',
 	include_package_data=True,
 	include_dirs=[numpy.get_include()],
 	ext_modules=[Extension('focuspoint.fib4', ['focuspoint/fib4.c'])],
-	packages = ['focuspoint', 'focuspoint.import_methods', 'focuspoint.correlation_methods'],
+	packages = ['focuspoint', 'focuspoint.import_methods', 'focuspoint.correlation_methods', 'focuspoint.fitting_methods'],
 	
 	package_data={
         'focuspoint': ['fib4.pyx'],
