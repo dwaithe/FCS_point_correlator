@@ -66,7 +66,7 @@ class folderOutput(QMainWindow):
 		self.parent.config ={}
 		
 		try:
-			self.parent.config = pickle.load(open(os.path.expanduser('~')+'/FCS_Analysis/config.p', "rb" ));
+			self.parent.config = pickle.load(open(os.path.expanduser('~')+'/FCS_Analysis/config.p', "rb" ))
 			self.filepath = self.parent.config['output_filepath']
 		except:
 			self.filepath = os.path.expanduser('~')+'/FCS_Analysis/output/'
@@ -76,7 +76,7 @@ class folderOutput(QMainWindow):
 				if exception.errno != errno.EEXIST:
 					raise
 		try:
-			self.parent.config = pickle.load(open(os.path.expanduser('~')+'/FCS_Analysis/config.p', "rb" ));
+			self.parent.config = pickle.load(open(os.path.expanduser('~')+'/FCS_Analysis/config.p', "rb" ))
 			self.folder_to_process = self.parent.config['folder_to_process']
 		except:
 			self.folder_to_process = os.path.expanduser('~')+'/FCS_Analysis/output/'
@@ -143,8 +143,8 @@ class folderOutput(QMainWindow):
 			#filepath = QFileDialog.getOpenFileName(self, 'Open file', '/home')
 			filepath =  QFileDialog.getOpenFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
 			if filepath != '':
-				opened_file = pickle.load(open(str(filepath),"rb"));
-				self.parent.fit_profile = opened_file;
+				opened_file = pickle.load(open(str(filepath),"rb"))
+				self.parent.fit_profile = opened_file
 		if self.type == 'profile_save':
 			
 			
@@ -157,7 +157,7 @@ class folderOutput(QMainWindow):
 				#Save the files to the 
 				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "wb" ))
 				#Save the 
-				pickle.dump(self.parent.fit_profile, open(str(filepath),"w"));
+				pickle.dump(self.parent.fit_profile, open(str(filepath),"w"))
 
 				
 
@@ -173,7 +173,7 @@ class Form(QMainWindow):
 		self.activeObj = None
 		self.objIdArr =[]
 		self.objStruct = {}
-		self.names = [];
+		self.names = []
 		self.setAutoScale =True
 		self.colors = ['blue','green','red','orange','magenta','midnightblue','black']
 		self.objId_sel = None
@@ -219,7 +219,8 @@ class Form(QMainWindow):
 		except:
 			self.loadpath = os.path.expanduser('~')+'/FCS_Analysis/'
 		
-		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'CSV files (*.csv);SIN files (*.SIN);All Files (*.*)')
+		# The first index of the returned tuple contains the file list.
+		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'Supported Files (*.csv *.sin *.fcs);;All Files (*.*)')[0]
 		self.load_series(files_to_load)
 		
 		try:
@@ -345,7 +346,7 @@ class Form(QMainWindow):
 					self.axes.autoscale(None)
 				
 			
-		row = 0;
+		row = 0
 		row_checked = 0
 		def onpick(event):
 			thisline = event.artist
@@ -371,7 +372,7 @@ class Form(QMainWindow):
 				
 				objId.checked = checked
 				if objId.filter ==True:
-					alpha = 0.1;
+					alpha = 0.1
 				else:
 					alpha = 1.0
 				
@@ -403,7 +404,7 @@ class Form(QMainWindow):
 
 					#self.axes.set_ylim(bottom=float(objId.param['offset'].value)-0.001)
 				row += 1  
-		row = 0;
+		row = 0
 		
 		
 		for Id, objId in enumerate(self.objIdArr):
@@ -411,7 +412,7 @@ class Form(QMainWindow):
 				model_index = objId.item_in_list
 				checked = model_index.checkState() == QtCore.Qt.Checked
 				if objId.filter ==True:
-					alpha = 0.1;
+					alpha = 0.1
 				else:
 					alpha = 1.0
 				
@@ -579,7 +580,7 @@ class Form(QMainWindow):
 	#		item = objId.series_list_id
 	#lis		objId.name = item.text()
 	def file_item_edited(self, model_index):
-		
+		# In case a parent is selected.
 		if model_index.hasChildren() == True:
 			self.series_list_model.itemChanged.disconnect()
 			for file_id in self.root_name:
@@ -595,6 +596,14 @@ class Form(QMainWindow):
 							objId.checked = True
 							objId.item_in_list.setCheckState(QtCore.Qt.Checked)
 			self.series_list_model.itemChanged.connect(self.file_item_edited)
+		# In case a child (correlated data) is selected.
+		else:
+			corrObj = self.objIdArr[self.obj_hash_list[self.tree_hash_list[id(model_index)]]]
+			corrObj.name = model_index.text()
+
+			# Update the fit list with the new name.
+			self.updateFitList()
+
 	def colour_entry(self,objId):
 		#Context sensitive colour highlighting
 		if objId.goodFit == False:
@@ -786,7 +795,7 @@ class Form(QMainWindow):
 					self.root_name[file_id]['file_item'].setChild(idx,item)
 					idx = idx +1
 					item.setCheckable(True)
-					item.setEditable(False)
+					#item.setEditable(False)
 					
 					objId.item_in_list = item
 					if objId.clicked == True:
@@ -804,16 +813,20 @@ class Form(QMainWindow):
 		
 		self.updateFitList()
 		self.series_list_model.itemChanged.connect(self.file_item_edited)
-		self.series_list_view.doubleClicked.connect(self.dbl_click_method)
+		self.series_list_view.selectionModel().selectionChanged.connect(self.selection_method)
 
 				
 
 
 				
-	def dbl_click_method(self,index):
-		
+	def selection_method(self,index):
+		"""Called when a selection is made in the data tree"""
 		#Returns the indices of what has been double clicked.
-		itemToSelect = self.series_list_view.selectedIndexes()[0]
+		try:
+			itemToSelect = self.series_list_view.selectedIndexes()[0]
+		except:
+			# No selection has been made
+			return
 		#Gets the associated index.
 		item = self.series_list_model.itemFromIndex(itemToSelect)
 		if item.hasChildren():
@@ -897,7 +910,7 @@ class Form(QMainWindow):
 		self.model_layout.setSpacing(16)
 		
 		#Drop down list of equations for diffusing species
-		self.diffModEqSel = comboBoxSp2(self);
+		self.diffModEqSel = comboBoxSp2(self)
 		self.diffModEqSel.setToolTip('Set the type of equation to fit (see documentation for more advice).')
 		self.diffModEqSel.type ='Diff_eq'
 		self.diffModEqSel.addItem('Equation 1A')
@@ -917,14 +930,14 @@ class Form(QMainWindow):
 
 
 		self.diffNumSpecSpin = QSpinBox()
-		self.diffNumSpecSpin.setRange(1,3);
+		self.diffNumSpecSpin.setRange(1,3)
 		self.diffNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
 		diffNumSpecies.addWidget(diffNumSpecLabel)
 		diffNumSpecies.addWidget(self.diffNumSpecSpin)
 
 		
 		#Drop down list of equations for Triplet equations
-		self.tripModEqSel = comboBoxSp2(self);
+		self.tripModEqSel = comboBoxSp2(self)
 		self.tripModEqSel.setToolTip('Set the number of Triplet states to be included in the fitting')
 		self.tripModEqSel.type ='Triplet_eq'
 		self.tripModEqSel.addItem('no triplet')
@@ -946,7 +959,7 @@ class Form(QMainWindow):
 		
 		tripNumSpecLabel = QLabel('Triplet states')
 		self.tripNumSpecSpin = QSpinBox()
-		self.tripNumSpecSpin.setRange(1,3);
+		self.tripNumSpecSpin.setRange(1,3)
 		self.tripNumSpecSpin.valueChanged[int].connect(self.updateParamFirst)
 		diffNumSpecies.addWidget(tripNumSpecLabel)
 		diffNumSpecies.addWidget(self.tripNumSpecSpin)
@@ -1061,7 +1074,7 @@ class Form(QMainWindow):
 		fit_btns.addWidget(self.fit_btn)
 		fit_btns.addWidget(self.fitAll_btn)
 		fit_btns.addWidget(self.fitSelected_btn)
-		fit_btns.addStretch();
+		fit_btns.addStretch()
 
 		#bootstrap.
 		bootstrap_panel = QHBoxLayout()
@@ -1070,7 +1083,7 @@ class Form(QMainWindow):
 
 		self.bootstrap_enable_toggle = False
 		self.bootstrap_enable_btn = QPushButton('OFF')
-		self.bootstrap_enable_btn.setStyleSheet("color: red");
+		self.bootstrap_enable_btn.setStyleSheet("color: red")
 		self.bootstrap_enable_btn.setFixedWidth(60)
 		self.bootstrap_enable_btn.clicked.connect(self.bootstrap_enable_toggle_fn)
 		self.bootstrap_enable_btn.setToolTip('This will enable bootstapping (see documentation formore details)')
@@ -1152,7 +1165,7 @@ class Form(QMainWindow):
 		self.copy_output_btn.setToolTip("Copies the fit parameters to the clipboard.")
 		self.copy_output_btn.clicked.connect(self.copyOutputDataFn)
 		self.copy_model_btn = QPushButton("plot data")
-		self.copy_model_btn.setToolTip("Copies the raw data and fit data to the clipboard.");
+		self.copy_model_btn.setToolTip("Copies the raw data and fit data to the clipboard.")
 		self.copy_model_btn.clicked.connect(self.copyModelFile)
 
 		copy_layout = QHBoxLayout()
@@ -1160,7 +1173,7 @@ class Form(QMainWindow):
 		copy_layout.addWidget(copy_text)
 		copy_layout.addWidget(self.copy_output_btn)
 		copy_layout.addWidget(self.copy_model_btn)
-		copy_layout.addStretch();
+		copy_layout.addStretch()
 
 		
 
@@ -1171,7 +1184,7 @@ class Form(QMainWindow):
 		self.save_output_btn.clicked.connect(self.saveOutputDataFn)
 		
 		self.save_model_btn = QPushButton("plot data")
-		self.save_model_btn.setToolTip("Saves the raw data and fit data to a file.");
+		self.save_model_btn.setToolTip("Saves the raw data and fit data to a file.")
 		self.save_model_btn.clicked.connect(self.saveModelFile)
 
 		save_layout = QHBoxLayout()
@@ -1342,11 +1355,11 @@ class Form(QMainWindow):
 		self.clearFits_btn.setToolTip('Clears the fit parameters only from any data-files highlighted in the \"Data Series Viewer\" ')
 		self.clearFits_btn.clicked.connect(self.clearFits)
 		self.visual_histo = visualHisto(self)
-		visual_histo_btn = QPushButton("Generate Histogram");
+		visual_histo_btn = QPushButton("Generate Histogram")
 		visual_histo_btn.setToolTip('Opens the Generate Histogram plot dialog')
 		visual_histo_btn.clicked.connect(self.visual_histo.create_main_frame)
 		self.visual_scatter = visualScatter(self)
-		visual_scatter_btn = QPushButton("Generate Scatter");
+		visual_scatter_btn = QPushButton("Generate Scatter")
 		visual_histo_btn.setToolTip('Opens the Generate Scatter plot dialog')
 		visual_scatter_btn.clicked.connect(self.visual_scatter.create_main_frame)
 
@@ -1394,7 +1407,7 @@ class Form(QMainWindow):
 
 		self.filter_add.clicked.connect(self.tfb.filter_add_fn)
 		hbox = QHBoxLayout()
-		splitter = QSplitter();
+		splitter = QSplitter()
 		
 		hbox1 =QWidget()
 		hbox1.setLayout(left_vbox)
@@ -1429,11 +1442,11 @@ class Form(QMainWindow):
 		#Toggle the bootstrap toggle.
 		if self.bootstrap_enable_toggle == False:
 			self.bootstrap_enable_btn.setText('ON')
-			self.bootstrap_enable_btn.setStyleSheet("color: green");
+			self.bootstrap_enable_btn.setStyleSheet("color: green")
 			self.bootstrap_enable_toggle = True
 		else:
 			self.bootstrap_enable_btn.setText('OFF')
-			self.bootstrap_enable_btn.setStyleSheet("color: red");
+			self.bootstrap_enable_btn.setStyleSheet("color: red")
 			self.bootstrap_enable_toggle = False
 	
 		
@@ -1444,15 +1457,7 @@ class Form(QMainWindow):
 		
 		#Reads those indices which are highlighted.
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
-		for v_ind in listToFit:
-			item = self.series_list_model.itemFromIndex(v_ind)
-			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
-			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1488,7 +1493,7 @@ class Form(QMainWindow):
 		average_out = np.average(matrix_2_average,0)
 
 
-		corrObj1 = corrObject(None,self);
+		corrObj1 = corrObject(None,self)
 		corrObj1.siblings = None
 		self.objIdArr.append(corrObj1.objId)
 		corrObj1.param = copy.deepcopy(self.def_param)
@@ -1589,15 +1594,7 @@ class Form(QMainWindow):
 	def fitSelected_equation(self):
 		
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
-		for v_ind in listToFit:
-			item = self.series_list_model.itemFromIndex(v_ind)
-			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
-			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1644,22 +1641,25 @@ class Form(QMainWindow):
 			return indList			
 			
 
-					
-			
-	def removeDataFn(self):
-		"""Removes data from the displayed dataseries."""
+	def return_obj_ind_list(self, listToFit):
+		indList =[]
 		
-		#Reads those indices which are highlighted.
-		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
 		for v_ind in listToFit:
 			item = self.series_list_model.itemFromIndex(v_ind)
 			if item.hasChildren():
 				indList.extend(self.return_grouped_data_fn(id(item)))
 			else:
 				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		
+		return indList
+
+			
+	def removeDataFn(self):
+		"""Removes data from the displayed dataseries."""
+		
+		#Reads those indices which are highlighted.
+		listToFit = self.series_list_view.selectedIndexes()
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1729,7 +1729,7 @@ class Form(QMainWindow):
 		#If the name wasn't found in the list, because it was filtered out. Default to first entry.      
 		
 		if name_found == False and self.modelFitSel.model_obj_list !=[]:
-			self.modelFitSel.setCurrentIndex(0);
+			self.modelFitSel.setCurrentIndex(0)
 			self.modelFitSel.objId_ind = self.objIdArr[self.modelFitSel.currentIndex()]
 		#Redraw the table
 		#If the currentIndex is valid
@@ -1744,24 +1744,24 @@ class Form(QMainWindow):
 
 
 	def resetScaleFn(self):
-		self.setAutoScale = True;
+		self.setAutoScale = True
 		self.on_show()
-		self.setAutoScale = False;
+		self.setAutoScale = False
 	def autoScaleFn(self):
 		#self.turnOffAutoScale.setFlat(True)
+
 		if self.turnOffAutoScale.isChecked() == True:#Keep Scale on.
-			self.setAutoScale = False;
+			self.setAutoScale = False
 			self.yscale_min,self.yscale_max = self.axes.get_ylim()
 			self.xscale_min,self.xscale_max = self.axes.get_xlim()
 		else:
-			self.setAutoScale = True;
-			
+			self.setAutoScale = True
 
 	def norm_to_one_fn(self):
 		if self.norm_to_one_btn.isChecked() == True:
-			self.norm_to_one = True;
+			self.norm_to_one = True
 		else:
-			self.norm_to_one =  False;
+			self.norm_to_one =  False
 		
 	def copyOutputDataFn(self):
 
@@ -1769,7 +1769,7 @@ class Form(QMainWindow):
 	def saveOutputDataFn(self,copy_fn=False):
 		#Find highlighted indices
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
+		indList =[]
 		#If no highlighted indices. Take all those which are fitted.
 		if listToFit ==[]:
 			indList = range(0,self.objIdArr.__len__())
@@ -1783,18 +1783,11 @@ class Form(QMainWindow):
 		saveOutputDataFn(self,indList,copy_fn)
 
 
+
 	def clearFits(self):
 		"""If items are selected in the tree view. Clear their fit settings."""
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		
-
-		for v_ind in listToFit:
-			item = self.series_list_model.itemFromIndex(v_ind)
-			if item.hasChildren():
-				indList.extend(self.return_grouped_data_fn(item))
-			else:
-				indList.append(self.obj_hash_list[self.tree_hash_list[id(item)]])
+		indList = self.return_obj_ind_list(listToFit)
 
 		
 		#Removes duplicates
@@ -1805,8 +1798,8 @@ class Form(QMainWindow):
 		
 		#deletes the objects
 		for indL in indList:
-			self.objIdArr[indL].fitted = False;
-			self.objIdArr[indL].goodFit = True;
+			self.objIdArr[indL].fitted = False
+			self.objIdArr[indL].goodFit = True
 			self.objIdArr[indL].param = copy.deepcopy(self.def_param)
 			self.objIdArr[indL].model_autoNorm =[]
 			self.objIdArr[indL].model_autotime = []
@@ -1829,17 +1822,12 @@ class Form(QMainWindow):
 			copyStr += 'Time (ms)'+'\t'
 		else:
 			f = open(outPath+'/'+filenameTxt+'_rawFitData.csv', 'w')
-			f.write('Time (ms)'+',');
+			f.write('Time (ms)'+',')
 		
 
 
 		listToFit = self.series_list_view.selectedIndexes()
-		indList =[];
-		if listToFit ==[]:
-			indList = range(0,self.objIdArr.__len__())
-		else:
-			for v_ind in listToFit:
-				indList.append(v_ind.row())
+		indList = self.return_obj_ind_list(listToFit)
 		
 		if copy_fn == True:
 			for v_ind in indList:
@@ -1885,51 +1873,51 @@ class Form(QMainWindow):
 
 	def paramFactory(self,paraTxt,setDec,paraMin,paraMax,setSingStep,row,param):
 				"""UI factory function"""
-				#exec("self."+paraTxt+"_label = QLabel()");
+				#exec("self."+paraTxt+"_label = QLabel()")
 				
 				
-				exec("self."+paraTxt+"_value = QDoubleSpinBox()");
-				exec("self."+paraTxt+"_value.setDecimals("+str(setDec)+")");
-				exec("self."+paraTxt+"_value.setSingleStep("+str(setSingStep)+")");
-				exec("self."+paraTxt+"_value.setRange("+str(paraMin)+","+str(paraMax)+")");
-				
-				try:
-					exec("self."+paraTxt+"_value.setValue(float(param[\'"+paraTxt+"\']['value']))");
-				except:
-					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\']['value']))");
-				
-				exec("self."+paraTxt+"_vary = QCheckBox()");
-				try:
-					exec("self."+paraTxt+"_vary.setChecked(param[\'"+paraTxt+"\']['vary'])");
-				except:
-					exec("self."+paraTxt+"_vary.setChecked(self.def_param[\'"+paraTxt+"\']['vary'])");
-				exec("self."+paraTxt+"_min = QDoubleSpinBox()");
-				exec("self."+paraTxt+"_min.setDecimals("+str(setDec)+")");
-				exec("self."+paraTxt+"_min.setSingleStep("+str(setSingStep)+")");
-				exec("self."+paraTxt+"_min.setRange("+str(paraMin)+","+str(paraMax)+")");
+				exec("self."+paraTxt+"_value = QDoubleSpinBox()")
+				exec("self."+paraTxt+"_value.setDecimals("+str(setDec)+")")
+				exec("self."+paraTxt+"_value.setSingleStep("+str(setSingStep)+")")
+				exec("self."+paraTxt+"_value.setRange("+str(paraMin)+","+str(paraMax)+")")
 				
 				try:
-					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\']['minv']))");
+					exec("self."+paraTxt+"_value.setValue(float(param[\'"+paraTxt+"\']['value']))")
 				except:
-					exec("self."+paraTxt+"_min.setValue(float(self.def_param[\'"+paraTxt+"\']['minv']))");
-				exec("self."+paraTxt+"_max = QDoubleSpinBox()");
-				exec("self."+paraTxt+"_max.setDecimals("+str(setDec)+")");
-				exec("self."+paraTxt+"_max.setSingleStep("+str(setSingStep)+")");
-				exec("self."+paraTxt+"_max.setRange("+str(paraMin)+","+str(paraMax)+")");
-				exec("self."+paraTxt+"_label = QLabel()");
-				try:
-					exec("self."+paraTxt+"_max.setValue(float(param[\'"+paraTxt+"\']['maxv']))");
-				except:
-					 exec("self."+paraTxt+"_max.setValue(float(self.def_param[\'"+paraTxt+"\']['maxv']))");
+					exec("self."+paraTxt+"_value.setValue(float(self.def_param[\'"+paraTxt+"\']['value']))")
 				
-				#exec("self.fitTable.setCellWidget(row, 0, self."+paraTxt+"_label)");
-				exec("self.fitTable.setCellWidget(row, 0, self."+paraTxt+"_value)");
+				exec("self."+paraTxt+"_vary = QCheckBox()")
+				try:
+					exec("self."+paraTxt+"_vary.setChecked(param[\'"+paraTxt+"\']['vary'])")
+				except:
+					exec("self."+paraTxt+"_vary.setChecked(self.def_param[\'"+paraTxt+"\']['vary'])")
+				exec("self."+paraTxt+"_min = QDoubleSpinBox()")
+				exec("self."+paraTxt+"_min.setDecimals("+str(setDec)+")")
+				exec("self."+paraTxt+"_min.setSingleStep("+str(setSingStep)+")")
+				exec("self."+paraTxt+"_min.setRange("+str(paraMin)+","+str(paraMax)+")")
+				
+				try:
+					exec("self."+paraTxt+"_min.setValue(float(param[\'"+paraTxt+"\']['minv']))")
+				except:
+					exec("self."+paraTxt+"_min.setValue(float(self.def_param[\'"+paraTxt+"\']['minv']))")
+				exec("self."+paraTxt+"_max = QDoubleSpinBox()")
+				exec("self."+paraTxt+"_max.setDecimals("+str(setDec)+")")
+				exec("self."+paraTxt+"_max.setSingleStep("+str(setSingStep)+")")
+				exec("self."+paraTxt+"_max.setRange("+str(paraMin)+","+str(paraMax)+")")
+				exec("self."+paraTxt+"_label = QLabel()")
+				try:
+					exec("self."+paraTxt+"_max.setValue(float(param[\'"+paraTxt+"\']['maxv']))")
+				except:
+					 exec("self."+paraTxt+"_max.setValue(float(self.def_param[\'"+paraTxt+"\']['maxv']))")
+				
+				#exec("self.fitTable.setCellWidget(row, 0, self."+paraTxt+"_label)")
+				exec("self.fitTable.setCellWidget(row, 0, self."+paraTxt+"_value)")
 				
 			   
 				
-				exec("self.fitTable.setCellWidget(row, 1, self."+paraTxt+"_vary)");
-				exec("self.fitTable.setCellWidget(row, 2, self."+paraTxt+"_min)");
-				exec("self.fitTable.setCellWidget(row, 3, self."+paraTxt+"_max)");
+				exec("self.fitTable.setCellWidget(row, 1, self."+paraTxt+"_vary)")
+				exec("self.fitTable.setCellWidget(row, 2, self."+paraTxt+"_min)")
+				exec("self.fitTable.setCellWidget(row, 3, self."+paraTxt+"_max)")
 	def defineTable(self):
 			"""Creates all the fields on the parameter table"""
 			self.fitTable.setCurrentCell(0,0)
@@ -1938,11 +1926,11 @@ class Form(QMainWindow):
 			self.fitTable.setHorizontalHeaderLabels(["Init","Vary","Min","Max", "", "", ""])
 			
 			
-			self.fitTable.setColumnWidth(0,75);
-			self.fitTable.setColumnWidth(1,32);
-			self.fitTable.setColumnWidth(2,75);
-			self.fitTable.setColumnWidth(3,75);
-			row = 0;
+			self.fitTable.setColumnWidth(0,75)
+			self.fitTable.setColumnWidth(1,32)
+			self.fitTable.setColumnWidth(2,75)
+			self.fitTable.setColumnWidth(3,75)
+			row = 0
 			self.fitTable.repaint()
 			self.fitTable.reset()
 			self.labelArray =[]
@@ -1997,7 +1985,7 @@ class Form(QMainWindow):
 							
 							col = 2
 							row +=1
-							continue;
+							continue
 						if col ==2:
 							label = QLabel(' '+str(np.round(param[item]['value'],3)))
 							#label.setToolTip('test'+str(item))
@@ -2069,8 +2057,10 @@ class Form(QMainWindow):
 		"""Take the active parameters and applies them to all the other data which is not filtered"""
 		#Make sure all table properties are stored
 		self.updateParamFirst()
-		c = 0;
+
+		c = 0
 		import time
+
 		for Id, objId in enumerate(self.objIdArr):
 			t0 = time.time()
 			#Preflight fit.
@@ -2080,7 +2070,7 @@ class Form(QMainWindow):
 			if objId.toFit == True:
 				c = c+1
 				if objId != self.objId_sel:
-					#objId.param = Parameters();
+					#objId.param = Parameters()
 					objId.param = copy.deepcopy(self.objId_sel.param)
 				
 				objId.fitToParameters()

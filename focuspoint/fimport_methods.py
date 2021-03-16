@@ -5,6 +5,7 @@ from focuspoint.correlation_objects import corrObject
 import csv
 import numpy as np
 import copy
+
 import time
 def fcs_import_method(fit_obj,file_path,feed=None):
 	
@@ -42,13 +43,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 
 	#Main loop which ends once all file is read.
 	while  read == True:
-		
-		
-		
 		text = next(r_obj)
-
-		
-
 		while True:
 			if text[0].split(' = ')[0] == 'Name':
 				name2 = text[0].split(' = ')[1]
@@ -56,8 +51,10 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 
 			if text[0].split(' = ')[0] == 'Channel':
 				channel_str = text[0].split(' = ')[1]
+
 			text = next(r_obj)
 			if text  ==[]:
+
 				read = False
 				break
 			if  text[0].split(' = ')[0] == 'CountRateArray':
@@ -65,8 +62,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			
 		if read == False or text == []:
 			break
-		#text = next(r_obj)
-		
+	
 		dimensions = text[0].split(' = ')[1]
 		len_of_seq = int(dimensions.split(' ')[0])
 		if len_of_seq >0:
@@ -79,7 +75,6 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				if text.__len__() >1:
 					cscale.append(float(text[0]))
 					cdata.append(float(text[1]))
-
 				text = next(r_obj)[0].split(" ")
 			cdata_arr.append(cdata)
 			cscale_arr.append(cscale)
@@ -88,6 +83,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 		while  text[0].split(' = ')[0] != 'CorrelationArray':
 			text = next(r_obj)
 
+
 		
 		dimensions = text[0].split(' = ')[1]
 		len_of_seq = int(dimensions.split(' ')[0])
@@ -95,6 +91,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			tdata = []
 			tscale = []
 			text = next(r_obj)[0].split(" ")
+
 			for v in range(0,len_of_seq):
 
 				
@@ -103,13 +100,13 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 					tscale.append(float(text[0]))
 					tdata.append(float(text[1]))
 				
-
 				text = next(r_obj)[0].split(" ")
 			tdata_arr.append(tdata)
 			tscale_arr.append(tscale)
 		#This is where we find-out how many channels. Unhelpfully after the raw data.
 		while  text[0].split(' = ')[0] != 'Channels':
 			text = next(r_obj)
+
 
 		num_of_channels = int(text[0].split(' = ')[1])
 
@@ -130,6 +127,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			corrObj1.autoNorm= np.array(tdata_arr[0]).astype(np.float64).reshape(-1)
 			corrObj1.autotime= np.array(tscale_arr[0]).astype(np.float64).reshape(-1)*1000
 			
+
 			corrObj1.name = name+'-CH0'
 			corrObj1.parent_name = '.fcs files'
 			corrObj1.parent_uqid = '0'
@@ -147,6 +145,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			corrObj1.min = np.min(corrObj1.autoNorm)
 			corrObj1.tmax = np.max(corrObj1.autotime)
 			corrObj1.tmin = np.min(corrObj1.autotime)
+
 
 			if fit_obj.def_options['Diff_eq'] == 4: 
 				VD.calc_param_fcs(fit_obj,corrObj1)
@@ -177,6 +176,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				corrObj2.parent_uqid = '0'
 				corrObj2.ch_type = 1;
 		
+
 				#And to be in kHz we divide by 1000. This we found through comparison with Zeiss software.
 				if cscale_arr != []:
 					corrObj2.kcount = np.average(np.array(cdata_arr[1]))/1000
@@ -288,6 +288,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 		int_tscale =[];
 		int_tdata = [];
 		int_tdata2 = [];
+
 		
 		
 		proceed = False
@@ -296,7 +297,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			
 			if proceed =='correlated':
 				if line ==[]:
-					proceed =False;
+					proceed =False
 				else:
 					tscale.append(float(line[0]))
 					tdata.append(float(line[1]))
@@ -309,7 +310,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			if proceed =='intensity':
 				
 				if line ==[]:
-					proceed=False;
+					proceed=False
 				elif line.__len__()> 1:
 					
 					int_tscale.append(float(line[0]))
@@ -318,9 +319,9 @@ def sin_import_method(fit_obj,file_path,feed=None):
 						int_tdata2.append(float(line[2]))
 					
 			if (str(line)  == "[\'[CorrelationFunction]\']"):
-				proceed = 'correlated';
+				proceed = 'correlated'
 			elif (str(line)  == "[\'[IntensityHistory]\']"):
-				proceed = 'intensity';
+				proceed = 'intensity'
 			
 			
 		
@@ -334,7 +335,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 		corrObj1.parent_uqid = '0'
 					
 					
-		corrObj1.ch_type = 0;
+		corrObj1.ch_type = 0
 		#Average counts per bin. Apparently they are normalised to time.
 		unit = int_tscale[-1]/(int_tscale.__len__()-1)
 		#And to be in kHz we divide by 1000.
@@ -365,7 +366,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			corrObj2.name = corrObj2.name+'-CH1'
 			corrObj2.parent_name = '.sin files'
 			corrObj2.parent_uqid = '0'
-			corrObj2.ch_type = 1;
+			corrObj2.ch_type = 1
 	
 			#And to be in kHz we divide by 1000.
 			corrObj2.kcount = np.average(np.array(int_tdata2))/1000
@@ -392,9 +393,9 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			corrObj3 = corrObject(file_path,fit_obj)
 			corrObj3.autoNorm= np.array(tdata3).astype(np.float64).reshape(-1)
 			corrObj3.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
-			
 			corrObj3.ch_type = 2;
 			corrObj3.name = corrObj3.name+'-CH01'
+
 			corrObj3.parent_name = '.sin files'
 			corrObj3.parent_uqid = '0'
 			
@@ -426,6 +427,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			
 			corrObj4.ch_type = 3;
 			corrObj4.name = corrObj4.name+'-CH10'
+
 			corrObj4.parent_name = '.sin files'
 			corrObj4.parent_uqid = '0'
 			
@@ -454,12 +456,14 @@ def sin_import_method(fit_obj,file_path,feed=None):
 
 
 	
+
 def csv_import_method(fit_obj,file_path, feed = None):
 			if feed == None:
 				r_obj = csv.reader(open(str(file_path), 'r'))
 			else:
 				r_obj = csv.reader(feed.split('\n'), delimiter=',')
 				
+
 			line_one = next(r_obj)
 			if line_one.__len__()>1:
 				
@@ -473,7 +477,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 			else:
 				version = 1
 
-			corrObj1 = corrObject(file_path,fit_obj);
+			corrObj1 = corrObject(file_path,fit_obj)
 
 			if version == 1:
 				fit_obj.objIdArr.append(corrObj1)
@@ -487,7 +491,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 					if (c >0):
 						tscale.append(line[0])
 						tdata.append(line[1])
-					c +=1;
+					c +=1
 
 				corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 				corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)
@@ -568,12 +572,10 @@ def csv_import_method(fit_obj,file_path, feed = None):
 					
 					corrObj1.siblings = None
 					corrObj1.param = copy.deepcopy(fit_obj.def_param)
-					
 
 				elif numOfCH == 2:
-					corrObj2 = corrObject(file_path,fit_obj);
-					corrObj3 = corrObject(file_path,fit_obj);
-
+					corrObj2 = corrObject(file_path,fit_obj)
+					corrObj3 = corrObject(file_path,fit_obj)
 					
 					fit_obj.objIdArr.append(corrObj1)
 					fit_obj.objIdArr.append(corrObj2)
@@ -604,8 +606,8 @@ def csv_import_method(fit_obj,file_path, feed = None):
 					corrObj3.name = corrObj3.name+'-CH'+str(corrObj3.ch_type)
 
 					line = next(r_obj)
-					while  line[0][:4] != 'Time':
 
+					while  line[0][:4] != 'Time':
 						if line[0] == 'kcount':
 							corrObj1.kcount = float(line[1])
 							corrObj2.kcount = float(line[2])
@@ -637,7 +639,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 							corrObj1.parent_uqid = str(line[1])
 							corrObj2.parent_uqid = str(line[1])
 							corrObj3.parent_uqid = str(line[1])
-						
+
 						line = next(r_obj)
 					
 					

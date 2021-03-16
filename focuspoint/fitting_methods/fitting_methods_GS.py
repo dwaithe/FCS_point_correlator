@@ -95,7 +95,7 @@ def update_param_fcs(int_obj):
 def update_each(int_obj,text):
 		"""Will try and populate paramaters with what is present in the inteface, but if new option will goto the default"""
 		try:
-			exec("valueV = int_obj."+text+"_value.value()"); exec("minV = int_obj."+text+"_min.value()"); exec("maxV = int_obj."+text+"_max.value()"); exec("varyV = int_obj."+text+"_vary.isChecked()");
+			exec("valueV = int_obj."+text+"_value.value()"); exec("minV = int_obj."+text+"_min.value()"); exec("maxV = int_obj."+text+"_max.value()"); exec("varyV = int_obj."+text+"_vary.isChecked()")
 			
 			int_obj.objId_sel.param[text]['value'] = valueV 
 			int_obj.objId_sel.param[text]['minv'] = minV
@@ -118,7 +118,7 @@ def equation_(param,tc,options):
 
 	offset =param['offset'].value; 
 	GN0 =param['GN0'].value; 
-	Y = param['Y'].value;
+	Y = param['Y'].value
 	
 
 	k = (0.689 + 0.34*np.exp(-0.37*(Y-0.5)**2))
@@ -129,50 +129,50 @@ def equation_(param,tc,options):
 	elif(options['Triplet_eq'] ==2):
 		#Equation (2) 1st equation.
 		if (options['Triplet_species'] == 1):
-			B1 = param['B1'].value;tauT1 = param['tauT1'].value;
+			B1 = param['B1'].value;tauT1 = param['tauT1'].value
 			#For one dark state.
 			GT = 1 + (B1*np.exp(-tc/tauT1))
 		elif (options['Triplet_species'] == 2):
-			B1 = param['B1'].value;tauT1 = param['tauT1'].value;
-			B2 = param['B2'].value;tauT2 = param['tauT2'].value;
+			B1 = param['B1'].value;tauT1 = param['tauT1'].value
+			B2 = param['B2'].value;tauT2 = param['tauT2'].value
 			#For two dark state
 			GT = 1 + (B1*np.exp(-tc/tauT1))+(B2*np.exp(-tc/tauT2))
 		elif (options['Triplet_species'] == 3):
-			B1 = param['B1'].value;tauT1 = param['tauT1'].value;
-			B2 = param['B2'].value;tauT2 = param['tauT2'].value;
-			B3 = param['B3'].value;tauT3 = param['tauT3'].value;
+			B1 = param['B1'].value;tauT1 = param['tauT1'].value
+			B2 = param['B2'].value;tauT2 = param['tauT2'].value
+			B3 = param['B3'].value;tauT3 = param['tauT3'].value
 			#For three dark state
 			GT = 1 + (B1*np.exp(-tc/tauT1))+(B2*np.exp(-tc/tauT2))+(B3*np.exp(-tc/tauT3))
 	
 	elif(options['Triplet_eq'] ==3):       
 		#Equation (2) 2nd equation.
 		if (options['Triplet_species'] == 1):
-			T1 = param['T1'].value;tauT1 = param['tauT1'].value;
+			T1 = param['T1'].value;tauT1 = param['tauT1'].value
 			#For one dark state.
 			GT = 1- T1 + (T1*np.exp(-tc/tauT1))
 		elif (options['Triplet_species'] == 2):
-			T1 = param['T1'].value;tauT1 = param['tauT1'].value;
-			T1 = param['T2'].value;tauT1 = param['tauT2'].value;
+			T1 = param['T1'].value;tauT1 = param['tauT1'].value
+			T1 = param['T2'].value;tauT1 = param['tauT2'].value
 			#For two dark state.
 			GT = 1- (T1+T2 )+ ((T1*np.exp(-tc/tauT1))+(T2*np.exp(-tc/tauT2)))
 		elif (options['Triplet_species'] == 3):
-			T1 = param['T1'].value;tauT1 = param['tauT1'].value;
-			T2 = param['T2'].value;tauT1 = param['tauT2'].value;
-			T3 = param['T3'].value;tauT1 = param['tauT3'].value;
+			T1 = param['T1'].value;tauT1 = param['tauT1'].value
+			T2 = param['T2'].value;tauT1 = param['tauT2'].value
+			T3 = param['T3'].value;tauT1 = param['tauT3'].value
 			#For three dark state.
 			GT = 1- (T1+T2+T3)+ ((T1*np.exp(-tc/tauT1))+(T2*np.exp(-tc/tauT2))+(T3*np.exp(-tc/tauT3)))
 	
 	
 	if (options['Diff_species'] == 1):
-		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value;
+		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value
 
 		gy1 = (np.sqrt(np.pi)/Y)*(1 + ((Y/np.sqrt(np.pi))*(erf(Y)/erf(Y/np.sqrt(2))**2)-1)*((np.exp(-k*(np.pi/Y)**2) *tc/tdiff1)/(np.sqrt(1+tc/tdiff1))))
 		gx1 = 1/np.sqrt(1+tc/tdiff1)
 		
 		GDiff = A1*gy1*gx1
 	if (options['Diff_species'] == 2):
-		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value;
-		A2 = param['A2'].value; tdiff2 = param['tdiff2'].value;
+		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value
+		A2 = param['A2'].value; tdiff2 = param['tdiff2'].value
 
 		param['A2'].value = 1.0-A1
 		A2 = param['A2'].value
@@ -184,9 +184,9 @@ def equation_(param,tc,options):
 
 		GDiff = A1*gy1*gx1 + A2*gy2*gx2
 	if (options['Diff_species'] == 3):
-		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value;
-		A2 = param['A2'].value; tdiff2 = param['tdiff2'].value;
-		A3 = param['A3'].value; tdiff3 = param['tdiff3'].value;
+		A1 = param['A1'].value; tdiff1 = param['tdiff1'].value
+		A2 = param['A2'].value; tdiff2 = param['tdiff2'].value
+		A3 = param['A3'].value; tdiff3 = param['tdiff3'].value
 
 		param['A2'].value = 1.0-A1-A3
 		A2 = param['A2'].value
