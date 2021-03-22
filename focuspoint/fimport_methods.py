@@ -116,7 +116,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				this_is_ch = i
 
 		if len_of_seq >0:
-			print('num_of_channels',num_of_channels)
+			
 			#If a four channel file we want to skip until we have collected all channels.
 			if num_of_channels == 4 and tdata_arr.__len__() != 4:
 				continue
