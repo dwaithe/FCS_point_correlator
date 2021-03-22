@@ -3,7 +3,7 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView,QWebEnginePage as QWebPage
- 
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt5.QtWidgets import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
 from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFileDialog, qApp
@@ -220,7 +220,7 @@ class Form(QMainWindow):
 			self.loadpath = os.path.expanduser('~')+'/FCS_Analysis/'
 		
 		# The first index of the returned tuple contains the file list.
-		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'Supported Files (*.csv *.sin *.fcs);;All Files (*.*)')[0]
+		files_to_load = load_fileInt.getOpenFileNames(self, 'Open a data file', self.loadpath, 'Supported Files (*.csv *.sin *.fcs);;All Files (*.*)')
 		self.load_series(files_to_load)
 		
 		try:
@@ -239,7 +239,6 @@ class Form(QMainWindow):
 				print("nameAndExt", file_path)
 				self.name = self.nameAndExt[0]
 				self.ext = self.nameAndExt[-1]
-				print('csv',self.ext)
 				#try:
 				if self.ext == 'SIN' or self.ext == 'sin':
 					sin_import_method(self,file_path)
@@ -341,7 +340,6 @@ class Form(QMainWindow):
 					if self.xscale_min == 0:
 						self.xscale_min = 0.0001
 					self.axes.set_xlim(self.xscale_min,self.xscale_max)
-					print(self.xscale_min,'xscale_min',self.xscale_max,'scale_max')
 				else:
 					self.axes.autoscale(None)
 				
@@ -452,7 +450,7 @@ class Form(QMainWindow):
 					#Find the nearest position to the the vertical line.
 					xpos1 = int(np.argmin(np.abs(self.scale -  self.dr.xpos)))
 					xpos2 = int(np.argmin(np.abs(self.scale -  self.dr1.xpos)))
-					xpos1a = np.argmax(self.series >0)
+					xpos1a = np.argmin(self.series >0)
 					xpos2a = int(self.series.shape[0]-np.argmax(self.series[::-1] >-1)-1)
 					if (xpos1<xpos1a):
 						xpos1 = xpos1a
@@ -460,9 +458,8 @@ class Form(QMainWindow):
 						xpos2 = xpos2a
 				except:
 					
-					try:
-						
-						xpos1 = np.argmax(self.scale >0)
+					try:	
+						xpos1 = 10
 						xpos2 = int(self.series.shape[0]-np.argmax(self.series[::-1] >-1)-1)
 					except:
 						
@@ -476,6 +473,7 @@ class Form(QMainWindow):
 				self.dr = draggableLine(self.line0, self)
 				self.dr.type = 'left'
 				self.dr.xpos = self.scale[xpos1]
+				self.dr.connect()
 				#Set the spinbox values
 				self.fit_btn_min.array = self.scale
 				self.fit_btn_max.array = self.scale
@@ -484,7 +482,7 @@ class Form(QMainWindow):
 				self.fit_btn_min.setValue(self.scale[xpos1])
 				self.fit_btn_max.setValue(self.scale[xpos2])
 
-				self.dr.connect()
+				
 				#The line on the right.
 				self.line1=self.axes.axvline(x=self.scale[xpos2],linewidth=4, color='gray')
 				self.dr1 = draggableLine(self.line1,self)
@@ -706,16 +704,55 @@ class Form(QMainWindow):
 				
 
 				#Filter for CH identification:
-				if self.ch_check_ch0.isChecked() == True and objId.ch_type == 0:
+				if self.ch_check_ch1.isChecked() == True and objId.ch_type == 0:
 					objId.toFit = True
-				elif self.ch_check_ch1.isChecked() == True and objId.ch_type == 1:
+				elif self.ch_check_ch2.isChecked() == True and objId.ch_type == 1:
 					objId.toFit = True
-				elif self.ch_check_ch01.isChecked() == True and objId.ch_type == 2:
+				elif self.ch_check_ch12.isChecked() == True and objId.ch_type == 2:
 					objId.toFit = True
-				elif self.ch_check_ch10.isChecked() == True and objId.ch_type == 3:
+				elif self.ch_check_ch21.isChecked() == True and objId.ch_type == 3:
 					objId.toFit = True
 				else:
 					objId.toFit = False
+
+
+				#Filter for CH identification:
+				if self.ch_check_ch1.isChecked() == True and objId.ch_type == '1_1':
+					objId.toFit = True
+				elif self.ch_check_ch2.isChecked() == True and objId.ch_type == '2_2':
+					objId.toFit = True
+				elif self.ch_check_ch3.isChecked() == True and objId.ch_type == '3_3':
+					objId.toFit = True
+				elif self.ch_check_ch4.isChecked() == True and objId.ch_type == '4_4':
+					objId.toFit = True
+				elif self.ch_check_ch12.isChecked() == True and objId.ch_type == '1_2':
+					objId.toFit = True
+				elif self.ch_check_ch13.isChecked() == True and objId.ch_type == '1_3':
+					objId.toFit = True
+				elif self.ch_check_ch14.isChecked() == True and objId.ch_type == '1_4':
+					objId.toFit = True
+				elif self.ch_check_ch23.isChecked() == True and objId.ch_type == '2_3':
+					objId.toFit = True
+				elif self.ch_check_ch24.isChecked() == True and objId.ch_type == '2_4':
+					objId.toFit = True
+				elif self.ch_check_ch34.isChecked() == True and objId.ch_type == '3_4':
+					objId.toFit = True
+				elif self.ch_check_ch21.isChecked() == True and objId.ch_type == '2_1':
+					objId.toFit = True
+				elif self.ch_check_ch31.isChecked() == True and objId.ch_type == '3_1':
+					objId.toFit = True
+				elif self.ch_check_ch41.isChecked() == True and objId.ch_type == '4_1':
+					objId.toFit = True
+				elif self.ch_check_ch32.isChecked() == True and objId.ch_type == '3_2':
+					objId.toFit = True
+				elif self.ch_check_ch42.isChecked() == True and objId.ch_type == '4_2':
+					objId.toFit = True
+				elif self.ch_check_ch43.isChecked() == True and objId.ch_type == '4_3':
+					objId.toFit = True
+				else:
+					objId.toFit = False
+
+
 				
 				for filt in self.tfb.filter_list:
 					if objId.filter == False:
@@ -1288,44 +1325,164 @@ class Form(QMainWindow):
 
 		right_ch_check = QHBoxLayout()
 		right_ch_check.setSpacing(16)
-		#Channel 0 auto-correlation
-		ch_check_ch0_label = QLabel("ac: CH0")
-		self.ch_check_ch0 = QCheckBox()
-		self.ch_check_ch0.setChecked(True)
-		self.ch_check_ch0.setToolTip("check to display CH0 auto-correlation data.")
-		self.ch_check_ch0.stateChanged.connect(self.fill_series_list)
+		right_ch_check1 = QHBoxLayout()
+		right_ch_check1.setSpacing(8)
+		right_ch_check2 = QHBoxLayout()
+		right_ch_check2.setSpacing(8)
+
+		right_ch_VH = QVBoxLayout()
+	
+		
 		#Channel 1 auto-correlation
-		ch_check_ch1_label = QLabel("CH1")
+		ch_check_ch1_label = QLabel("ac: CH1")
 		self.ch_check_ch1 = QCheckBox()
 		self.ch_check_ch1.setChecked(True)
 		self.ch_check_ch1.setToolTip("check to display CH1 auto-correlation data.")
 		self.ch_check_ch1.stateChanged.connect(self.fill_series_list)
-		#Channel 01 cross-correlation
-		ch_check_ch01_label = QLabel("cc: CH01")
-		self.ch_check_ch01 = QCheckBox()
-		self.ch_check_ch01.setChecked(True)
-		self.ch_check_ch01.setToolTip("check to display CH01 cross-correlation data.")
-		self.ch_check_ch01.stateChanged.connect(self.fill_series_list)
+		#Channel 2 auto-correlation
+		ch_check_ch2_label = QLabel("CH2")
+		self.ch_check_ch2 = QCheckBox()
+		self.ch_check_ch2.setChecked(True)
+		self.ch_check_ch2.setToolTip("check to display CH2 auto-correlation data.")
+		self.ch_check_ch2.stateChanged.connect(self.fill_series_list)
+		#Channel 3 auto-correlation
+		ch_check_ch3_label = QLabel("CH3")
+		self.ch_check_ch3 = QCheckBox()
+		self.ch_check_ch3.setChecked(True)
+		self.ch_check_ch3.setToolTip("check to display CH3 auto-correlation data.")
+		self.ch_check_ch3.stateChanged.connect(self.fill_series_list)
+		#Channel 4 auto-correlation
+		ch_check_ch4_label = QLabel("CH4")
+		self.ch_check_ch4 = QCheckBox()
+		self.ch_check_ch4.setChecked(True)
+		self.ch_check_ch4.setToolTip("check to display CH4 auto-correlation data.")
+		self.ch_check_ch4.stateChanged.connect(self.fill_series_list)
+		#Channel 12 cross-correlation
+		ch_check_ch12_label = QLabel("CH12")
+		self.ch_check_ch12 = QCheckBox()
+		self.ch_check_ch12.setChecked(True)
+		self.ch_check_ch12.setToolTip("check to display CH12 cross-correlation data.")
+		self.ch_check_ch12.stateChanged.connect(self.fill_series_list)
+		#Channel 13 cross-correlation
+		ch_check_ch13_label = QLabel("CH13")
+		self.ch_check_ch13 = QCheckBox()
+		self.ch_check_ch13.setChecked(True)
+		self.ch_check_ch13.setToolTip("check to display CH12 cross-correlation data.")
+		self.ch_check_ch13.stateChanged.connect(self.fill_series_list)
 		#Channel 10 cross-correlation
-		ch_check_ch10_label = QLabel("CH10")
-		self.ch_check_ch10 = QCheckBox()
-		self.ch_check_ch10.setChecked(False)
-		self.ch_check_ch10.setToolTip("check to display CH10 cross-correlation data.")
-		self.ch_check_ch10.stateChanged.connect(self.fill_series_list)
+		ch_check_ch14_label = QLabel("CH14")
+		self.ch_check_ch14 = QCheckBox()
+		self.ch_check_ch14.setChecked(True)
+		self.ch_check_ch14.setToolTip("check to display CH10 cross-correlation data.")
+		self.ch_check_ch14.stateChanged.connect(self.fill_series_list)
+		#Channel 23 cross-correlation
+		ch_check_ch23_label = QLabel("CH23")
+		self.ch_check_ch23 = QCheckBox()
+		self.ch_check_ch23.setChecked(True)
+		self.ch_check_ch23.setToolTip("check to display CH23 cross-correlation data.")
+		self.ch_check_ch23.stateChanged.connect(self.fill_series_list)
+		#Channel 24 cross-correlation
+		ch_check_ch24_label = QLabel("CH24")
+		self.ch_check_ch24 = QCheckBox()
+		self.ch_check_ch24.setChecked(True)
+		self.ch_check_ch24.setToolTip("check to display CH24 cross-correlation data.")
+		self.ch_check_ch24.stateChanged.connect(self.fill_series_list)
+		#Channel 34 cross-correlation
+		ch_check_ch34_label = QLabel("CH34")
+		self.ch_check_ch34 = QCheckBox()
+		self.ch_check_ch34.setChecked(True)
+		self.ch_check_ch34.setToolTip("check to display CH34 cross-correlation data.")
+		self.ch_check_ch34.stateChanged.connect(self.fill_series_list)
+
+		#Channel 21 cross-correlation
+		ch_check_ch21_label = QLabel("CH21")
+		self.ch_check_ch21 = QCheckBox()
+		self.ch_check_ch21.setChecked(True)
+		self.ch_check_ch21.setToolTip("check to display CH21 cross-correlation data.")
+		self.ch_check_ch21.stateChanged.connect(self.fill_series_list)
+		#Channel 31 cross-correlation
+		ch_check_ch31_label = QLabel("CH31")
+		self.ch_check_ch31 = QCheckBox()
+		self.ch_check_ch31.setChecked(True)
+		self.ch_check_ch31.setToolTip("check to display CH31 cross-correlation data.")
+		self.ch_check_ch31.stateChanged.connect(self.fill_series_list)
+		#Channel 32 cross-correlation
+		ch_check_ch32_label = QLabel("CH32")
+		self.ch_check_ch32 = QCheckBox()
+		self.ch_check_ch32.setChecked(True)
+		self.ch_check_ch32.setToolTip("check to display CH32 cross-correlation data.")
+		self.ch_check_ch32.stateChanged.connect(self.fill_series_list)
+		#Channel 41 cross-correlation
+		ch_check_ch41_label = QLabel("CH41")
+		self.ch_check_ch41 = QCheckBox()
+		self.ch_check_ch41.setChecked(True)
+		self.ch_check_ch41.setToolTip("check to display CH41 cross-correlation data.")
+		self.ch_check_ch41.stateChanged.connect(self.fill_series_list)
+		#Channel 42 cross-correlation
+		ch_check_ch42_label = QLabel("CH42")
+		self.ch_check_ch42 = QCheckBox()
+		self.ch_check_ch42.setChecked(True)
+		self.ch_check_ch42.setToolTip("check to display CH42 cross-correlation data.")
+		self.ch_check_ch42.stateChanged.connect(self.fill_series_list)
+		
+		#Channel 43 cross-correlation
+		ch_check_ch43_label = QLabel("CH43")
+		self.ch_check_ch43 = QCheckBox()
+		self.ch_check_ch43.setChecked(True)
+		self.ch_check_ch43.setToolTip("check to display CH43 cross-correlation data.")
+		self.ch_check_ch43.stateChanged.connect(self.fill_series_list)
 		#Add widgets.
-		right_ch_check.addWidget(ch_check_ch0_label)
-		right_ch_check.addWidget(self.ch_check_ch0)
+		aa_check_export_fns = QtWidgets.QGroupBox('auto-correlation')
+		cc_check_export_fns = QtWidgets.QGroupBox('cross-correlation')
+
 		right_ch_check.addWidget(ch_check_ch1_label)
 		right_ch_check.addWidget(self.ch_check_ch1)
-		right_ch_check.addWidget(ch_check_ch01_label)
-		right_ch_check.addWidget(self.ch_check_ch01)
-		right_ch_check.addWidget(ch_check_ch10_label)
-		right_ch_check.addWidget(self.ch_check_ch10)
+		right_ch_check.addWidget(ch_check_ch2_label)
+		right_ch_check.addWidget(self.ch_check_ch2)
+		right_ch_check.addWidget(ch_check_ch3_label)
+		right_ch_check.addWidget(self.ch_check_ch3)
+		right_ch_check.addWidget(ch_check_ch4_label)
+		right_ch_check.addWidget(self.ch_check_ch4)
+		right_ch_check.addStretch()
+
+		right_ch_check1.addWidget(ch_check_ch12_label)
+		right_ch_check1.addWidget(self.ch_check_ch12)
+		right_ch_check1.addWidget(ch_check_ch13_label)
+		right_ch_check1.addWidget(self.ch_check_ch13)
+		right_ch_check1.addWidget(ch_check_ch14_label)
+		right_ch_check1.addWidget(self.ch_check_ch14)
+		right_ch_check1.addWidget(ch_check_ch23_label)
+		right_ch_check1.addWidget(self.ch_check_ch23)
+		right_ch_check1.addWidget(ch_check_ch24_label)
+		right_ch_check1.addWidget(self.ch_check_ch24)
+		right_ch_check1.addWidget(ch_check_ch34_label)
+		right_ch_check1.addWidget(self.ch_check_ch34)
+
+		right_ch_check2.addWidget(ch_check_ch21_label)
+		right_ch_check2.addWidget(self.ch_check_ch21)
+		right_ch_check2.addWidget(ch_check_ch31_label)
+		right_ch_check2.addWidget(self.ch_check_ch31)
+		right_ch_check2.addWidget(ch_check_ch41_label)
+		right_ch_check2.addWidget(self.ch_check_ch41)
+		right_ch_check2.addWidget(ch_check_ch32_label)
+		right_ch_check2.addWidget(self.ch_check_ch32)
+		right_ch_check2.addWidget(ch_check_ch42_label)
+		right_ch_check2.addWidget(self.ch_check_ch42)
+		right_ch_check2.addWidget(ch_check_ch43_label)
+		right_ch_check2.addWidget(self.ch_check_ch43)
 		#Add to main layout.
 		self.right_check_all_none.clicked.connect(self.check_all_none)
 		self.show_button.clicked.connect(self.on_show)
 		#self.connect(self.show_button, QtCore.SIGNAL('clicked()'), self.on_show)
-		right_vbox.addLayout(right_ch_check)
+		right_vbox.addWidget(aa_check_export_fns)
+		right_vbox.addWidget(cc_check_export_fns)
+		
+		aa_check_export_fns.setLayout(right_ch_check)
+
+		right_ch_VH.addLayout(right_ch_check1)
+		right_ch_VH.addLayout(right_ch_check2)
+		cc_check_export_fns.setLayout(right_ch_VH)
+
 
 		
 

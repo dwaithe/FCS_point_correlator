@@ -51,12 +51,8 @@ class picoObject():
 		
 		#Imports pt3 file format to object.
 		self.unqID = self.par_obj.numOfLoaded
+		self.objId =[]
 		
-		#For fitting.
-		self.objId1 = None
-		self.objId2 = None
-		self.objId3 = None
-		self.objId4 = None
 		self.processData()
 		
 		self.plotOn = True
@@ -104,7 +100,8 @@ class picoObject():
 			self.exit = True
 			return 
 
-					
+		if self.type  == 'subObject':
+			self.subArrayGeneration(self.xmin,self.xmax)			
 		
 		#Colour assigned to file.
 		self.color = self.par_obj.colors[self.unqID % len(self.par_obj.colors)]
@@ -112,160 +109,151 @@ class picoObject():
 		#How many channels there are in the files.
 		
 		self.ch_present = np.sort(np.unique(np.array(self.subChanArr)))
+		
 		if self.ext == 'pt3' or self.ext == 'ptu'or self.ext == 'pt2':
-			self.numOfCH =  self.ch_present.__len__()-1 #Minus 1 because not interested in channel 15.
+			
+			self.numOfCH =  self.ch_present.__len__() #Minus 1 because not interested in channel 15.
+
 		else:
 			self.numOfCH =  self.ch_present.__len__()
-		
 		#Finds the numbers which address the channels.
 		
-		#Calculates decay function for both channels.
-		self.photonDecayCh1,self.decayScale1 = delayTime2bin(np.array(self.dTimeArr),np.array(self.subChanArr),self.ch_present[0],self.winInt)
-		
-		if self.numOfCH ==  2:
-			self.photonDecayCh2,self.decayScale2 = delayTime2bin(np.array(self.dTimeArr),np.array(self.subChanArr),self.ch_present[1],self.winInt)
-
-		#Time series of photon counts. For visualisation.
-		
-
-		self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
-	
-		
-		unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
-		
-		
-		#Converts to counts per 
-		self.kcount_CH1 = np.average(self.timeSeries1)
-
-		raw_count = np.average(self.timeSeries1) #This is the unnormalised intensity count for int_time duration (the first moment)
-		var_count = np.var(self.timeSeries1)
-
-		self.brightnessNandBCH0=(((var_count -raw_count)/(raw_count))/(float(unit)))
-		if (var_count-raw_count) == 0:
-			self.numberNandBCH0 =0
-		else:
-			self.numberNandBCH0 = (raw_count**2/(var_count-raw_count))
-		
-
-
-		if self.numOfCH ==  2:
-
-			self.timeSeries2,self.timeSeriesScale2 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[1],self.photonCountBin)
-			unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
-			self.kcount_CH2 = np.average(self.timeSeries2)
-			raw_count = np.average(self.timeSeries2) #This is the unnormalised intensity count for int_time duration (the first moment)
-			var_count = np.var(self.timeSeries2)
-			self.brightnessNandBCH1= (((var_count -raw_count)/(raw_count))/(float(unit)))
-			if (var_count-raw_count) == 0:
-				self.numberNandBCH1 =0
-			else:
-				self.numberNandBCH1 = (raw_count**2/(var_count-raw_count))
-			self.CV = calc_coincidence_value(self)
 			
-
+		self.photonDecay = []
+		self.decayScale = []
+		self.timeSeries = []
+		self.timeSeriesScale = []
+		self.kcount = []
+		self.brightnessNandB = []
+		self.numberNandB = []
+		self.photonDecayMin = []
+		self.photonDecayNorm = []
 
 		
+
+		for i in range(0,self.numOfCH):
+			photonDecay, decayScale = delayTime2bin(np.array(self.dTimeArr),np.array(self.subChanArr),self.ch_present[i],self.winInt)
+			self.photonDecay.append(photonDecay)
+			self.decayScale.append(decayScale)
+
+			#Normalisaation of the decay functions.
+			if np.sum(self.photonDecay[i]) > 0:
+				self.photonDecayMin.append(self.photonDecay[i]-np.min(self.photonDecay[i]))
+				self.photonDecayNorm.append(self.photonDecayMin[i]/np.max(self.photonDecayMin[i]))
+			else:
+				self.photonDecayMin.append(0)
+				self.photonDecayNorm.append(0)
+
+			timeSeries, timeSeriesScale = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[i],self.photonCountBin)
+			self.timeSeries.append(timeSeries)
+			self.timeSeriesScale.append(timeSeriesScale)
+			
+			kcount, brightnessNandB, numberNandB = photonCountingStats(self.timeSeries[i],self.timeSeriesScale[i])
+			self.kcount.append(kcount)
+			self.brightnessNandB.append(brightnessNandB)
+			self.numberNandB.append(numberNandB)
+		
+		#Correlation combinations.
+		##Provides ordering of files and reduces repetition.
+
+		corr_array = []
+		corr_comb = []
+		
+
+		
+		for i in range(0,self.numOfCH):
+			corr_array.append([])
+			for j in range(0,self.numOfCH):
+				if i < j:
+					corr_comb.append([i,j])
+				corr_array[i].append([])
+					
+		
+		for i,j in corr_comb:
+			corr_fn = self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr),[self.ch_present[i],self.ch_present[j]])
+			
+			if corr_array[i][i]  == []:
+				corr_array[i][i] = corr_fn[:,0,0].reshape(-1)
+			if corr_array[j][j] == []:
+				corr_array[j][j] = corr_fn[:,1,1].reshape(-1)
+			corr_array[i][j] = corr_fn[:,0,1].reshape(-1)
+			corr_array[j][i] = corr_fn[:,1,0].reshape(-1)
+		self.autoNorm = corr_array  
+		self.autotime = self.autotime.reshape(-1)
+		self.CV = []			
 		#Calculates the Auto and Cross-correlation functions.
-		self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr))
+		#self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr),np.array(self.ch_present)[0:2])
 		
 		if self.fit_obj != None:
+			self.indx_arr = []
+
+			#I order them this way, for systematic ordering in the plotting. 
+			#All the plots are included. First the auto, then the cross.
+			for i in range(0,self.numOfCH):
+				self.indx_arr.append([i,i])
+			for i in range(0,self.numOfCH):
+				for j in range(0,self.numOfCH):
+					if i != j:
+						self.indx_arr.append([i,j])
+
 			#If fit object provided then creates fit objects.
-			if self.objId1 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj)
-				self.objId1 = corrObj.objId
-				self.objId1.parent_name = 'point FCS'
-				self.objId1.parent_uqid = 'point FCS'
-				self.fit_obj.objIdArr.append(corrObj.objId)
-				self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
-				self.objId1.name = self.name+'_CH0_Auto_Corr'
-				self.objId1.ch_type = 0 #channel 0 Auto
-				self.objId1.siblings = None
-				self.objId1.prepare_for_fit()
-				self.objId1.kcount = self.kcount_CH1
-				self.objId1.item_in_list = False
-				
-			self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
-			self.objId1.autotime = np.array(self.autotime).reshape(-1)
-			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
-			self.objId1.max = np.max(self.objId1.autoNorm)
-			self.objId1.min = np.min(self.objId1.autoNorm)
-			self.objId1.tmax = np.max(self.objId1.autotime)
-			self.objId1.tmin = np.min(self.objId1.autotime)
-
+			traces = self.indx_arr.__len__()
 			
-			
-			if self.numOfCH ==  2:
-				self.objId1.CV = self.CV
+
+			for c in range(0,traces):
+				i,j = self.indx_arr[c]
+				if self.objId.__len__() == c:
+					corrObj= corrObject(self.filepath,self.fit_obj)
+					self.objId.append(corrObj.objId)
+					if self.type == "subObject":
+						self.objId[c].parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
+						self.objId[c].parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
+					else:
+						self.objId[c].parent_name = 'point FCS'
+						self.objId[c].parent_uqid = 'point FCS'
+
+					self.fit_obj.objIdArr.append(corrObj.objId)
+					self.objId[c].param = copy.deepcopy(self.fit_obj.def_param)
+					
+					self.objId[c].ch_type = str(i+1)+"_"+str(j+1)
+					
+					self.objId[c].prepare_for_fit()
+					self.objId[c].siblings = None
+				
+					self.objId[c].item_in_list = False
+
+					
+						
+					self.objId[c].name = self.name+'_CH'+str(self.indx_arr[c][0]+1)+'_CH'+str(self.indx_arr[c][1]+1)
+					if i == j:
+						self.objId[c].name += '_Auto_Corr'
+						self.objId[c].kcount = self.kcount[i]
+					else:
+						self.objId[c].name += '_Cross_Corr'
+						
+					
+				self.objId[c].autoNorm = corr_array[i][j]
+				
 				
 
-				if self.objId3 == None:
-					corrObj= corrObject(self.filepath,self.fit_obj)
-					self.objId3 = corrObj.objId
-					self.objId3.parent_name = 'point FCS'
-					self.objId3.parent_uqid = 'point FCS'
-					self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
-					self.fit_obj.objIdArr.append(corrObj.objId)
-					self.objId3.name = self.name+'_CH1_Auto_Corr'
-					self.objId3.ch_type = 1 #channel 1 Auto
-					self.objId3.siblings = None
-					self.objId3.prepare_for_fit()
-					self.objId3.kcount = self.kcount_CH2
-					self.objId3.item_in_list = False
-					
-				self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
-				self.objId3.autotime = np.array(self.autotime).reshape(-1)
-				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
-				self.objId3.max = np.max(self.objId3.autoNorm)
-				self.objId3.min = np.min(self.objId3.autoNorm)
-				self.objId3.tmax = np.max(self.objId3.autotime)
-				self.objId3.tmin = np.min(self.objId3.autotime)
+				self.objId[c].autotime = np.array(self.autotime).reshape(-1)
+				self.objId[c].param = copy.deepcopy(self.fit_obj.def_param)
+				self.objId[c].max = np.max(self.objId[c].autoNorm)
+				self.objId[c].min = np.min(self.objId[c].autoNorm)
+				self.objId[c].tmax = np.max(self.objId[c].autotime)
+				self.objId[c].tmin = np.min(self.objId[c].autotime)
+				if i != j:
+					self.objId[c].CV = calc_coincidence_value(self.timeSeries[i],self.timeSeries[j])
+				else:
+					self.objId[c].CV = None
 
-
-				self.objId3.CV = self.CV
-				if self.objId2 == None:
-					corrObj= corrObject(self.filepath,self.fit_obj)
-					self.objId2 = corrObj.objId
-					self.objId2.parent_name = 'point FCS'
-					self.objId2.parent_uqid = 'point FCS'
-					self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
-					self.fit_obj.objIdArr.append(corrObj.objId)
-					self.objId2.name = self.name+'_CH01_Cross_Corr'
-					self.objId2.ch_type = 2 #01cross
-					self.objId2.siblings = None
-					self.objId2.prepare_for_fit()
-					self.objId2.item_in_list = False
-					
-				self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
-				self.objId2.autotime = np.array(self.autotime).reshape(-1)
-				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
-				self.objId2.max = np.max(self.objId2.autoNorm)
-				self.objId2.min = np.min(self.objId2.autoNorm)
-				self.objId2.tmax = np.max(self.objId2.autotime)
-				self.objId2.tmin = np.min(self.objId2.autotime)
-				self.objId2.CV =self.CV
-
-				if self.objId4 == None:
-					corrObj= corrObject(self.filepath,self.fit_obj)
-					self.objId4 = corrObj.objId
-					self.objId4.parent_name = 'point FCS'
-					self.objId4.parent_uqid = 'point FCS'
-					self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
-					self.fit_obj.objIdArr.append(corrObj.objId)
-					self.objId4.name = self.name+'_CH10_Cross_Corr'
-					self.objId4.ch_type = 3 #10cross
-					self.objId4.siblings = None
-					self.objId4.prepare_for_fit()
-					self.objId4.item_in_list = False
-
-				self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
-				self.objId4.autotime = np.array(self.autotime).reshape(-1)
-				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
-				self.objId4.max = np.max(self.objId4.autoNorm)
-				self.objId4.min = np.min(self.objId4.autoNorm)
-				self.objId4.tmax = np.max(self.objId4.autotime)
-				self.objId4.tmin = np.min(self.objId4.autotime)
-				self.objId4.CV = self.CV
+				self.CV.append(self.objId[c].CV)
+			
 			self.fit_obj.fill_series_list()
+		
+		
+
+
 		self.dTimeMin = 0
 		self.dTimeMax = np.max(self.dTimeArr)
 		self.subDTimeMin = self.dTimeMin
@@ -274,245 +262,51 @@ class picoObject():
 		#del self.subChanArr 
 		#del self.trueTimeArr 
 		del self.dTimeArr
-	def crossAndAuto(self,trueTimeArr,subChanArr):
+	
+	def crossAndAuto(self,trueTimeArr,subChanArr,channelsToUse):
 		#For each channel we loop through and find only those in the correct time gate.
 		#We only want photons in channel 1 or two.
-		y = trueTimeArr[subChanArr < 3]
-		validPhotons = subChanArr[subChanArr < 3 ]
+		if self.numOfCH == 1:
+			indices = subChanArr == channelsToUse[0]
+			y = trueTimeArr[indices]
+			validPhotons = subChanArr[indices]
+		else:
+			indices0 = subChanArr == channelsToUse[0]
+			indices1 = subChanArr == channelsToUse[1]
+			indices = indices0+indices1
+			
+			
+			y = trueTimeArr[indices]
+			validPhotons = subChanArr[indices]
 
 
 		#Creates boolean for photon events in either channel.
 		num = np.zeros((validPhotons.shape[0],2))
-		num[:,0] = (np.array([np.array(validPhotons) ==self.ch_present[0]])).astype(np.int32)
-		if self.numOfCH ==2:
-			num[:,1] = (np.array([np.array(validPhotons) ==self.ch_present[1]])).astype(np.int32)
-
+		num[:,0] = (np.array([np.array(validPhotons) == channelsToUse[0]])).astype(np.int32)
+		if self.numOfCH >1:
+			num[:,1] = (np.array([np.array(validPhotons) ==channelsToUse[1]])).astype(np.int32)
+			
 
 		self.count0 = np.sum(num[:,0]) 
 		self.count1 = np.sum(num[:,1])
+
+
 
 		t1 = time.time()
 		auto, self.autotime = tttr2xfcs(y,num,self.NcascStart,self.NcascEnd, self.Nsub)
 		t2 = time.time()
 		
-		
 
 		#Normalisation of the TCSPC data:
 		maxY = np.ceil(max(self.trueTimeArr))
-		self.autoNorm = np.zeros((auto.shape))
-		self.autoNorm[:,0,0] = ((auto[:,0,0]*maxY)/(self.count0*self.count0))-1
+		autoNorm = np.zeros((auto.shape))
+		autoNorm[:,0,0] = ((auto[:,0,0]*maxY)/(self.count0*self.count0))-1
 		
-		if self.numOfCH ==  2:
-			self.autoNorm[:,1,1] = ((auto[:,1,1]*maxY)/(self.count1*self.count1))-1
-			self.autoNorm[:,1,0] = ((auto[:,1,0]*maxY)/(self.count1*self.count0))-1
-			self.autoNorm[:,0,1] = ((auto[:,0,1]*maxY)/(self.count0*self.count1))-1
-			
-
-		#Normalisaation of the decay functions.
-		if np.sum(self.photonDecayCh1) > 0:
-			self.photonDecayCh1Min = self.photonDecayCh1-np.min(self.photonDecayCh1)
-			self.photonDecayCh1Norm = self.photonDecayCh1Min/np.max(self.photonDecayCh1Min)
-			
-			
-			if self.numOfCH ==  2:
-				self.photonDecayCh2Min = self.photonDecayCh2-np.min(self.photonDecayCh2)
-				self.photonDecayCh2Norm = self.photonDecayCh2Min/np.max(self.photonDecayCh2Min)
-		else:
-			self.photonDecayCh1Min = 0
-			self.photonDecayCh1Norm = 0
-			self.photonDecayCh2Min = 0
-			self.photonDecayCh2Norm = 0
-
-		
-		return 
-   
-
-	
-	
-class subPicoObject():
-	def __init__(self,parentId,xmin,xmax,TGid,par_obj):
-		#Binning window for decay function
-		self.TGid = TGid
-		#Parameters for auto-correlation and cross-correlation.
-		self.parentId = parentId
-		self.par_obj = par_obj
-		self.NcascStart = self.parentId.NcascStart
-		self.NcascEnd = self.parentId.NcascEnd
-		self.Nsub = self.parentId.Nsub
-		self.fit_obj = self.parentId.fit_obj
-		self.ext = self.parentId.ext
-		
-		self.type = 'subObject'
-		#Appends the object to the subObject register.
-		self.par_obj.subObjectRef.append(self)
-		self.unqID = self.par_obj.subNum
-		self.parentUnqID = self.parentId.unqID
-		#self.chanArr = parentObj.chanArr
-		#self.trueTimeArr = self.parentId.trueTimeArr
-		#self.dTimeArr = self.parentId.dTimeArr
-		self.color = self.parentId.color
-		self.numOfCH = self.parentId.numOfCH
-		self.ch_present = self.parentId.ch_present
-		self.photonCountBin = 25#self.par_obj.photonCountBin
-
-		self.filepath = str(self.parentId.filepath)
-		self.xmin = xmin
-		self.xmax = xmax
-
-		self.nameAndExt = os.path.basename(self.filepath).split('.')
-		self.name = self.nameAndExt[0]+'-TG-'+str(self.unqID)+'-xmin_'+str(round(xmin,0))+'-xmax_'+str(round(xmax,0))
-
-		self.objId1 = None
-		self.objId2 = None
-		self.objId3 = None
-		self.objId4 = None
-		self.processData()
-		self.plotOn = True
-		
-		
-	def processData(self):
-		self.NcascStart= self.par_obj.NcascStart
-		self.NcascEnd= self.par_obj.NcascEnd
-		self.Nsub = self.par_obj.Nsub
-		self.winInt = self.par_obj.winInt
-		
-		
-		#self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
-		if self.ext == 'pt2':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt2import(self.filepath)
-		if self.ext == 'pt3':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = pt3import(self.filepath)
-		if self.ext == 'csv':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = csvimport(self.filepath)
-		if self.ext == 'spc':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
-		if self.ext == 'asc':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
-
-
-		self.subArrayGeneration(self.xmin,self.xmax)
-		
-		self.dTimeMin = self.parentId.dTimeMin
-		self.dTimeMax = self.parentId.dTimeMax
-		self.subDTimeMin = self.dTimeMin
-		self.subDTimeMax = self.dTimeMax
-
-	   #Time series of photon counts. For visualisation.
-		self.timeSeries1,self.timeSeriesScale1 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[0],self.photonCountBin)
-		
-		unit = self.timeSeriesScale1[-1]/self.timeSeriesScale1.__len__()
-		self.kcount_CH1 = np.average(self.timeSeries1)
-
-		raw_count = np.average(self.timeSeries1) #This is the unnormalised intensity count for int_time duration (the first moment)
-		var_count = np.var(self.timeSeries1)
-
-		self.brightnessNandBCH0=(((var_count -raw_count)/(raw_count))/(float(unit)))
-		if (var_count-raw_count) == 0:
-			self.numberNandBCH0 =0
-		else:
-			self.numberNandBCH0 = (raw_count**2/(var_count-raw_count))
-
-		if self.numOfCH ==  2:
-
-			self.timeSeries2,self.timeSeriesScale2 = delayTime2bin(np.array(self.trueTimeArr)/1000000,np.array(self.subChanArr),self.ch_present[1],self.photonCountBin)
-			unit = self.timeSeriesScale2[-1]/self.timeSeriesScale2.__len__()
-			self.kcount_CH2 = np.average(self.timeSeries2)
-			raw_count = np.average(self.timeSeries2) #This is the unnormalised intensity count for int_time duration (the first moment)
-			var_count = np.var(self.timeSeries2)
-			self.brightnessNandBCH1= (((var_count -raw_count)/(raw_count))/(float(unit)))
-			if (var_count-raw_count) == 0:
-				self.numberNandBCH1 =0
-			else:
-				self.numberNandBCH1 = (raw_count**2/(var_count-raw_count))
-
-			self.CV = calc_coincidence_value(self)
-
-			
-		
-
-		
-		#Adds names to the fit function for later fitting.
-		if self.objId1 == None:
-			corrObj= corrObject(self.filepath,self.fit_obj)
-			self.objId1 = corrObj.objId
-			self.objId1.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-			self.objId1.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-			self.fit_obj.objIdArr.append(corrObj.objId)
-			self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
-			self.objId1.name = self.name+'_CH0_Auto_Corr'
-			self.objId1.ch_type = 0 #channel 0 Auto
-			self.objId1.siblings = None
-			self.objId1.prepare_for_fit()
-			
-			self.objId1.kcount = self.kcount_CH1
-		self.objId1.autoNorm = np.array(self.autoNorm[:,0,0]).reshape(-1)
-		self.objId1.autotime = np.array(self.autotime).reshape(-1)
-		self.objId1.param = copy.deepcopy(self.fit_obj.def_param)
-		
-		
-		if self.numOfCH == 2:
-			self.objId1.CV = self.CV
-			if self.objId3 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj)
-				self.objId3 = corrObj.objId
-				self.objId3.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-				self.objId3.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-				self.fit_obj.objIdArr.append(corrObj.objId)
-				self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
-				self.objId3.name = self.name+'_CH1_Auto_Corr'
-				self.objId3.ch_type = 1 #channel 1 Auto
-				self.objId3.siblings = None
-				self.objId3.prepare_for_fit()
-				self.objId3.kcount = self.kcount_CH2
-				
-				
-			self.objId3.autoNorm = np.array(self.autoNorm[:,1,1]).reshape(-1)
-			self.objId3.autotime = np.array(self.autotime).reshape(-1)
-			self.objId3.param = copy.deepcopy(self.fit_obj.def_param)
-			self.objId3.CV = self.CV
-			if self.objId2 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj)
-				self.objId2 = corrObj.objId
-				self.objId2.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-				self.objId2.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-				self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
-				self.fit_obj.objIdArr.append(corrObj.objId)
-				self.objId2.name = self.name+'_CH01_Cross_Corr'
-				self.objId2.ch_type = 2 #channel 01 Cross
-				self.objId2.siblings = None
-				self.objId2.prepare_for_fit()
-
-				
-			self.objId2.autoNorm = np.array(self.autoNorm[:,0,1]).reshape(-1)
-			self.objId2.autotime = np.array(self.autotime).reshape(-1)
-			self.objId2.param = copy.deepcopy(self.fit_obj.def_param)
-			self.objId2.CV = self.CV
-			if self.objId4 == None:
-				corrObj= corrObject(self.filepath,self.fit_obj)
-				self.objId4 = corrObj.objId
-				
-				self.objId4.parent_name = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-				self.objId4.parent_uqid = 'pt FCS tgated -tg0: '+str(np.round(self.xmin,0))+' -tg1: '+str(np.round(self.xmax,0))
-				self.objId4.param = copy.deepcopy(self.fit_obj.def_param)
-				self.fit_obj.objIdArr.append(corrObj.objId)
-				self.objId4.name = self.name+'_CH10_Cross_Corr'
-				self.objId4.ch_type = 3 #channel 10 Cross
-				self.objId4.siblings = None
-				self.objId4.prepare_for_fit()
-				
-			self.objId4.autoNorm = np.array(self.autoNorm[:,1,0]).reshape(-1)
-			self.objId4.autotime = np.array(self.autotime).reshape(-1)
-			self.objId4.CV = self.CV
-			
-			
-		
-		self.fit_obj.fill_series_list()  
-		#del self.subChanArr 
-		#self.trueTimeArr 
-		del self.dTimeArr 
-	
-
-
+		if self.numOfCH >1:
+			autoNorm[:,1,1] = ((auto[:,1,1]*maxY)/(self.count1*self.count1))-1
+			autoNorm[:,1,0] = ((auto[:,1,0]*maxY)/(self.count1*self.count0))-1
+			autoNorm[:,0,1] = ((auto[:,0,1]*maxY)/(self.count0*self.count1))-1
+		return  autoNorm
 	def subArrayGeneration(self,xmin,xmax):
 		if(xmax<xmin):
 			xmin1 = xmin
@@ -524,39 +318,64 @@ class subPicoObject():
 		
 		self.subChanArr[np.invert(photonInd).astype(np.bool)] = 16
 		
-		self.crossAndAuto()
 
 		return
-	def crossAndAuto(self):
-		#We only want photons in channel 1 or two.
-		validPhotons = self.subChanArr[self.subChanArr < 3]
-		y = self.trueTimeArr[self.subChanArr < 3]
-		#Creates boolean for photon events in either channel.
-		num = np.zeros((validPhotons.shape[0],2))
-		num[:,0] = (np.array([np.array(validPhotons) ==self.ch_present[0]])).astype(np.int)
-		if self.numOfCH == 2:
-			num[:,1] = (np.array([np.array(validPhotons) ==self.ch_present[1]])).astype(np.int)
 
-		self.count0 = np.sum(num[:,0]) 
-		self.count1 = np.sum(num[:,1]) 
-		#Function which calculates auto-correlation and cross-correlation.
+	
+	
+class subPicoObject(picoObject):
+	def __init__(self,parentId,xmin,xmax,TGid,par_obj):
+		#Binning window for decay function
+		self.TGid = TGid
+		#Parameters for auto-correlation and cross-correlation.
+		self.parentId = parentId
+		self.par_obj = par_obj
+		
+		self.fit_obj = self.parentId.fit_obj
+		self.ext = self.parentId.ext
+		
+		self.type = 'subObject'
+		#Appends the object to the subObject register.
+		self.par_obj.subObjectRef.append(self)
+		self.unqID = self.par_obj.subNum
+		self.parentUnqID = self.parentId.unqID
 
+		self.color = self.parentId.color
+		self.numOfCH = self.parentId.numOfCH
+		self.ch_present = self.parentId.ch_present
+		self.photonCountBin = 25#self.par_obj.photonCountBin
 
+		self.filepath = str(self.parentId.filepath)
+		self.xmin = xmin
+		self.xmax = xmax
 
-		auto, self.autotime = tttr2xfcs(y,num,self.NcascStart,self.NcascEnd, self.Nsub)
+		self.objId =[]
+		self.nameAndExt = os.path.basename(self.filepath).split('.')
+		self.name = self.nameAndExt[0]+'-TG-'+str(self.unqID)+'-xmin_'+str(round(xmin,0))+'-xmax_'+str(round(xmax,0))
+		#self.processData = self.parentId.processData
+		self.processData()
+		self.plotOn = True
+		
+		
+	
+def photonCountingStats(timeSeries,timeSeriesScale):
+	unit = timeSeriesScale[-1]/timeSeriesScale.__len__()
 
-		maxY = np.ceil(max(self.trueTimeArr))
-		self.autoNorm = np.zeros((auto.shape))
-		self.autoNorm[:,0,0] = ((auto[:,0,0]*maxY)/(self.count0*self.count0))-1
-		if self.numOfCH ==2:
-			self.autoNorm[:,1,1] = ((auto[:,1,1]*maxY)/(self.count1*self.count1))-1
-			self.autoNorm[:,1,0] = ((auto[:,1,0]*maxY)/(self.count1*self.count0))-1
-			self.autoNorm[:,0,1] = ((auto[:,0,1]*maxY)/(self.count0*self.count1))-1
+	#Converts to counts per 
+	kcount_CH = np.average(timeSeries)
 
-		return 
-def calc_coincidence_value(self):
-	N1 = np.bincount((np.array(self.timeSeries1)).astype(np.int64))
-	N2 = np.bincount((np.array(self.timeSeries2)).astype(np.int64))
+	raw_count = np.average(timeSeries) #This is the unnormalised intensity count for int_time duration (the first moment)
+	var_count = np.var(timeSeries)
+
+	brightnessNandBCH=(((var_count -raw_count)/(raw_count))/(float(unit)))
+	if (var_count-raw_count) == 0:
+		numberNandBCH =0
+	else:
+		numberNandBCH = (raw_count**2/(var_count-raw_count))
+	return kcount_CH, brightnessNandBCH, numberNandBCH 
+def calc_coincidence_value(timeSeries1,timeSeries2):
+	N1 = np.bincount((np.array(timeSeries1)).astype(np.int64))
+	N2 = np.bincount((np.array(timeSeries2)).astype(np.int64))
 	
 	n = max(N1.shape[0],N2.shape[0])
 	NN1 = np.zeros(n)
@@ -596,15 +415,51 @@ class corrObject():
 		self.series_list_id = None
 	   
 	def prepare_for_fit(self):
-		if self.parentFn.ch_check_ch0.isChecked() == True and self.ch_type == 0:
+		if self.parentFn.ch_check_ch1.isChecked() == True and self.ch_type == 0:
 			self.toFit = True
-		if self.parentFn.ch_check_ch1.isChecked() == True and self.ch_type == 1:
+		if self.parentFn.ch_check_ch2.isChecked() == True and self.ch_type == 1:
 			self.toFit = True
 			
-		if self.parentFn.ch_check_ch01.isChecked() == True and self.ch_type == 2:
+		if self.parentFn.ch_check_ch12.isChecked() == True and self.ch_type == 2:
 			self.toFit = True
-		if self.parentFn.ch_check_ch10.isChecked() == True and self.ch_type == 3:
+		if self.parentFn.ch_check_ch21.isChecked() == True and self.ch_type == 3:
 			self.toFit = True
+
+		if self.parentFn.ch_check_ch1.isChecked() == True and self.ch_type == '1_1':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch2.isChecked() == True and self.ch_type == '2_2':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch3.isChecked() == True and self.ch_type == '3_3':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch4.isChecked() == True and self.ch_type == '4_4':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch12.isChecked() == True and self.ch_type == '1_2':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch13.isChecked() == True and self.ch_type == '1_3':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch14.isChecked() == True and self.ch_type == '1_4':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch23.isChecked() == True and self.ch_type == '2_3':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch24.isChecked() == True and self.ch_type == '2_4':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch34.isChecked() == True and self.ch_type == '3_4':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch21.isChecked() == True and self.ch_type == '2_1':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch31.isChecked() == True and self.ch_type == '3_1':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch41.isChecked() == True and self.ch_type == '4_1':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch32.isChecked() == True and self.ch_type == '3_2':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch42.isChecked() == True and self.ch_type == '4_2':
+			self.toFit = True
+		elif self.parentFn.ch_check_ch43.isChecked() == True and self.ch_type == '4_3':
+			self.toFit = True
+		else:
+			self.toFit = False
+
 		#self.parentFn.modelFitSel.clear()
 		#for objId in self.parentFn.objIdArr:
 		 #   if objId.toFit == True:

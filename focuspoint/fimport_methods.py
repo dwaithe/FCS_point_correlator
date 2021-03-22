@@ -78,7 +78,6 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 				text = next(r_obj)[0].split(" ")
 			cdata_arr.append(cdata)
 			cscale_arr.append(cscale)
-			print("cscale_arr",cscale.__len__())
 		#Reads to first correlation array text.
 		while  text[0].split(' = ')[0] != 'CorrelationArray':
 			text = next(r_obj)
@@ -468,8 +467,9 @@ def csv_import_method(fit_obj,file_path, feed = None):
 			if line_one.__len__()>1:
 				
 					if float(line_one[1]) == 2:
-						
 						version = 2
+					elif float(line_one[1]) == 3:
+						version = 3
 					else:
 						print('version not known:',line_one[1])
 					
@@ -504,7 +504,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 
 				corrObj1.param = copy.deepcopy(fit_obj.def_param)
 				fit_obj.fill_series_list()
-			if version >= 2:
+			if version == 2:
 				
 					
 				numOfCH = float(next(r_obj)[1])
@@ -700,6 +700,93 @@ def csv_import_method(fit_obj,file_path, feed = None):
 					corrObj3.calculate_suitability()
 
 					SE.calc_param_fcs(fit_obj,corrObj1)
+
+			if version == 3:
+				
+				objIdArT = []
+				numOfCH = float(next(r_obj)[1])
+				
+				
+								
+				line = next(r_obj)
+				metadata = {}
+				
+				while  line[0][:4] != 'Time':
+					metadata[line[0]] = line[1:]
+					line = next(r_obj)
+
+				#null = next(r_obj)
+				line = next(r_obj)
+
+				tscale = []
+				tdata = []
+				
+				while  line[0] != 'end':
+					tscale.append(line[0])
+					tdata.append(line[1:])		
+					line = next(r_obj)
+
+				for i in range(0,int(numOfCH**2)):
+					corrObj = corrObject(file_path,fit_obj)
+					objIdArT.append(corrObj)
+					fit_obj.objIdArr.append(corrObj)	
+
+					corrObj.parent_name = 'no name'
+					corrObj.parent_uqid = '0'
+					corrObj.numOfCH = numOfCH
+					
+					corrObj.type = str(metadata['type'])				
+					corrObj.ch_type = str(metadata['ch_type'][i])
+					
+					corrObj.name = objIdArT[i].name+'-CH'+str(objIdArT[i].ch_type)
+					
+					if 'kcount' in metadata:
+						if i < numOfCH:
+							corrObj.kcount = float(metadata['kcount'][i])
+					if 'numberNandB' in metadata:
+						if i < numOfCH:
+							corrObj.numberNandB = float(metadata['numberNandB'][i])
+					if 'brightnessNandB' in metadata:
+						if i < numOfCH:
+							corrObj.brightnessNandB = float(metadata['brightnessNandB'][i])
+					if 'CV' in metadata:
+						if i >= numOfCH:
+							corrObj.CV = float(metadata['CV'][i])
+					if 'carpet pos' in metadata:
+						corrObj.carpet_position = int(metadata['carpet pos'][0])
+					if 'pc' in metadata:
+						pc_text = float(metadata['pc'][0])
+					if 'pbc_f0' in metadata:
+						corrObj.pbc_f0 = float(metadata['pbc_f0'][i])
+					if 'pbc_tb' in metadata:
+						corrObj.pbc_tb = float(metadata['pbc_tb'][i])	
+					if 'parent_name' in metadata:
+						corrObj.parent_name = str(metadata['parent_name'][0])
+					if 'parent_uqid' in metadata:
+						corrObj.parent_uqid = str(metadata['parent_uqid'][0])	
+						
+				
+					
+					td = []
+					for tda in tdata:
+						td.append(tda[i])
+
+					corrObj.autotime= np.array(tscale).astype(np.float64).reshape(-1)
+					corrObj.autoNorm= np.array(td).astype(np.float64).reshape(-1)
+					
+					corrObj.max = np.max(corrObj.autoNorm)
+					corrObj.min = np.min(corrObj.autoNorm)
+					
+					corrObj.tmax = np.max(corrObj.autotime)
+					corrObj.tmin = np.min(corrObj.autotime)
+
+					corrObj.param = copy.deepcopy(fit_obj.def_param)
+					corrObj.calculate_suitability()
+					SE.calc_param_fcs(fit_obj,corrObj)
+
+				#corrObj.siblings = [corrObj2,corrObj3]
+				#corrObj.siblings = [corrObj1,corrObj3]
+				#corrObj.siblings = [corrObj1,corrObj2]
 import pyperclip
 def saveOutputDataFn(fit_obj,indList,copy_fn=False):
 		localTime = time.asctime( time.localtime(time.time()) )

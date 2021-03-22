@@ -210,7 +210,7 @@ class FileDialog(QtWidgets.QMainWindow):
         
         for c,filename in enumerate(file_imports[0]):
             self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:green;font-weight:regular;}")
-            self.win_obj.image_status_text.showMessage("Processing file "+str(c+1)+" of "+str(file_imports.__len__()))
+            self.win_obj.image_status_text.showMessage("Processing file "+str(c+1)+" of "+str(file_imports[0].__len__()))
             self.fit_obj.app.processEvents()
             pic = picoObject(filename,self.par_obj,self.fit_obj);
             if pic.exit == True:
@@ -224,7 +224,7 @@ class FileDialog(QtWidgets.QMainWindow):
             self.win_obj.TGScrollBoxObj.generateList()
             self.win_obj.updateCombo()
             self.win_obj.cbx.setCurrentIndex(self.par_obj.numOfLoaded-1)
-            self.win_obj.plot_PhotonCount(self.par_obj.numOfLoaded-1)
+            self.win_obj.plot_PhotonCount()
         self.win_obj.plotDataQueueFn()
         self.win_obj.image_status_text.setStyleSheet("QStatusBar{padding-left:8px;color:green;font-weight:regular;}")
         self.win_obj.image_status_text.showMessage("Processing finished")
@@ -421,6 +421,7 @@ class Window(QtWidgets.QWidget):
         self.modelTab2.setHorizontalHeaderLabels(["","data name","plot","save","file name"])
 
         tableAndBtns =  QtWidgets.QVBoxLayout()
+        channelPlotBtns =  QtWidgets.QHBoxLayout()
         correlationBtns =  QtWidgets.QHBoxLayout()
         #self.label.setText('<HTML><H3>DATA file: </H3><P>'+str(6)+' Click here to load in this sample and what happens if I make it too long.</P></HTML>')
         #self.label.listId = 6
@@ -478,7 +479,16 @@ class Window(QtWidgets.QWidget):
         self.cbx.type ='PhotonCount'
         self.updateCombo()
 
+        self.replot_photon_btn = QtWidgets.QPushButton('replot Photon Count')
+        self.replot_photon_btn.clicked.connect(self.plot_PhotonCount)
         self.left_panel_top_btns.addWidget(self.cbx)
+        self.left_panel_top_btns.addWidget(self.replot_photon_btn)
+        self.plotText1 =QtWidgets.QLabel()
+        
+        self.left_panel_top_btns.addWidget(self.plotText1)
+        self.plotText2 =QtWidgets.QLabel()
+
+        self.left_panel_top_btns.addWidget(self.plotText2)
         self.left_panel_top_btns.addStretch()
 
         self.left_panel_export_fns = QtWidgets.QGroupBox('Export Binned Intensities')
@@ -532,7 +542,6 @@ class Window(QtWidgets.QWidget):
         self.left_panel_bottom_btns = QtWidgets.QHBoxLayout()
         self.left_panel_bottom.addLayout(self.left_panel_bottom_btns)
         self.left_panel_bottom_btns.addWidget(self.normPlot)
-        self.left_panel_bottom_btns.addWidget(self.replot_btn2)
         self.left_panel_bottom_btns.addWidget(self.winIntText)
 
         self.left_panel_bottom_btns.addWidget(self.winIntEdit)
@@ -563,11 +572,39 @@ class Window(QtWidgets.QWidget):
         
         self.left_panel_centre_right.setAlignment(QtCore.Qt.AlignTop)
         self.right_panel.addWidget(self.canvas1)
+        self.right_panel.addLayout(channelPlotBtns)
         self.right_panel.addLayout(correlationBtns)
         self.right_panel.addWidget(self.modelTab2)
         self.right_panel.addStrut(800)
 
+       
+        #self.updateCombo()
+        self.channel1_lbl = QtWidgets.QLabel('Visualization: Primary Channel')
+        self.channel1_sel =  comboBoxSp(self)
+        self.channel1_sel.type = 'channel1_sel'
         
+
+
+        self.channel2_lbl = QtWidgets.QLabel('Secondary Channel')
+        self.channel2_sel = comboBoxSp(self)
+        self.channel2_sel.type =  'channel2_sel'
+
+        for i in range(0,8):
+            self.channel1_sel.addItem('CH'+str(i+1))
+            self.channel2_sel.addItem('CH'+str(i+1))
+
+        self.channel1_sel.setCurrentIndex(0)
+        self.channel2_sel.setCurrentIndex(1)
+
+
+        
+
+        channelPlotBtns.addWidget(self.channel1_lbl)
+        channelPlotBtns.addWidget(self.channel1_sel)
+        channelPlotBtns.addWidget(self.channel2_lbl)
+        channelPlotBtns.addWidget(self.channel2_sel)
+
+        channelPlotBtns.addStretch()
         
         correlationBtns.addWidget(self.replot_btn)
         correlationBtns.addWidget(self.folderSelect_btn)
@@ -652,8 +689,10 @@ class Window(QtWidgets.QWidget):
             self.reprocessPhotonBinFn('TIFF',x+y+1)
 
     def reprocessPhotonBinFnCSV(self):
+        index = self.cbx.currentIndex()
         self.reprocessPhotonBinFn('CSV',index)
     def reprocessPhotonBinFnTIF(self):
+        index = self.cbx.currentIndex()
         self.reprocessPhotonBinFn('TIFF',index)
 
     def reprocessPhotonBinFn(self,type_ex,index):
@@ -665,60 +704,44 @@ class Window(QtWidgets.QWidget):
 
         if index < self.par_obj.numOfLoaded:
             objId = self.par_obj.objectRef[index]
-            objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
-            if objId.numOfCH == 2:
-                objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
         else:
             objId = self.par_obj.subObjectRef[index-self.par_obj.numOfLoaded]
-            objId.timeSeries1,objId.timeSeriesScale1 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[0],self.par_obj.photonCountBin)
-            if objId.numOfCH == 2:
-                objId.timeSeries2,objId.timeSeriesScale2 = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[1],self.par_obj.photonCountBin)
         
+        for i in range(0,objId.numOfCH):
+            timeSeries, timeSeriesScale = delayTime2bin(np.array(objId.trueTimeArr)/1000000,np.array(objId.subChanArr),objId.ch_present[i],objId.photonCountBin)
+            objId.timeSeries.append(timeSeries)
+            objId.timeSeriesScale.append(timeSeriesScale)   
+          
         
         
         if type_ex == 'CSV':
             f = open(self.folderOutput.filepath+'/'+objId.name+'_intensity.csv', 'w')
-            f.write('version,'+str(2)+'\n')
+            f.write('version,'+str(3)+'\n')
             f.write('numOfCH,'+str(objId.numOfCH)+'\n')
-            f.write('time(ms), intensityCH0, intensityCH1\n')
+            strt = "Time (ms)"
+            for i in range(0,objId.numOfCH):
+                strt += ",intensityCH"+str(i+1)
+            f.write(strt+'\n')
 
             if objId == None:
                 return
 
-            
-            if objId.numOfCH == 1:
-                
-                for x in range(0,objId.timeSeries1.__len__()):
-                    f.write(str(objId.timeSeriesScale1[x])+','+str(objId.timeSeries1[x])+ '\n')
-            if objId.numOfCH == 2:
-                for x in range(0,objId.timeSeries1.__len__()):
-                    f.write(str(objId.timeSeriesScale2[x])+','+str(objId.timeSeries1[x])+','+str(objId.timeSeries2[x])+ '\n')
-
-            
+            for x in range(0,objId.timeSeriesScale[0].__len__()):
+                strt = ""
+                for i in range(0,objId.numOfCH):
+                    strt += ","+str(objId.timeSeries[i][x])
+                f.write(str(objId.timeSeriesScale[0][x])+strt+'\n')
+           
         
         if type_ex == 'TIFF':
-            height = objId.timeSeries1.__len__()
-            if objId.numOfCH ==1:
-                
-                    export_im =np.zeros((height,1))
-                    export_im[:,0] = np.array(objId.timeSeries1).astype(np.float32)
-                    metadata = dict(microscope='', shape=[height,1], dtype=export_im.dtype.str)
-                    metadata = json.dumps(metadata)
-                    tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_raw.tiff', export_im.astype(np.float32), description=metadata)
-       
-
-            if objId.numOfCH ==2:
-                
-                    export_im =np.zeros((height,1))
-                    export_im[:,0] =  np.array(objId.timeSeries1).astype(np.float32)
-                    metadata = dict(microscope='', shape=[height,1], dtype=export_im.dtype.str)
-                    metadata = json.dumps(metadata)
-                    tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_CH0_raw.tiff', export_im.astype(np.float32), description=metadata)
-                    export_im =np.zeros((height,1))
-                    export_im[:,0] =  np.array(objId.timeSeries2).astype(np.float32)
-                    tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_CH1_raw.tiff', export_im.astype(np.float32), description=metadata)
-       
-                    
+            height = objId.timeSeries[0].__len__()
+            export_im =np.zeros((objId.numOfCH,1,1,height))
+            for i in range(0,objId.numOfCH):
+                export_im[i,0,0,:] =  np.array(objId.timeSeries[i]).astype(np.float32)
+            metadata = dict(microscope='', dtype=export_im.dtype.str)
+            metadata = json.dumps(metadata)
+            tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_raw.tiff', export_im.astype(np.float32), shape=export_im.shape,imagej=True,description=metadata)
+                  
 
         
         
@@ -735,8 +758,9 @@ class Window(QtWidgets.QWidget):
                     self.par_obj.subObjectRef[i].processData()
 
         self.plotDataQueueFn();
-        self.plot_PhotonCount(self.par_obj.numOfLoaded-1)
+        
         self.updateCombo()
+        self.plot_PhotonCount()
     def updateCombo(self):
         """Updates photon counting combox box"""
         self.cbx.clear()
@@ -745,22 +769,34 @@ class Window(QtWidgets.QWidget):
                 self.cbx.addItem("Data: "+str(b), b)
         for i in range(0, self.par_obj.subNum):
                 self.cbx.addItem("subData: "+str(b+i+1), b+i+1)
-    def plot_PhotonCount(self,index):
+    def plot_PhotonCount(self):
         """Plots the photon counting"""
-
+        index  = self.cbx.currentIndex();
         if index < self.par_obj.numOfLoaded:
-            object = self.par_obj.objectRef[index]
+            objId = self.par_obj.objectRef[index]
         else:
-            object = self.par_obj.subObjectRef[index-self.par_obj.numOfLoaded]
+            objId = self.par_obj.subObjectRef[index-self.par_obj.numOfLoaded]
         self.plt4.clear()
         self.canvas4.draw()
+        chplt1 = self.channel1_sel.currentIndex()
+        chplt2 = self.channel2_sel.currentIndex()
         
-        self.plt4.bar(np.array(object.timeSeriesScale1),np.array(object.timeSeries1), float(object.photonCountBin), color=object.color,linewidth=0)
-        if object.numOfCH ==  2:
-            self.plt4.bar(np.array(object.timeSeriesScale2),-1*np.array(object.timeSeries2).astype(np.float32),float(object.photonCountBin),color="grey",linewidth=0,edgecolor = None)
-       
+        if chplt1 < objId.timeSeriesScale.__len__():
+            self.plt4.bar(np.array(objId.timeSeriesScale[chplt1]),np.array(objId.timeSeries[chplt1]), float(objId.photonCountBin), color=objId.color,linewidth=0)
+            self.plt4.set_xlim(0,objId.timeSeriesScale[chplt1][-1])
+            self.plotText1.setText('CH'+str(self.channel1_sel.currentIndex()+1))
+            self.plotText1.setStyleSheet("color:"+objId.color+";")
+        else:
+            self.plotText1.setText('')
+
+        if objId.numOfCH >1 and chplt2 < objId.timeSeriesScale.__len__():
+            self.plt4.bar(np.array(objId.timeSeriesScale[chplt2]),-1*np.array(objId.timeSeries[chplt2]).astype(np.float32),float(objId.photonCountBin),color="grey",linewidth=0,edgecolor = None)
+            self.plotText2.setText('CH'+str(self.channel2_sel.currentIndex()+1))
+            self.plotText2.setStyleSheet("color:grey;")
+        else:
+            self.plotText2.setText('')
         self.figure4.subplots_adjust(left=0.15,bottom=0.25)
-        self.plt4.set_xlim(0,object.timeSeriesScale1[-1])
+        
         self.plt4.set_xlabel('Time (ms)', fontsize=12)
         self.plt4.set_ylabel('Photon counts', fontsize=12)
         self.plt4.xaxis.grid(True,'minor')
@@ -770,35 +806,55 @@ class Window(QtWidgets.QWidget):
         self.canvas4.draw()
 
             
-    def plot(self,object):
+    def plot(self,objId):
         ''' plot some random stuff '''
 
-        autotime = object.autotime
+        autotime = objId.autotime
+
+        idx1 = self.channel1_sel.currentIndex()
+        if objId.autoNorm.__len__() > idx1:
+            auto = objId.autoNorm[idx1][idx1]
+            self.plt1.plot(autotime,auto,objId.color)
         
-        auto = object.autoNorm
+            
+
         corrText = 'Auto-correlation'
         
         
-        subDTimeMax = object.subDTimeMax
-        subDTimeMin = object.subDTimeMin
+        subDTimeMax = objId.subDTimeMax
+        subDTimeMin = objId.subDTimeMin
         
         
-        self.plt1.plot(autotime,auto[:,0,0],object.color)
+        
         self.plt1.set_xscale('log')
         self.plt1.set_xlim([0, np.max(autotime)])
        
         self.plt1.set_xlabel('Tau (ms)', fontsize=12)
-        self.plt1.set_ylabel('Auto-correlation CH0 (tau)', fontsize=8)
+        self.plt1.set_ylabel('Auto-correlation CH'+str(idx1+1)+'(tau)', fontsize=8)
         self.plt1.xaxis.grid(True,'minor')
         self.plt1.xaxis.grid(True,'major')
         self.plt1.yaxis.grid(True,'minor')
         self.plt1.yaxis.grid(True,'major')
-        self.plt2.set_ylabel('Auto-correlation CH1 (tau)', fontsize=8)
-        self.plt2.xaxis.grid(True,'minor')
-        self.plt3.set_ylabel('Cross-correlation CH01 (tau)', fontsize=8)
-        self.plt3.xaxis.grid(True,'minor')
-        if object.numOfCH ==  2:
-            self.plt2.plot(autotime,auto[:,1,1],object.color)
+        
+        
+        if objId.numOfCH >1:
+
+            idx2 = self.channel2_sel.currentIndex()
+            if objId.autoNorm.__len__() > idx2:
+                    auto2 = objId.autoNorm[idx2][idx2]
+                    self.plt2.plot(autotime,auto2,objId.color)
+            if objId.autoNorm.__len__() > idx1:
+                if objId.autoNorm[idx1].__len__() > idx2:
+                    cross = objId.autoNorm[idx1][idx2]
+                    self.plt3.plot(autotime,cross,objId.color)
+            
+
+            self.plt2.set_ylabel('Auto-correlation CH'+str(idx2+1)+' (tau)', fontsize=8)
+            self.plt2.xaxis.grid(True,'minor')
+            self.plt3.set_ylabel('Cross-correlation CH'+str(idx1+1)+str(idx2+1)+' (tau)', fontsize=8)
+            self.plt3.xaxis.grid(True,'minor')
+            
+            
             self.plt2.set_xscale('log')
             self.plt2.set_xlim([0, np.max(autotime)])
             
@@ -808,9 +864,9 @@ class Window(QtWidgets.QWidget):
             self.plt2.yaxis.grid(True,'minor')
             self.plt2.yaxis.grid(True,'major')
             
-            self.plt3.plot(autotime,auto[:,0,1],object.color)
+            
             self.plt3.set_xscale('log')
-            self.plt3.set_xlim([0, np.max(autotime)])
+            self.plt3.set_xlim([1e-6, np.max(autotime)])
          
             self.plt3.set_xlabel('Tau (ms)', fontsize=12)
             
@@ -821,28 +877,39 @@ class Window(QtWidgets.QWidget):
             
             
 
-        if object.type == 'mainObject':
-            decayScale1 = object.decayScale1
-            if object.numOfCH ==  2:
-                decayScale2 = object.decayScale2
+        if objId.type == 'mainObject':
             if self.normPlot.isChecked() == True:
-                photonDecayCh1 = object.photonDecayCh1Norm
-                if object.numOfCH ==  2:
-                    photonDecayCh2 = object.photonDecayCh2Norm
                 axisText = 'No. of photons (Norm)'
             else:
-                photonDecayCh1 = object.photonDecayCh1
-                if object.numOfCH ==  2:
-                    photonDecayCh2 = object.photonDecayCh2
                 axisText = 'No. of photons '
-            self.plt5.plot(decayScale1, photonDecayCh1,object.color)
-            if object.numOfCH ==  2:
-                self.plt5.plot(decayScale2, photonDecayCh2,object.color,linestyle='dashed')
+
+            if objId.autoNorm.__len__() > idx1:
+                decayScale1 = objId.decayScale[idx1]
+                if self.normPlot.isChecked() == True:
+                    photonDecayCh1 = objId.photonDecayNorm[idx1]
+                else:
+                    photonDecayCh1 = objId.photonDecay[idx1]
+                self.plt5.plot(decayScale1[1:-2], photonDecayCh1[1:-2],objId.color)
+                    
+            if objId.numOfCH >1 and objId.autoNorm.__len__() > idx2:
+                decayScale2 = objId.decayScale[idx2]
+            
+                if self.normPlot.isChecked() == True:
+                    photonDecayCh2 = objId.photonDecayNorm[idx2]
+                else:
+                    photonDecayCh2 = objId.photonDecay[idx2]
+                self.plt5.plot(decayScale2[1:-2], photonDecayCh2[1:-2], objId.color,linestyle='dashed')
+                    
+            #
+            
+                
             self.figure5.subplots_adjust(left=0.1,right=0.95, bottom=0.20,top=0.90)
-            if object.resolution != None:
-                self.plt5.set_xlabel('Time channels (1 ='+str(np.round(object.resolution,4))+' ns)', fontsize=12)
+            if objId.resolution != None:
+                self.plt5.set_xlabel('Time channels (1 ='+str(np.round(objId.resolution,4))+' ns)', fontsize=12)
             else:
                 self.plt5.set_xlabel('Time channels (No micro time in file))', fontsize=12)
+            
+
             self.plt5.set_ylabel(axisText, fontsize=12)
             self.plt5.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
             self.plt5.xaxis.grid(True,'minor')
@@ -869,34 +936,54 @@ class Window(QtWidgets.QWidget):
                 
             
         f = open(self.folderOutput.filepath+'/'+objId.name+'_correlation.csv', 'w')
-        f.write('version,'+str(2)+'\n')
+        f.write('version,'+str(3)+'\n')
         f.write('numOfCH,'+str(objId.numOfCH)+'\n')
         f.write('type, point\n')
+        f.write('parent_name,'+objId.name+'\n')
+
+        strt = "ch_type"
+        for indx_arr in objId.indx_arr:
+            strt += ","+str(indx_arr[0]+1)+"_"+str(indx_arr[1]+1)
+        f.write(strt+'\n')
         
-        if objId.numOfCH == 1:
-            f.write('ch_type,'+str(0)+'\n')
-            f.write('kcount,'+str(objId.kcount_CH1)+'\n')
-            f.write('numberNandB,'+str(objId.numberNandBCH0)+'\n')
-            f.write('brightnessNandB,'+str(objId.brightnessNandBCH0)+'\n')
-            f.write('carpet pos, 0 \n')
-            f.write('pc, 0\n');
-            f.write('Time (ms), CH0 Auto-Correlation\n')
-            for x in range(0,objId.autotime.shape[0]):
-                f.write(str(objId.autotime[x][0])+','+str(objId.autoNorm[x,0,0])+ '\n')
-            f.write('end\n')
-        if objId.numOfCH == 2:
-            f.write('ch_type, 0 ,1, 2\n')
-            f.write('kcount,'+str(objId.kcount_CH1)+','+str(objId.kcount_CH2)+'\n')
-            f.write('numberNandB,'+str(objId.numberNandBCH0)+','+str(objId.numberNandBCH1)+'\n')
-            f.write('brightnessNandB,'+str(objId.brightnessNandBCH0)+','+str(objId.brightnessNandBCH1)+'\n')
-            f.write('CV,'+str(objId.CV)+','+str(objId.CV)+','+str(objId.CV)+'\n')
-            f.write('carpet pos, 0 \n')
-            
-            f.write('pc, 0\n');
-            f.write('Time (ms), CH0 Auto-Correlation, CH1 Auto-Correlation, CH01 Cross-Correlation\n')
-            for x in range(0,objId.autotime.shape[0]):
-                f.write(str(objId.autotime[x][0])+','+str(objId.autoNorm[x,0,0])+','+str(objId.autoNorm[x,1,1])+','+str(objId.autoNorm[x,0,1])+'\n')
-            f.write('end\n')
+        strt = "kcount"
+        for kcount in objId.kcount:
+            strt += ","+str(kcount)
+        f.write(strt+'\n')
+        
+        strt = "numberNandB"
+        for numberNandB in objId.numberNandB:
+            strt += ","+str(numberNandB)
+        f.write(strt+'\n')
+
+        strt = "brightnessNandB"
+        for brightnessNandB in objId.brightnessNandB:
+            strt += ","+str(brightnessNandB)
+        f.write(strt+'\n')
+
+        strt = "CV"
+        for CV in objId.CV:
+            strt += ","+str(CV)
+        f.write(strt+'\n')        
+
+        
+        f.write('carpet pos, 0 \n')
+        
+        f.write('pc, 0\n');
+        strt = "Time (ms)"
+        for i,j in objId.indx_arr:
+            if i ==j:
+                strt += ",CH"+str(i+1)+" Auto-Correlation"
+            else:
+                strt += ",CH"+str(i+1)+str(j+1)+" Cross-Correlation"
+        f.write(strt+'\n')
+        for x in range(0,objId.autotime.shape[0]):
+            strt = ""
+            for i,j in objId.indx_arr:
+                strt += ","+str(objId.autoNorm[i][j][x])
+
+            f.write(str(objId.autotime[x])+strt+'\n')
+        f.write('end\n')
                 
 
 
@@ -1004,8 +1091,12 @@ class comboBoxSp(QtWidgets.QComboBox):
                 self.obj.aug = 'rmAP'
                 self.obj.processData()
                 self.win_obj.plotDataQueueFn()
-        if self.type == 'PhotonCount':
-            self.win_obj.plot_PhotonCount(self.currentIndex());
+        #if self.type == 'PhotonCount':
+            
+        #if self.type == 'channel1_sel':
+        #    self.win_obj.plot_PhotonCount(self.win_obj.cbx.currentIndex());
+        #if self.type == 'channel2_sel':
+        #    self.win_obj.plot_PhotonCount(self.win_obj.cbx.currentIndex());
 
 class pushButtonSp(QtWidgets.QPushButton):
     def __init__(self, win_obj, par_obj):

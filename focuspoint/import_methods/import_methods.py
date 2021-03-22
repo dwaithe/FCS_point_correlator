@@ -103,6 +103,8 @@ def asc_file_import(file_path):
     return  np.array(chan_arr), np.array(true_time_arr)*(macro_time), np.array(dtime_arr), micro_time
 
 def ptuimport(filepath):
+    #This import is mostly taken from picoquant resource:
+    #https://github.com/PicoQuant/PicoQuant-Time-Tagged-File-Format-Demos/tree/master/PTU/Python
 
     
     tyEmpty8      = int('FFFF0008', 16);
@@ -127,7 +129,8 @@ def ptuimport(filepath):
     rtTimeHarp260NT2 = int('00010205', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $05 (TimeHarp260N)
     rtTimeHarp260PT3 = int('00010306', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $06 (TimeHarp260P)
     rtTimeHarp260PT2 = int('00010206', 16);# (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $06 (TimeHarp260P)
-
+    rtMultiHarpNT3   = struct.unpack(">i", bytes.fromhex('00010307'))[0]
+    rtMultiHarpNT2   = struct.unpack(">i", bytes.fromhex('00010207'))[0]
     fid = 0
     #TTResultFormat_TTTRRecType =0 ;
     #TTResult_NumberOfRecords = 0; #% Number of TTTR Records in the File;
@@ -274,6 +277,12 @@ def ptuimport(filepath):
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2:
         isT2 = True
         print ('TimeHarp260P T2 data \n')
+    elif TTResultFormat_TTTRRecType == rtMultiHarpNT3:
+        isT2 = False
+        print ('rtMultiHarpNT3 T2 data \n')
+    elif TTResultFormat_TTTRRecType == rtMultiHarpNT2:
+        isT2 = True
+        print ('rtMultiHarpNT3 T2 data \n')
 
     else:
         print('Illegal RecordType')
@@ -311,8 +320,13 @@ def ptuimport(filepath):
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2: #ReadHT2(2);
         print ('currently this type of file is not supported using this python implementation')
         return False
+    elif TTResultFormat_TTTRRecType == rtMultiHarpNT3: #ReadHT2(2);
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
+    elif TTResultFormat_TTTRRecType == rtMultiHarpNT2: #ReadHT2(2);
+        print ('currently this type of file is not supported using this python implementation')
+        return True
     else: 
-        print('Illegal RecordType')
+        print('Illegal RecordType or not yet supported')
         return False
         
     ###Decoder functions
@@ -350,10 +364,10 @@ def readPT2(inputfile,numRecords,MeasDesc_GlobalResolution):
             truetime = oflcorrection + time
             
 
-        trueTimeArr[cnt_ph] = truetime
-        dTimeArr[cnt_ph] = time
-        chanArr[cnt_ph] = channel+1
-        cnt_ph = cnt_ph +1
+            trueTimeArr[cnt_ph] = truetime
+            dTimeArr[cnt_ph] = time
+            chanArr[cnt_ph] = channel+1
+            cnt_ph = cnt_ph +1
     return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e6
 # Read HydraHarp/TimeHarp260 T3
 def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
@@ -366,26 +380,30 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
     chanArr = [0]*TTResult_NumberOfRecords
     trueTimeArr =[0]*TTResult_NumberOfRecords
     dTimeArr= [0]*TTResult_NumberOfRecords
-    for b in range(0,TTResult_NumberOfRecords):
-        RecNum = b
+    
+    for RecNum in range(0,TTResult_NumberOfRecords):
+        
        
-        T3Record = struct.unpack('I', f.read(4))[0];
-        nsync = T3Record & 1023
-        truetime = 0
+        #T3Record = struct.unpack('I', f.read(4))[0];
+        #nsync = T3Record & 1023
+        #truetime = None
+        try:
+            recordData = "{0:0{1}b}".format(struct.unpack("<I", f.read(4))[0], 32)
+        except:
+            print("The file ended earlier than expected, at record %d/%d."\
+                  % (recNum, TTResult_NumberOfRecords))
+            exit(0)
 
         #dtime = bitand(bitshift(T3Record,-10),32767);
-        dtime = ((T3Record >> 10) & 32767);
-        channel = ((T3Record >> 25) & 63);
-        special = ((T3Record >> 31) & 1);
-
-        
-
-        if special == 0:
-            true_nSync = OverflowCorrection + nsync
-            truetime = (true_nSync * MeasDesc_GlobalResolution * 1e9)
+        #dtime = ((T3Record >> 10) & 32767);
+        #channel = ((T3Record >> 25) & 63);
+        #special = ((T3Record >> 31) & 1);
+        special = int(recordData[0:1], base=2)
+        channel = int(recordData[1:7], base=2)
+        dtime = int(recordData[7:22], base=2)
+        nsync = int(recordData[22:32], base=2)
             
-            
-        else:
+        if special == 1:
             if channel  == 63:
                 if nsync == 0 or version == 1:
                     OverflowCorrection = OverflowCorrection + T3WRAPAROUND
@@ -394,115 +412,73 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
                     OverflowCorrection = OverflowCorrection + T3WRAPAROUND*nsync
                     cnt_Ofl = cnt_Ofl+nsync
             
-            if channel >-1 and channel < 16:
+            if channel >0 and channel < 16:
                 true_nSync = OverflowCorrection + nsync
                 cnt_ma = cnt_ma +1
-        
-        trueTimeArr[cnt_ph] = truetime
-        dTimeArr[cnt_ph] = dtime
-        chanArr[cnt_ph] = channel+1
-        cnt_ph = cnt_ph +1
-
+        else:
+            true_nSync = OverflowCorrection + nsync
+            truetime = (true_nSync * MeasDesc_GlobalResolution * 1e9)
+            trueTimeArr[cnt_ph] = truetime
+            dTimeArr[cnt_ph] = dtime
+            chanArr[cnt_ph] = channel+1
+            cnt_ph = cnt_ph +1
+       
         #PT3
         #dtime = ((T3Record >> 16) & 4095);
         #dtime = bitand(bitshift(T3Record,-16),4095)
     return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e6   
 
-
-
-"""
-def ReadHT3(Version)
-        global fid;
-        global RecNum;
-        global TTResult_NumberOfRecords; % Number of TTTR Records in the File
-        OverflowCorrection = 0;
-        T3WRAPAROUND = 1024;
-
-        for i = 1:TTResult_NumberOfRecords
-            RecNum = i;
-            T3Record = fread(fid, 1, 'ubit32');     % all 32 bits:
-            %   +-------------------------------+  +-------------------------------+
-            %   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
-            %   +-------------------------------+  +-------------------------------+
-            nsync = bitand(T3Record,1023);       % the lowest 10 bits:
-            %   +-------------------------------+  +-------------------------------+
-            %   | | | | | | | | | | | | | | | | |  | | | | | | |x|x|x|x|x|x|x|x|x|x|
-            %   +-------------------------------+  +-------------------------------+
-            dtime = bitand(bitshift(T3Record,-10),32767);   % the next 15 bits:
-            %   the dtime unit depends on "Resolution" that can be obtained from header
-            %   +-------------------------------+  +-------------------------------+
-            %   | | | | | | | |x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x| | | | | | | | | | |
-            %   +-------------------------------+  +-------------------------------+
-            channel = bitand(bitshift(T3Record,-25),63);   % the next 6 bits:
-            %   +-------------------------------+  +-------------------------------+
-            %   | |x|x|x|x|x|x| | | | | | | | | |  | | | | | | | | | | | | | | | | |
-            %   +-------------------------------+  +-------------------------------+
-            special = bitand(bitshift(T3Record,-31),1);   % the last bit:
-            %   +-------------------------------+  +-------------------------------+
-            %   |x| | | | | | | | | | | | | | | |  | | | | | | | | | | | | | | | | |
-            %   +-------------------------------+  +-------------------------------+
-            if special == 0   % this means a regular input channel
-               true_nSync = OverflowCorrection + nsync;
-               %  one nsync time unit equals to "syncperiod" which can be
-               %  calculated from "SyncRate"
-               GotPhoton(true_nSync, channel, dtime);
-            else    % this means we have a special record
-                if channel == 63  % overflow of nsync occured
-                  if (nsync == 0) || (Version == 1) % if nsync is zero it is an old style single oferflow or old Version
-                    OverflowCorrection = OverflowCorrection + T3WRAPAROUND;
-                    GotOverflow(1);
-                  else         % otherwise nsync indicates the number of overflows - THIS IS NEW IN FORMAT V2.0
-                    OverflowCorrection = OverflowCorrection + T3WRAPAROUND * nsync;
-                    GotOverflow(nsync);
-                  end;
-                end;
-                if (channel >= 1) && (channel <= 15)  % these are markers
-                  true_nSync = OverflowCorrection + nsync;
-                  GotMarker(true_nSync, channel);
-                end;
-            end;
-        end;
-    end
-    ##READ picoHarp T3"""
 def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
 
     cnt_Ofl = 0
-    WRAPAROUND = 65536
+    T3WRAPAROUND = 65536
     ofltime = 0
     chanArr = [0]*TTResult_NumberOfRecords
     trueTimeArr =[0]*TTResult_NumberOfRecords
     dTimeArr= [0]*TTResult_NumberOfRecords
-    truetime = 0
+    oflcorrection = 0
     cnt_M = 0
 
-    for b in range(0,TTResult_NumberOfRecords):
-        recNum = b
-        T3Record = struct.unpack('I', f.read(4))[0];
-        nsync = T3Record & 65535
-        chan = ((T3Record >> 28) & 15);
-        chanArr[b]=chan
+    for recNum in range(0,TTResult_NumberOfRecords):
+        
+        try:
+            recordData = "{0:0{1}b}".format(struct.unpack("<I", f.read(4))[0], 32)
+        except:
+            print("The file ended earlier than expected, at record %d/%d."\
+                  % (recNum, TTResult_NumberOfRecords))
+            exit(0)
+        
 
-        dtime = 0
-        truensync = ofltime + nsync;
-        if chan >0 and chan <5:
-            dtime = dtime = ((T3Record >> 16) & 4095);
-            truetime = (truensync * MeasDesc_GlobalResolution * 1e9)
-        elif chan == 15:
-            markers = ((T3Record >> 16) & 15);
-            truetime = 0
-            if markers ==0:
-                ofltime = ofltime +WRAPAROUND;
-                cnt_Ofl = cnt_Ofl+1
-                
+        channel = int(recordData[0:4], base=2)
+        dtime = int(recordData[4:16], base=2)
+        nsync = int(recordData[16:32], base=2)
+        
+      
+        
+        
+        if channel == 15:
+            if dtime == 0: # Not a marker, so overflow
+                #  dgotOverflow(1)
+                oflcorrection += T3WRAPAROUND
             else:
-                cnt_M=cnt_M+1
+                truensync = oflcorrection + nsync
+                #gotMarker(truensync, dtime)
+                
+            
+        else:
+            if channel == 0 and channel > 4:
+                pass
+            truensync = oflcorrection + nsync;    
+            truetime = (truensync * MeasDesc_GlobalResolution * 1e9)
+            trueTimeArr[cnt_M] = truetime
+            dTimeArr[cnt_M] = dtime
+            chanArr[cnt_M] = channel
+            cnt_M += 1
                 #f1.write("MA:%1u "+markers+" ")
         
-        trueTimeArr[b] = truetime
-        dTimeArr[b] = dtime
-        chanArr[b] = chan
+        
 
-    return np.array(chanArr), np.array(trueTimeArr), np.array(dTimeArr), MeasDesc_GlobalResolution* 1e6
+    return np.array(chanArr)[0:cnt_M], np.array(trueTimeArr)[0:cnt_M], np.array(dTimeArr)[0:cnt_M], MeasDesc_GlobalResolution* 1e6
 def csvimport(filepath):
     """Function for importing time-tag data directly into FCS point software. """
     r_obj = csv.reader(open(filepath, 'r'))
