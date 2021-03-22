@@ -703,29 +703,18 @@ class Form(QMainWindow):
 				
 				
 
-				#Filter for CH identification:
-				if self.ch_check_ch1.isChecked() == True and objId.ch_type == 0:
-					objId.toFit = True
-				elif self.ch_check_ch2.isChecked() == True and objId.ch_type == 1:
-					objId.toFit = True
-				elif self.ch_check_ch12.isChecked() == True and objId.ch_type == 2:
-					objId.toFit = True
-				elif self.ch_check_ch21.isChecked() == True and objId.ch_type == 3:
-					objId.toFit = True
-				else:
-					objId.toFit = False
 
 
 				#Filter for CH identification:
-				if self.ch_check_ch1.isChecked() == True and objId.ch_type == '1_1':
+				if self.ch_check_ch1.isChecked() == True and (objId.ch_type == '1_1' or objId.ch_type == 0):
 					objId.toFit = True
-				elif self.ch_check_ch2.isChecked() == True and objId.ch_type == '2_2':
+				elif self.ch_check_ch2.isChecked() == True and (objId.ch_type == '2_2' or objId.ch_type == 1):
 					objId.toFit = True
 				elif self.ch_check_ch3.isChecked() == True and objId.ch_type == '3_3':
 					objId.toFit = True
 				elif self.ch_check_ch4.isChecked() == True and objId.ch_type == '4_4':
 					objId.toFit = True
-				elif self.ch_check_ch12.isChecked() == True and objId.ch_type == '1_2':
+				elif self.ch_check_ch12.isChecked() == True and (objId.ch_type == '1_2' or objId.ch_type == 2):
 					objId.toFit = True
 				elif self.ch_check_ch13.isChecked() == True and objId.ch_type == '1_3':
 					objId.toFit = True
@@ -737,7 +726,7 @@ class Form(QMainWindow):
 					objId.toFit = True
 				elif self.ch_check_ch34.isChecked() == True and objId.ch_type == '3_4':
 					objId.toFit = True
-				elif self.ch_check_ch21.isChecked() == True and objId.ch_type == '2_1':
+				elif self.ch_check_ch21.isChecked() == True and (objId.ch_type == '2_1' or objId.ch_type == 3):
 					objId.toFit = True
 				elif self.ch_check_ch31.isChecked() == True and objId.ch_type == '3_1':
 					objId.toFit = True

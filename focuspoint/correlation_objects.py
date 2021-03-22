@@ -415,25 +415,15 @@ class corrObject():
 		self.series_list_id = None
 	   
 	def prepare_for_fit(self):
-		if self.parentFn.ch_check_ch1.isChecked() == True and self.ch_type == 0:
+		if self.parentFn.ch_check_ch1.isChecked() == True and (self.ch_type == '1_1' or self.ch_type == 0):
 			self.toFit = True
-		if self.parentFn.ch_check_ch2.isChecked() == True and self.ch_type == 1:
-			self.toFit = True
-			
-		if self.parentFn.ch_check_ch12.isChecked() == True and self.ch_type == 2:
-			self.toFit = True
-		if self.parentFn.ch_check_ch21.isChecked() == True and self.ch_type == 3:
-			self.toFit = True
-
-		if self.parentFn.ch_check_ch1.isChecked() == True and self.ch_type == '1_1':
-			self.toFit = True
-		elif self.parentFn.ch_check_ch2.isChecked() == True and self.ch_type == '2_2':
+		elif self.parentFn.ch_check_ch2.isChecked() == True and (self.ch_type == '2_2' or self.ch_type == 1):
 			self.toFit = True
 		elif self.parentFn.ch_check_ch3.isChecked() == True and self.ch_type == '3_3':
 			self.toFit = True
 		elif self.parentFn.ch_check_ch4.isChecked() == True and self.ch_type == '4_4':
 			self.toFit = True
-		elif self.parentFn.ch_check_ch12.isChecked() == True and self.ch_type == '1_2':
+		elif self.parentFn.ch_check_ch12.isChecked() == True and (self.ch_type == '1_2' or self.ch_type == 2):
 			self.toFit = True
 		elif self.parentFn.ch_check_ch13.isChecked() == True and self.ch_type == '1_3':
 			self.toFit = True
@@ -445,7 +435,7 @@ class corrObject():
 			self.toFit = True
 		elif self.parentFn.ch_check_ch34.isChecked() == True and self.ch_type == '3_4':
 			self.toFit = True
-		elif self.parentFn.ch_check_ch21.isChecked() == True and self.ch_type == '2_1':
+		elif self.parentFn.ch_check_ch21.isChecked() == True and (self.ch_type == '2_1' or self.ch_type == 3):
 			self.toFit = True
 		elif self.parentFn.ch_check_ch31.isChecked() == True and self.ch_type == '3_1':
 			self.toFit = True

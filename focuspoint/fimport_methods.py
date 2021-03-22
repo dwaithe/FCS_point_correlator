@@ -156,7 +156,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			fit_obj.objIdArr.append(corrObj1)
 
 			
-			if num_of_channels == 1:
+			if num_of_channels == 1 or  num_of_channels == 0:
 				tscale_arr = []
 				tdata_arr = []
 				cscale_arr = []
