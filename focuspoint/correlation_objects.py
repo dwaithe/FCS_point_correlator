@@ -109,16 +109,20 @@ class picoObject():
 		#How many channels there are in the files.
 		
 		self.ch_present = np.sort(np.unique(np.array(self.subChanArr)))
+
+		for i in range(self.ch_present.__len__()-1,-1,-1):
+			if self.ch_present[i] >8:
+				self.ch_present = np.delete(self.ch_present, i)
 		
 		if self.ext == 'pt3' or self.ext == 'ptu'or self.ext == 'pt2':
 			
-			self.numOfCH =  self.ch_present.__len__() #Minus 1 because not interested in channel 15.
+			self.numOfCH =  self.ch_present.__len__()
 
 		else:
 			self.numOfCH =  self.ch_present.__len__()
 		#Finds the numbers which address the channels.
 		
-			
+		print('numOfCH',self.numOfCH,self.ch_present )
 		self.photonDecay = []
 		self.decayScale = []
 		self.timeSeries = []
@@ -152,14 +156,13 @@ class picoObject():
 			self.kcount.append(kcount)
 			self.brightnessNandB.append(brightnessNandB)
 			self.numberNandB.append(numberNandB)
-		
+			
+
 		#Correlation combinations.
 		##Provides ordering of files and reduces repetition.
 
 		corr_array = []
 		corr_comb = []
-		
-
 		
 		for i in range(0,self.numOfCH):
 			corr_array.append([])
@@ -168,7 +171,6 @@ class picoObject():
 					corr_comb.append([i,j])
 				corr_array[i].append([])
 					
-		
 		for i,j in corr_comb:
 			corr_fn = self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr),[self.ch_present[i],self.ch_present[j]])
 			
@@ -178,6 +180,11 @@ class picoObject():
 				corr_array[j][j] = corr_fn[:,1,1].reshape(-1)
 			corr_array[i][j] = corr_fn[:,0,1].reshape(-1)
 			corr_array[j][i] = corr_fn[:,1,0].reshape(-1)
+		
+		if self.numOfCH ==1:
+			corr_fn = self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr),[self.ch_present[i],self.ch_present[j]])
+			corr_array[0][0] = corr_fn[:,0,0].reshape(-1)
+		
 		self.autoNorm = corr_array  
 		self.autotime = self.autotime.reshape(-1)
 		self.CV = []			

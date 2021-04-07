@@ -738,7 +738,7 @@ def csv_import_method(fit_obj,file_path, feed = None):
 					corrObj.type = str(metadata['type'])				
 					corrObj.ch_type = str(metadata['ch_type'][i])
 					
-					corrObj.name = objIdArT[i].name+'-CH'+str(objIdArT[i].ch_type)
+					corrObj.name = corrObj.name+'-CH'+str(corrObj.ch_type)
 					
 					if 'kcount' in metadata:
 						if i < numOfCH:
