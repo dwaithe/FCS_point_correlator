@@ -235,7 +235,6 @@ def ptuimport(filepath):
             if TagIdent == "Header_End":
                 
                 break
-
     print('\n------------------------\n')
     TTResultFormat_TTTRRecType = file_type['TTResultFormat_TTTRRecType']
     if TTResultFormat_TTTRRecType == rtPicoHarpT3:
@@ -279,7 +278,7 @@ def ptuimport(filepath):
         print ('TimeHarp260P T2 data \n')
     elif TTResultFormat_TTTRRecType == rtMultiHarpNT3:
         isT2 = False
-        print ('rtMultiHarpNT3 T2 data \n')
+        print ('rtMultiHarpNT3 T3 data \n')
     elif TTResultFormat_TTTRRecType == rtMultiHarpNT2:
         isT2 = True
         print ('rtMultiHarpNT3 T2 data \n')
@@ -296,32 +295,32 @@ def ptuimport(filepath):
     
             
     if TTResultFormat_TTTRRecType   == rtPicoHarpT3: 
-        return ReadPT3(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'])
+        return ReadPT3(f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'],file_type['MeasDesc_Resolution'])
 
     elif TTResultFormat_TTTRRecType == rtPicoHarpT2: #ReadPT2
         return readPT2(inputfile,numRecords,MeasDesc_GlobalResolution)
     elif TTResultFormat_TTTRRecType == rtHydraHarpT3: #ReadHT3(1)
-        return ReadHT3(1,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
+        return ReadHT3(1,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'],file_type['MeasDesc_Resolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarpT2: #ReadHT3(1)
         print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtHydraHarp2T3: 
-        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'],file_type['MeasDesc_Resolution']);
     elif TTResultFormat_TTTRRecType == rtHydraHarp2T2: #ReadHT2(2);
         print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT3: #ReadHT3(2);
-        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'],file_type['MeasDesc_Resolution']);
     elif TTResultFormat_TTTRRecType == rtTimeHarp260NT2: #ReadHT2(2);
         print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT3: #ReadHT3(2);
-        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'],file_type['MeasDesc_Resolution']);
     elif TTResultFormat_TTTRRecType == rtTimeHarp260PT2: #ReadHT2(2);
         print ('currently this type of file is not supported using this python implementation')
         return False
     elif TTResultFormat_TTTRRecType == rtMultiHarpNT3: #ReadHT2(2);
-        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution']);
+        return ReadHT3(2,f,file_type['TTResult_NumberOfRecords'],file_type['MeasDesc_GlobalResolution'],file_type['MeasDesc_Resolution']);
     elif TTResultFormat_TTTRRecType == rtMultiHarpNT2: #ReadHT2(2);
         print ('currently this type of file is not supported using this python implementation')
         return True
@@ -370,7 +369,7 @@ def readPT2(inputfile,numRecords,MeasDesc_GlobalResolution):
             cnt_ph = cnt_ph +1
     return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e6
 # Read HydraHarp/TimeHarp260 T3
-def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
+def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution,MeasDesc_Resolution):
     T3WRAPAROUND = 1024
     ofltime = 0
     cnt_Ofl = 0
@@ -426,9 +425,9 @@ def ReadHT3(version,f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
         #PT3
         #dtime = ((T3Record >> 16) & 4095);
         #dtime = bitand(bitshift(T3Record,-16),4095)
-    return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_GlobalResolution* 1e6   
+    return np.array(chanArr[0:cnt_ph]), np.array(trueTimeArr[0:cnt_ph]), np.array(dTimeArr[0:cnt_ph]), MeasDesc_Resolution* 1e6   
 
-def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
+def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution,MeasDesc_Resolution):
 
     cnt_Ofl = 0
     T3WRAPAROUND = 65536
@@ -478,7 +477,7 @@ def ReadPT3(f,TTResult_NumberOfRecords,MeasDesc_GlobalResolution):
         
         
 
-    return np.array(chanArr)[0:cnt_M], np.array(trueTimeArr)[0:cnt_M], np.array(dTimeArr)[0:cnt_M], MeasDesc_GlobalResolution* 1e6
+    return np.array(chanArr)[0:cnt_M], np.array(trueTimeArr)[0:cnt_M], np.array(dTimeArr)[0:cnt_M], MeasDesc_Resolution* 1e9
 def csvimport(filepath):
     """Function for importing time-tag data directly into FCS point software. """
     r_obj = csv.reader(open(filepath, 'r'))
