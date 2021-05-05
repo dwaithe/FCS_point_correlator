@@ -210,7 +210,8 @@ def ptuimport(filepath):
             elif TagTyp == tyAnsiString:
                 TagInt = int(struct.unpack('Q', f.read(8))[0])
                 TagString = f.read(TagInt)
-                TagString = str.replace(TagString.decode(),'\x00','')
+                #I found a weird character in the ANSI once, which was solved by changeing to windows.
+                TagString = str.replace(TagString.decode('windows-1252'),'\x00','')
 
                 #print('tyAnsiString',TagString)
                 if TagIdx > -1:
