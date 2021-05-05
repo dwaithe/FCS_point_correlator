@@ -6,8 +6,8 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView,QWebEnginePage a
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt5.QtWidgets import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
-from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFileDialog, qApp
-from PyQt5.QtGui import QStandardItem, QColor, QIcon
+from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFileDialog, qApp, QShortcut
+from PyQt5.QtGui import QStandardItem, QColor, QIcon, QKeySequence
 
 from scipy.special import _ufuncs_cxx
 
@@ -899,6 +899,9 @@ class Form(QMainWindow):
 		self.series_list_view.setModel(self.series_list_model)
 		self.to_spin = QSpinBox()
 
+		self.shortcut = QShortcut(QKeySequence("Ctrl+A"), self)
+		self.shortcut.activated.connect(self.selectAll)
+
 		
 		
 		
@@ -1736,6 +1739,8 @@ class Form(QMainWindow):
 		self.defineTable()
 		self.updateParamFirst()
 		self.image_status_text.showMessage('Profile Applied.')
+	def selectAll(self):
+		self.series_list_view.selectAll()
 
 	def fitSelected_equation(self):
 		
