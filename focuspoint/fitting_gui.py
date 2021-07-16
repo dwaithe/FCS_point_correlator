@@ -140,24 +140,26 @@ class folderOutput(QMainWindow):
 		if self.type == 'profile_load':
 			
 			
+			
 			#filepath = QFileDialog.getOpenFileName(self, 'Open file', '/home')
 			filepath =  QFileDialog.getOpenFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
 			if filepath != '':
-				opened_file = pickle.load(open(str(filepath),"rb"))
+				opened_file = pickle.load(open(str(filepath[0]),"rb"))
 				self.parent.fit_profile = opened_file
+			
 		if self.type == 'profile_save':
 			
 			
 			#filepath = QFileDialog.getOpenFileName(self, 'Open file', '/home')
 			filepath =  QFileDialog.getSaveFileName(self, 'Open file',self.filepath_save_profile,'Fit Profile(*.profile);;')
-			if filepath != '':
-				self.filepath_save_profile = str(QtCore.QFileInfo(filepath).absolutePath())+'/'
+			if filepath[0] != '':
+				self.filepath_save_profile = str(QtCore.QFileInfo(filepath[0]).absolutePath())+'/'
 
 				self.parent.config['filepath_save_profile']  = self.filepath_save_profile
 				#Save the files to the 
 				pickle.dump(self.parent.config, open(str(os.path.expanduser('~')+'/FCS_Analysis/config.p'), "wb" ))
 				#Save the 
-				pickle.dump(self.parent.fit_profile, open(str(filepath),"w"))
+				pickle.dump(self.parent.fit_profile, open(str(filepath[0]),"wb"))
 
 				
 
@@ -1689,56 +1691,64 @@ class Form(QMainWindow):
 			self.right_check_all_none.setText("check all")
 
 	def load_default_profile_fn(self):
-		
-		self.fit_profile = {}
-		self.load_default_profile_output.showDialog()
-		
-		self.def_options = self.fit_profile['def_options']
-		self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
-		self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
-		self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
+		if self.objIdArr.__len__() >0:
+			self.fit_profile = {}
+			self.load_default_profile_output.showDialog()
+			
+			self.def_options = self.fit_profile['def_options']
+			self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
+			self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
+			self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
 
 
-		self.diffModEqSel.setCurrentIndex(self.def_options['Diff_eq']-1)
-		self.tripModEqSel.setCurrentIndex(self.def_options['Triplet_eq']-1)
-		self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
-		
-		self.defineTable()
-		self.updateParamFirst()
+			self.diffModEqSel.setCurrentIndex(self.def_options['Diff_eq']-1)
+			self.tripModEqSel.setCurrentIndex(self.def_options['Triplet_eq']-1)
+			self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
+			
+			self.defineTable()
+			self.updateParamFirst()
+		else:
+			self.image_status_text.showMessage("Please load in some data before loading a param profile.")
+
 	def load_folder_fn(self):
 		self.load_folder_output.showDialog()
 	def save_default_profile_fn(self):
-		
-		self.fit_profile = {}
-		self.updateParamFirst()
-		self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
-		self.fit_profile['def_options'] = self.def_options
-		
-		self.save_default_profile_output.showDialog()
+		if self.objIdArr.__len__() >0:
+			self.fit_profile = {}
+			self.updateParamFirst()
+			self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
+			self.fit_profile['def_options'] = self.def_options
+			
+			self.save_default_profile_output.showDialog()
+		else:
+			self.image_status_text.showMessage("Please load in some data before saving a param profile.")
 	def store_default_profile_fn(self):
-		
-		self.fit_profile = {}
-		self.updateParamFirst()
-		self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
-		self.fit_profile['def_options'] = copy.deepcopy(self.def_options)
-		self.image_status_text.showMessage('Profile stored, use the \'Apply\' button to apply.')
-		
+		if self.objIdArr.__len__() >0:
+			self.fit_profile = {}
+			self.updateParamFirst()
+			self.fit_profile['param'] = copy.deepcopy(self.objId_sel.param)
+			self.fit_profile['def_options'] = copy.deepcopy(self.def_options)
+			self.image_status_text.showMessage('Profile stored, use the \'Apply\' button to apply.')
+		else:
+			self.image_status_text.showMessage("Please load in some data before storing a param profile.")
 	def apply_default_profile_fn(self):
-		
-		self.def_options = copy.deepcopy(self.fit_profile['def_options'])
+		if self.objIdArr.__len__() >0:
+			self.def_options = copy.deepcopy(self.fit_profile['def_options'])
 
-		self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
-		self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
-		self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
+			self.diffNumSpecSpin.setValue(self.def_options['Diff_species'])
+			self.tripNumSpecSpin.setValue(self.def_options['Triplet_species'])
+			self.objId_sel.param = copy.deepcopy(self.fit_profile['param'])
 
 
-		self.diffModEqSel.setCurrentIndex(self.def_options['Diff_eq']-1)
-		self.tripModEqSel.setCurrentIndex(self.def_options['Triplet_eq']-1)
-		self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
-		
-		self.defineTable()
-		self.updateParamFirst()
-		self.image_status_text.showMessage('Profile Applied.')
+			self.diffModEqSel.setCurrentIndex(self.def_options['Diff_eq']-1)
+			self.tripModEqSel.setCurrentIndex(self.def_options['Triplet_eq']-1)
+			self.dimenModSel.setCurrentIndex(self.def_options['Dimen']-1)
+			
+			self.defineTable()
+			self.updateParamFirst()
+			self.image_status_text.showMessage('Profile Applied.')
+		else:
+			self.image_status_text.showMessage("Please load in some data before applying a param profile.")
 	def selectAll(self):
 		self.series_list_view.selectAll()
 
