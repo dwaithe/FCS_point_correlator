@@ -33,7 +33,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 	
 	read = True
 	ind = 0
-	channelnum =0
+	channelnum = 0
 
 	tdata_arr = []
 	tscale_arr = []
@@ -108,18 +108,30 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 
 
 		num_of_channels = int(text[0].split(' = ')[1])
+		
+		if channel_str == 'Auto-correlation detector Meta1':
+			channel = 0
+			chname = 'CH1'
+			ind +=1
+		if channel_str == 'Auto-correlation detector Meta2':
+			channel = 1
+			chname = 'CH2'
+		if channel_str == 'Cross-correlation detector Meta2 versus detector Meta1':
+			channel = 3
+			chname = 'CH21'
+		if channel_str == 'Cross-correlation detector Meta1 versus detector Meta2':
+			channel = 2
+			chname = 'CH12'
 
 		#Which channel is it. Found by matching string found earlier?? The only way I saw to do it.
 		for i in range(num_of_channels):
 			text = next(r_obj)[0].split(' = ')[1]
 			if text == channel_str:
 				this_is_ch = i
-
 		if len_of_seq >0:
 			
 			#If a four channel file we want to skip until we have collected all channels.
-			if num_of_channels == 4 and tdata_arr.__len__() != 4:
-				continue
+			
 				
 			corrObj1 = corrObject(file_path,fit_obj)
 			corrObj1.siblings = None
@@ -127,7 +139,7 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			corrObj1.autotime= np.array(tscale_arr[0]).astype(np.float64).reshape(-1)*1000
 			
 
-			corrObj1.name = name+'-CH0'
+			corrObj1.name =  name + '_'+str(ind)+'_'+chname
 			corrObj1.parent_name = '.fcs files'
 			corrObj1.parent_uqid = '0'
 						
@@ -156,123 +168,12 @@ def fcs_import_method(fit_obj,file_path,feed=None):
 			fit_obj.objIdArr.append(corrObj1)
 
 			
-			if num_of_channels == 1 or  num_of_channels == 0:
-				tscale_arr = []
-				tdata_arr = []
-				cscale_arr = []
-				cdata_arr = []
-				continue;
-
-
-			if num_of_channels == 4 and tdata_arr.__len__() == 4:
-				
-				corrObj2 = corrObject(file_path,fit_obj)
-				corrObj2.autoNorm= np.array(tdata_arr[1]).astype(np.float64).reshape(-1)
-				corrObj2.autotime= np.array(tscale_arr[1]).astype(np.float64).reshape(-1)*1000
-				
-				corrObj2.name = name+'-CH1'
-				corrObj2.parent_name = '.fcs files'
-				corrObj2.parent_uqid = '0'
-				corrObj2.ch_type = 1;
-		
-
-				#And to be in kHz we divide by 1000. This we found through comparison with Zeiss software.
-				if cscale_arr != []:
-					corrObj2.kcount = np.average(np.array(cdata_arr[1]))/1000
-				
-				corrObj2.param = copy.deepcopy(fit_obj.def_param)
-
-				corrObj2.calculate_suitability()
-				corrObj2.max = np.max(corrObj2.autoNorm)
-				corrObj2.min = np.min(corrObj2.autoNorm)
-				corrObj2.tmax = np.max(corrObj2.autotime)
-				corrObj2.tmin = np.min(corrObj2.autotime)
-				
-				if fit_obj.def_options['Diff_eq'] == 4: 
-					VD.calc_param_fcs(fit_obj,corrObj2)
-				elif fit_obj.def_options['Diff_eq'] == 3: 
-					GS.calc_param_fcs(fit_obj,corrObj2)
-				else:
-					SE.calc_param_fcs(fit_obj,corrObj2)
-				
-				fit_obj.objIdArr.append(corrObj2)
 			
-				corrObj3 = corrObject(file_path,fit_obj)
-				corrObj3.autoNorm= np.array(tdata_arr[2]).astype(np.float64).reshape(-1)
-				corrObj3.autotime= np.array(tscale_arr[2]).astype(np.float64).reshape(-1)*1000
-				
-				corrObj3.ch_type = 2;
-				corrObj3.name = name+'-CH01'
-				corrObj3.parent_name = '.fcs files'
-				corrObj3.parent_uqid = '0'
-				
-		
-				#And to be in kHz we divide by 1000.
-				#corrObj3.kcount = np.average(np.array(int_tdata3)/unit)/1000
-				corrObj3.param = copy.deepcopy(fit_obj.def_param)
+			tscale_arr = []
+			tdata_arr = []
+			cscale_arr = []
+			cdata_arr = []
 
-			
-				
-				corrObj3.calculate_suitability()
-				corrObj3.max = np.max(corrObj3.autoNorm)
-				corrObj3.min = np.min(corrObj3.autoNorm)
-				corrObj3.tmax = np.max(corrObj3.autotime)
-				corrObj3.tmin = np.min(corrObj3.autotime)
-				if fit_obj.def_options['Diff_eq'] == 4: 
-					VD.calc_param_fcs(fit_obj,corrObj3)
-				elif fit_obj.def_options['Diff_eq'] == 3: 
-					GS.calc_param_fcs(fit_obj,corrObj3)
-				else:
-					SE.calc_param_fcs(fit_obj,corrObj3)
-				fit_obj.objIdArr.append(corrObj3)
-				
-
-				corrObj4 = corrObject(file_path,fit_obj)
-				corrObj4.autoNorm= np.array(tdata_arr[3]).astype(np.float64).reshape(-1)
-				corrObj4.autotime= np.array(tscale_arr[3]).astype(np.float64).reshape(-1)*1000
-				
-				corrObj4.ch_type = 3;
-				corrObj4.name = name+'-CH10'
-				corrObj4.parent_name = '.fcs files'
-				corrObj4.parent_uqid = '0'
-				
-		
-				#And to be in kHz we divide by 1000.
-				#corrObj4.kcount = np.average(np.array(int_tdata4)/unit)/1000
-				corrObj4.param = copy.deepcopy(fit_obj.def_param)
-
-				corrObj1.siblings = [corrObj2,corrObj3,corrObj4]
-				corrObj2.siblings = [corrObj1,corrObj3,corrObj4]
-				corrObj3.siblings = [corrObj1,corrObj2,corrObj4]
-				corrObj4.siblings = [corrObj1,corrObj2,corrObj3]
-				
-				corrObj4.calculate_suitability()
-				corrObj4.max = np.max(corrObj4.autoNorm)
-				corrObj4.min = np.min(corrObj4.autoNorm)
-				corrObj4.tmax = np.max(corrObj4.autotime)
-				corrObj4.tmin = np.min(corrObj4.autotime)
-				
-				if fit_obj.def_options['Diff_eq'] == 4: 
-					VD.calc_param_fcs(fit_obj,corrObj4)
-				elif fit_obj.def_options['Diff_eq'] == 3: 
-					GS.calc_param_fcs(fit_obj,corrObj4)
-				else:
-					SE.calc_param_fcs(fit_obj,corrObj4)
-				fit_obj.objIdArr.append(corrObj4)
-
-
-				tscale_arr = []
-				tdata_arr = []
-				cscale_arr = []
-				cdata_arr = []
-		
-
-
-	
-
-#for i in range():
-#	corrObj.name = corrObj.name+'_'+str(ind)+'_'+str(name)
-		
 def sin_import_method(fit_obj,file_path,feed=None):
 
 		if feed == None:
@@ -329,7 +230,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 		corrObj1.autoNorm= np.array(tdata).astype(np.float64).reshape(-1)
 		corrObj1.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 		
-		corrObj1.name = corrObj1.name+'-CH0'
+		corrObj1.name = corrObj1.name+'-CH1'
 		corrObj1.parent_name = '.sin files'
 		corrObj1.parent_uqid = '0'
 					
@@ -362,7 +263,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			corrObj2.autoNorm= np.array(tdata2).astype(np.float64).reshape(-1)
 			corrObj2.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
-			corrObj2.name = corrObj2.name+'-CH1'
+			corrObj2.name = corrObj2.name+'-CH2'
 			corrObj2.parent_name = '.sin files'
 			corrObj2.parent_uqid = '0'
 			corrObj2.ch_type = 1
@@ -393,7 +294,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			corrObj3.autoNorm= np.array(tdata3).astype(np.float64).reshape(-1)
 			corrObj3.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			corrObj3.ch_type = 2;
-			corrObj3.name = corrObj3.name+'-CH01'
+			corrObj3.name = corrObj3.name+'-CH12'
 
 			corrObj3.parent_name = '.sin files'
 			corrObj3.parent_uqid = '0'
@@ -425,7 +326,7 @@ def sin_import_method(fit_obj,file_path,feed=None):
 			corrObj4.autotime= np.array(tscale).astype(np.float64).reshape(-1)*1000
 			
 			corrObj4.ch_type = 3;
-			corrObj4.name = corrObj4.name+'-CH10'
+			corrObj4.name = corrObj4.name+'-CH21'
 
 			corrObj4.parent_name = '.sin files'
 			corrObj4.parent_uqid = '0'
