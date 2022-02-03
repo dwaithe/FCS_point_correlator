@@ -144,7 +144,7 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
     
     for j in range(0, auto.shape[0]):
         auto[j,:,:] = auto[j,:,:]*dt/(dt-autotime[j])
-    autotime = autotime/1000
+    autotime = autotime/1000000
 
 
     #Removes the trailing zeros.
