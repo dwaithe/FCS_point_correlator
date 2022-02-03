@@ -205,7 +205,7 @@ class FileDialog(QtWidgets.QMainWindow):
         #Create loop which opens dialog box and allows selection of files.
 
         self.win_obj.update_correlation_parameters()
-        file_imports = fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'pt3 files (*.pt3);ptU files (*.ptU);asc files (*.asc);spc files (*.spc);All Files (*.*)')
+        file_imports = fileInt.getOpenFileNames(self, 'Open a data file',self.loadpath, 'h5 files (*.h5);hdf5 files (*.hdf5);pt3 files (*.pt3);ptU files (*.ptU);asc files (*.asc);spc files (*.spc);All Files (*.*)')
         bt = QtWidgets.QPushButton("cancel")
         
         for c,filename in enumerate(file_imports[0]):

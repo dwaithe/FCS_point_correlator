@@ -5,8 +5,9 @@ from focuspoint.correlation_objects import corrObject
 import csv
 import numpy as np
 import copy
-
+import pyperclip
 import time
+
 def fcs_import_method(fit_obj,file_path,feed=None):
 	
 	
@@ -688,7 +689,6 @@ def csv_import_method(fit_obj,file_path, feed = None):
 				#corrObj.siblings = [corrObj2,corrObj3]
 				#corrObj.siblings = [corrObj1,corrObj3]
 				#corrObj.siblings = [corrObj1,corrObj2]
-import pyperclip
 def saveOutputDataFn(fit_obj,indList,copy_fn=False):
 		localTime = time.asctime( time.localtime(time.time()) )
 		coreArray = []
