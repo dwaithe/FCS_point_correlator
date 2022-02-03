@@ -63,7 +63,8 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
 
 
      """
- 
+    
+    print('y',y,y.dtype)
     dt = np.max(y)-np.min(y)
     y = np.round(y[:],0)
     numshape = num.shape[0]
@@ -143,7 +144,7 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
     
     for j in range(0, auto.shape[0]):
         auto[j,:,:] = auto[j,:,:]*dt/(dt-autotime[j])
-    autotime = autotime/1000000
+    autotime = autotime/1000
 
 
     #Removes the trailing zeros.
