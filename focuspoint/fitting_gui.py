@@ -446,18 +446,22 @@ class Form(QMainWindow):
 				   
 		self.cid = self.canvas.mpl_connect('pick_event',onpick)	
 		if(self.series_list_model.rowCount()>0 and row_checked>0):
-			
+				
 				#The line on the left.
 				try:
 					#Find the nearest position to the the vertical line.
 					xpos1 = int(np.argmin(np.abs(self.scale -  self.dr.xpos)))
 					xpos2 = int(np.argmin(np.abs(self.scale -  self.dr1.xpos)))
-					xpos1a = np.argmin(self.series >0)
+					
+					xpos1a = np.argmax(self.series >0)
 					xpos2a = int(self.series.shape[0]-np.argmax(self.series[::-1] >-1)-1)
+
+					
 					if (xpos1<xpos1a):
 						xpos1 = xpos1a
 					if(xpos2>xpos2a):
 						xpos2 = xpos2a
+					
 				except:
 					
 					try:	
@@ -467,7 +471,15 @@ class Form(QMainWindow):
 						
 						xpos1 = 10
 						xpos2 = 40
+					
 
+
+				self.fit_btn_min.array = self.scale
+				self.fit_btn_max.array = self.scale
+				self.fit_btn_min.index = xpos1
+				self.fit_btn_max.index = xpos2
+				self.fit_btn_min.setValue(self.scale[xpos1])
+				self.fit_btn_max.setValue(self.scale[xpos2])
 
 				
 
@@ -477,12 +489,9 @@ class Form(QMainWindow):
 				self.dr.xpos = self.scale[xpos1]
 				self.dr.connect()
 				#Set the spinbox values
-				self.fit_btn_min.array = self.scale
-				self.fit_btn_max.array = self.scale
-				self.fit_btn_min.index = xpos1
-				self.fit_btn_max.index = xpos2
-				self.fit_btn_min.setValue(self.scale[xpos1])
-				self.fit_btn_max.setValue(self.scale[xpos2])
+				
+
+				
 
 				
 				#The line on the right.
