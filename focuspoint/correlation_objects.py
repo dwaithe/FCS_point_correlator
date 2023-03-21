@@ -2,7 +2,7 @@ import numpy as np
 import os, sys
 from focuspoint.correlation_methods.correlation_methods import *
 from focuspoint.import_methods.import_methods import *
-from focuspoint.import_methods.h5_import_methods import *
+#from focuspoint.import_methods.h5_import_methods import *
 
 import time
 from focuspoint.fitting_methods import fitting_methods_SE as SE
@@ -69,9 +69,9 @@ class picoObject():
 		self.photonCountBin = 25#self.par_obj.photonCountBin
 		
 		#File import
-		if self.ext == 'hdf5' or self.ext == 'h5':
-			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = photon_hdf5_import(self.filepath)
-		elif self.ext == 'spc':
+		#if self.ext == 'hdf5' or self.ext == 'h5':
+		#	self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = photon_hdf5_import(self.filepath)
+		if self.ext == 'spc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = spc_file_import(self.filepath)
 		elif self.ext == 'asc':
 			self.subChanArr, self.trueTimeArr, self.dTimeArr,self.resolution = asc_file_import(self.filepath)
