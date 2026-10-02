@@ -74,7 +74,7 @@ def decide_which_to_show(int_obj):
 def update_each(int_obj,text):
 		"""Will try and populate paramaters with what is present in the inteface, but if new option will goto the default"""
 		try:
-			exec("valueV = int_obj."+text+"_value.value()"); exec("minV = int_obj."+text+"_min.value()"); exec("maxV = int_obj."+text+"_max.value()"); exec("varyV = int_obj."+text+"_vary.isChecked()")
+			valueV = getattr(int_obj, text+"_value").value(); minV = getattr(int_obj, text+"_min").value(); maxV = getattr(int_obj, text+"_max").value(); varyV = getattr(int_obj, text+"_vary").isChecked()
 			
 			int_obj.objId_sel.param[text]['value'] = valueV 
 			int_obj.objId_sel.param[text]['minv'] = minV

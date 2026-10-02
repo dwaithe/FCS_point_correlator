@@ -9,7 +9,7 @@ from focuspoint.fitting_methods import fitting_methods_SE as SE
 from focuspoint.fitting_methods import fitting_methods_GS as GS
 from focuspoint.fitting_methods import fitting_methods_VD as VD
 from focuspoint.fitting_methods import fitting_methods_PB as PB
-from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
+from lmfit import minimize, Parameters,report_fit, fit_report
 import csv
 import copy
 
@@ -178,9 +178,9 @@ class picoObject():
 		for i,j in corr_comb:
 			corr_fn = self.crossAndAuto(np.array(self.trueTimeArr),np.array(self.subChanArr),[self.ch_present[i],self.ch_present[j]])
 			
-			if corr_array[i][i]  == []:
+			if isinstance(corr_array[i][i], list):  # not yet filled in
 				corr_array[i][i] = corr_fn[:,0,0].reshape(-1)
-			if corr_array[j][j] == []:
+			if isinstance(corr_array[j][j], list):
 				corr_array[j][j] = corr_fn[:,1,1].reshape(-1)
 			corr_array[i][j] = corr_fn[:,0,1].reshape(-1)
 			corr_array[j][i] = corr_fn[:,1,0].reshape(-1)
@@ -325,9 +325,9 @@ class picoObject():
 			xmax = xmin1
 		#self.subChanArr = np.array(self.chanArr)
 		#Finds those photons which arrive above certain time or below certain time.
-		photonInd = np.logical_and(self.dTimeArr>=xmin, self.dTimeArr<=xmax).astype(np.bool)
+		photonInd = np.logical_and(self.dTimeArr>=xmin, self.dTimeArr<=xmax).astype(bool)
 		
-		self.subChanArr[np.invert(photonInd).astype(np.bool)] = 16
+		self.subChanArr[np.invert(photonInd).astype(bool)] = 16
 		
 
 		return

@@ -2,14 +2,21 @@ import sys, os, csv
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 
-from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView,QWebEnginePage as QWebPage
+try:
+	from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView,QWebEnginePage as QWebPage
+except ImportError:
+	# PyQtWebEngine is optional: the About window only shows static HTML.
+	from PyQt5.QtWidgets import QTextBrowser as QWebView
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow,QComboBox, QDoubleSpinBox, QAction, QWidget, QLabel,QTreeView,QAbstractItemView
 from PyQt5.QtWidgets import QSpinBox,QListView,QHBoxLayout,QPushButton,QTextEdit,QTableWidget,QVBoxLayout,QLineEdit,QSplitter
 from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFileDialog, qApp, QShortcut
 from PyQt5.QtGui import QStandardItem, QColor, QIcon, QKeySequence
 
-from scipy.special import _ufuncs_cxx
+try:
+	from scipy.special import _ufuncs_cxx  # only needed by PyInstaller builds
+except ImportError:
+	pass
 
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -19,7 +26,7 @@ from matplotlib.transforms import ScaledTranslation
 import matplotlib.gridspec as gridspec
 import numpy as np
 from focuspoint.fitting_extended import TableFilterBox, visualHisto, visualScatter
-from lmfit import minimize, Parameters,report_fit,report_errors, fit_report
+from lmfit import minimize, Parameters,report_fit, fit_report
 import time
 import errno
 import copy
@@ -420,7 +427,7 @@ class Form(QMainWindow):
 				if checked:
 					has_series = True
 					#Takes the values from the interface 
-					if objId.model_autoNorm !=[]:
+					if len(objId.model_autoNorm) > 0:
 						self.mod_scale = objId.model_autotime
 
 						self.mod_series = objId.model_autoNorm
@@ -2001,13 +2008,13 @@ class Form(QMainWindow):
 		
 		if copy_fn == True:
 			for v_ind in indList:
-				if self.objIdArr[v_ind].model_autoNorm !=[]:
+				if len(self.objIdArr[v_ind].model_autoNorm) > 0:
 					copyStr += self.objIdArr[v_ind].name+'\t'+self.objIdArr[v_ind].name+' fitted model: '+'\t'
 		
 			copyStr +=str('\n')
 		else:
 			for v_ind in indList:
-				if self.objIdArr[v_ind].model_autoNorm !=[]:
+				if len(self.objIdArr[v_ind].model_autoNorm) > 0:
 					f.write(self.objIdArr[v_ind].name+','+self.objIdArr[v_ind].name+' fitted model: '+',')
 			f.write('\n')
 			
@@ -2016,7 +2023,7 @@ class Form(QMainWindow):
 			for x in range(0,self.scale.shape[0]):
 				copyStr += str(self.scale[x])+'\t'
 				for v_ind in indList:
-					if self.objIdArr[v_ind].model_autoNorm !=[]:
+					if len(self.objIdArr[v_ind].model_autoNorm) > 0:
 						copyStr += str(self.objIdArr[v_ind].autoNorm[x])+'\t'
 						if x >=xpos1 and x<xpos2:
 							copyStr += str(self.objIdArr[v_ind].model_autoNorm[x-xpos1])+'\t'
@@ -2028,7 +2035,7 @@ class Form(QMainWindow):
 			for x in range(0,self.scale.shape[0]):
 				f.write(str(self.scale[x])+',')    
 				for v_ind in indList:
-					if self.objIdArr[v_ind].model_autoNorm !=[]:
+					if len(self.objIdArr[v_ind].model_autoNorm) > 0:
 						f.write(str(self.objIdArr[v_ind].autoNorm[x])+',')
 						
 						if x >=xpos1 and x<xpos2:

@@ -16,7 +16,10 @@ import random
 import errno
 import os.path
 
-from scipy.special import _ufuncs_cxx
+try:
+	from scipy.special import _ufuncs_cxx  # only needed by PyInstaller builds
+except ImportError:
+	pass
 import pickle
 from correlation_objects import *
 import tifffile as tif_fn
@@ -740,7 +743,7 @@ class Window(QtWidgets.QWidget):
                 export_im[i,0,0,:] =  np.array(objId.timeSeries[i]).astype(np.float32)
             metadata = dict(microscope='', dtype=export_im.dtype.str)
             metadata = json.dumps(metadata)
-            tif_fn.imsave(self.folderOutput.filepath+'/'+objId.name+'_raw.tiff', export_im.astype(np.float32), shape=export_im.shape,imagej=True,description=metadata)
+            tif_fn.imwrite(self.folderOutput.filepath+'/'+objId.name+'_raw.tiff', export_im.astype(np.float32), shape=export_im.shape,imagej=True,description=metadata)
                   
 
         

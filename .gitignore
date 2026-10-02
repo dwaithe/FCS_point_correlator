@@ -2,3 +2,7 @@ build
 dist
 focuspoint.egg-info
 __pycache__
+# Generated from fib4.pyx when installing
+focuspoint/fib4.c
+focuspoint/*.so
+focuspoint/*.pyd
