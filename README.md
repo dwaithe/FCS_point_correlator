@@ -13,7 +13,7 @@ FoCuS-point's correlation and fitting now continue in **FoCuS-fit-JS**, which ru
 - **Use it online:** [https://dwaithe.github.io/FCSfitJS/](https://dwaithe.github.io/FCSfitJS/)
 - **Source code:** [https://github.com/dwaithe/FCSfitJS](https://github.com/dwaithe/FCSfitJS)
 
-FoCuS-fit-JS correlates raw photon files (.pt3, .ptu, .pt2, .spc, .asc and time-tag .csv), shows the photon decay and intensity trace with lifetime gating, and fits correlated curves (.sin, .fcs, .csv) with the same models as FoCuS-point. It also includes the scanning FCS carpets of [FoCuS-scan](https://github.com/dwaithe/FCS_scanning_correlator). Its correlator and fitting were tested against the results of this Python code, and it fixes the issues listed under [Known issues](#known-issues-fixed-in-focus-fit-js) below.
+FoCuS-fit-JS correlates raw photon files (.pt3, .ptu, .pt2, .spc, .asc and time-tag .csv), shows the photon decay and intensity trace with lifetime gating, and fits correlated curves (.sin, .fcs, .csv) with the same models as FoCuS-point. It also includes the scanning FCS carpets of [FoCuS-scan](https://github.com/dwaithe/FCS_scanning_correlator). Its correlator and fitting were tested against the results of this Python code, and it fixes the issue listed under [Known issue](#known-issue-fixed-in-focus-fit-js) below.
 
 This repository is kept so that FoCuS-point continues to run on current versions of Python. It has only been updated to work with newer Python and libraries; what it calculates is unchanged.
 
@@ -21,19 +21,18 @@ This repository is kept so that FoCuS-point continues to run on current versions
 
 FoCuS-point needs Python 3.9 or newer (tested with Python 3.11 and 3.13).
 
-Install it with pip:
+It is best installed in its own virtual environment, so that it does not change the packages other software relies on (FoCuS-point needs NumPy 2, for example, which some older packages cannot use). In a terminal:
 
 ```
+python3 -m venv focus-env
+source focus-env/bin/activate        # Windows: focus-env\Scripts\activate
 pip install git+https://github.com/dwaithe/FCS_point_correlator
-```
-
-and run it with:
-
-```
 python -m focuspoint.FCS_point_correlator
 ```
 
-Or, from a copy of this repository:
+The next time, activate the environment again (`source focus-env/bin/activate`) and run the last line.
+
+Or, from a copy of this repository (with the environment activated):
 
 ```
 pip install -r requirements.txt
@@ -44,6 +43,8 @@ python FCS_point_correlator.py
 Installing with pip compiles a small Cython routine that speeds up the correlation (`focuspoint/fib4.pyx`). This needs a C compiler (on macOS: `xcode-select --install`). Without one, FoCuS-point still installs and runs, and the correlator uses NumPy instead, with the same results.
 
 The About window uses `PyQtWebEngine` if it is installed (`pip install PyQtWebEngine`); otherwise it shows its text in a plain Qt window.
+
+**Troubleshooting.** `ValueError: numpy.dtype size changed, may indicate binary incompatibility` means a package built for NumPy 1 (often pandas, which lmfit uses if it is present) was found alongside NumPy 2: install FoCuS-point in a new virtual environment as above. An error that mentions `focuspoint-0.1` or `QtWebEngineWidgets` comes from an old installation of FoCuS-point in that Python; remove it with `pip uninstall focuspoint`, or use a new virtual environment.
 
 ## Updates for current Python (2026)
 
@@ -56,15 +57,15 @@ The code was last changed for Python 3.6-era libraries, and a number of things h
 - **NumPy 1.24+:** `np.bool` was removed; `bool` is used instead.
 - **NumPy 1.25+:** comparing an array with an empty list (`array == []`) now raises an error. This stopped files with three or more channels from loading, and stopped the plots after a fit. The checks now test for an empty list explicitly, with the same result as before.
 - **tifffile:** `tifffile.imsave` was removed; `tifffile.imwrite` is used to export intensity traces as TIFF.
+- **Triplet equation 2B:** fitting with two dark states failed with an error: in `fitting_methods_SE.py` the line `T1 = param['T2'].value` should read `T2 = ...`. The GS (neuron) model had the same mistake with two and with three dark states. Both are corrected; the triplet term now follows equation 2B for one, two and three dark states.
 - **Parameter table, PB / GS / vesicle models:** under Python 3, values typed into the parameter table for these models were silently replaced by the defaults (they were read back with `exec`, which cannot set local variables in Python 3). They are now read as in the original Python 2 version.
 - **SciPy and Qt WebEngine:** the import of a private SciPy module used only for PyInstaller builds, and of Qt WebEngine, no longer stop FoCuS-point from starting if they are unavailable.
 
-## Known issues (fixed in FoCuS-fit-JS)
+## Known issue (fixed in FoCuS-fit-JS)
 
-These were found while porting FoCuS-point to JavaScript. They are left as they are here, so that FoCuS-point gives the same results as it always has. FoCuS-fit-JS fixes them.
+This was found while porting FoCuS-point to JavaScript. It is left as it is here, so that FoCuS-point gives the same results as it always has. FoCuS-fit-JS fixes it.
 
-1. **Triplet equation 2B with two dark states fails.** In `fitting_methods/fitting_methods_SE.py`, the line `T1 = param['T2'].value` should read `T2 = param['T2'].value`, so fitting with "Triplet Eq 2B" and 2 triplet states raises an error. One and three dark states work.
-2. **Binning of photons that arrive at the same time.** To reach long lag times, the correlator (Wahl, Gregor, Patting and Enderlein) merges photons into coarser time bins, and each bin should carry the total number of photons in it. The original MATLAB code relied on `unique` returning the *last* occurrence of each value, as MATLAB did until R2013a; `numpy.unique` returns the *first*, so FoCuS-point shifts some weight between neighbouring bins and drops part of the last bin. On `topfluorPE_2_1_1_1.pt3`, G(τ) changes by up to 0.012 (autocorrelation) and 0.015 (cross-correlation). FoCuS-fit-JS sums the weights exactly, and has a "FoCuS-point legacy binning" option that reproduces FoCuS-point's results.
+1. **Binning of photons that arrive at the same time.** To reach long lag times, the correlator (Wahl, Gregor, Patting and Enderlein) merges photons into coarser time bins, and each bin should carry the total number of photons in it. The original MATLAB code relied on `unique` returning the *last* occurrence of each value, as MATLAB did until R2013a; `numpy.unique` returns the *first*, so FoCuS-point shifts some weight between neighbouring bins and drops part of the last bin. On `topfluorPE_2_1_1_1.pt3`, G(τ) changes by up to 0.012 (autocorrelation) and 0.015 (cross-correlation). FoCuS-fit-JS sums the weights exactly, and has a "FoCuS-point legacy binning" option that reproduces FoCuS-point's results.
 
 ## FAQ
 
