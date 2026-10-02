@@ -1,5 +1,15 @@
 import numpy as np
-from focuspoint import fib4
+try:
+    from focuspoint import fib4
+except ImportError:
+    # The compiled Cython module (fib4.pyx) is not available, e.g. no C
+    # compiler. y comes from np.unique, so it is sorted with no repeats, and
+    # np.isin marks the same elements as the Cython merge walk.
+    class fib4:
+        @staticmethod
+        def dividAndConquer(arr1, arr2, arrLength):
+            return (np.isin(arr1, arr2, assume_unique=True).astype(np.float64),
+                    np.isin(arr2, arr1, assume_unique=True).astype(np.float64))
 import time
 import _thread
 
@@ -125,8 +135,8 @@ def tttr2xfcs (y,num,NcascStart,NcascEnd, Nsub):
 
                 #If the weights (num) are one as in the first Ncasc round, then the correlation is equal to np.sum(i1)
                 
-                i1 = np.where(i1.astype(np.bool))[0]
-                i2 = np.where(i2.astype(np.bool))[0]
+                i1 = np.where(i1.astype(bool))[0]
+                i2 = np.where(i2.astype(bool))[0]
 
                 #Now we want to weight each photon corectly.
                 #Faster dot product method, faster than converting to matrix.

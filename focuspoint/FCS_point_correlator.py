@@ -1,6 +1,12 @@
+import os
+import sys
+# Works both as `python FCS_point_correlator.py` (from this folder) and as
+# `python -m focuspoint.FCS_point_correlator`: the GUI modules are imported
+# from this folder, the rest from the focuspoint package one level up.
+_here = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [_here, os.path.dirname(_here)]
 from fitting_gui import Form
 from correlation_gui import *
-import sys
 
 
    

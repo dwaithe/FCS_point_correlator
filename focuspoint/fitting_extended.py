@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QCheckBox, QStatusBar,QAbstractSpinBox, QWidget, QFi
 from PyQt5.QtGui import QStandardItem, QColor, QIcon
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 import pyperclip
 class TableFilterBox(QTableWidget):

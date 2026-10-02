@@ -1,0 +1,15 @@
+# FoCuS-point runs on Python 3.9 or newer (tested with Python 3.13).
+numpy
+scipy
+matplotlib
+lmfit
+PyQt5
+pyperclip
+tables
+tifffile
+# Builds the fast photon-intersection routine (focuspoint/fib4.pyx). Without a
+# compiled fib4, the correlator uses NumPy instead, with the same results.
+cython
+setuptools
+# Optional, not installed by default: PyQtWebEngine renders the About window's
+# HTML; without it a plain Qt text view is used.
